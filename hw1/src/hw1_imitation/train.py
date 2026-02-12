@@ -44,7 +44,7 @@ class TrainConfig:
     # The number of epochs to train for.
     num_epochs: int = 400
     # How often to run evaluation, measured in training steps.
-    eval_interval: int = 1_000 #10_000
+    eval_interval: int = 2_000 #10_000
     num_video_episodes: int = 5
     video_size: tuple[int, int] = (256, 256)
     # How often to log training metrics, measured in training steps.
