@@ -60,9 +60,13 @@ class MLPPolicy(nn.Module):
     def get_action(self, obs: np.ndarray) -> np.ndarray:
         """Takes a single observation (as a numpy array) and returns a single action (as a numpy array)."""
         # TODO: implement get_action
-        action = None
-
-        return action
+        # action = None
+        # return action
+        obs = ptu.from_numpy(obs[None])  # add batch dimension
+        dist = self.forward(obs)
+        action = dist.sample()
+        return ptu.to_numpy(action.squeeze(0))
+        
 
     def forward(self, obs: torch.FloatTensor):
         """
@@ -72,10 +76,15 @@ class MLPPolicy(nn.Module):
         """
         if self.discrete:
             # TODO: define the forward pass for a policy with a discrete action space.
-            pass
+            # pass
+            logits = self.logits_net(obs)
+            return D.Categorical(logits=logits)
         else:
             # TODO: define the forward pass for a policy with a continuous action space.
-            pass
+            # pass
+            mean = self.mean_net(obs)
+            std = torch.exp(self.logstd)
+            return D.Normal(mean, std)
 
     def update(self, obs: np.ndarray, actions: np.ndarray, *args, **kwargs) -> dict:
         """
@@ -100,10 +109,24 @@ class MLPPolicyPG(MLPPolicy):
         advantages = ptu.from_numpy(advantages)
 
         # TODO: compute the policy gradient actor loss
-        loss = None
+        # loss = None
+        # Forward pass → distribution
+        dist = self.forward(obs)
+
+        # Compute log probabilities
+        if self.discrete:
+            log_probs = dist.log_prob(actions)
+        else:
+            log_probs = dist.log_prob(actions).sum(-1)
+
+        # Policy gradient loss (maximize objective → minimize negative)
+        loss = -(log_probs * advantages).mean()
 
         # TODO: perform an optimizer step
-        pass
+        # pass
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
 
         return {
             "Actor Loss": loss.item(),

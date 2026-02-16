@@ -16,6 +16,11 @@ def sample_trajectory(
 ) -> Dict[str, np.ndarray]:
     """Sample a rollout in the environment from a policy."""
     ob = env.reset()
+
+    # My edit: env.reset() returns (observation, info)
+    if isinstance(ob, tuple):
+        ob = ob[0]
+    
     obs, acs, rewards, next_obs, terminals, image_obs = [], [], [], [], [], []
     steps = 0
     while True:
@@ -30,14 +35,24 @@ def sample_trajectory(
             )
 
         # TODO use the most recent ob to decide what to do
-        ac = None
+        ac = policy.get_action(ob) # None
+
+        if isinstance(ac, tuple):
+            ac = ac[0]
+
+        step_result = env.step(ac)
 
         # TODO: take that action and get reward and next ob
-        next_ob, rew, done, info = None, None, None, None
+        # next_ob, rew, done, info = None, None, None, None
+        if len(step_result) == 5:
+            next_ob, rew, terminated, truncated, info = step_result
+            done = terminated or truncated
+        else:
+            next_ob, rew, done, info = step_result
 
         # TODO rollout can end due to done, or due to max_length
         steps += 1
-        rollout_done = None
+        rollout_done = done or (steps >= max_length)# None
 
         # record result of taking that action
         obs.append(ob)
