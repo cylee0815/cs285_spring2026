@@ -158,8 +158,15 @@ class PGAgent(nn.Module):
         else:
             # TODO: run the critic and use it as a baseline
             # values = None
-            # Predict baseline values
-            values = self.critic.predict(obs)
+            # 1. Convert the NumPy array to a PyTorch tensor
+            obs_tensor = ptu.from_numpy(obs)
+            
+            # 2. Pass it through the critic network without tracking gradients
+            with torch.no_grad():
+                values_tensor = self.critic(obs_tensor)
+                
+            # 3. Convert the resulting tensor back to a NumPy array
+            values = ptu.to_numpy(values_tensor)
             assert values.shape == q_values.shape
 
             if self.gae_lambda is None:
