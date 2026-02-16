@@ -9,4 +9,3 @@ dist/
 .ruff_cache/
 
 .ipynb_checkpoints/
-exp/
