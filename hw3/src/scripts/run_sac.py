@@ -91,11 +91,11 @@ def run_training_loop(config: dict, logger: Logger, args: argparse.Namespace):
             batch = ptu.from_numpy(batch)
 
             update_info = agent.update(
-                obs=batch["observations"],
-                action=batch["actions"],
-                reward=batch["rewards"],
-                next_obs=batch["next_observations"],
-                done=batch["dones"],
+                observations=batch["observations"],
+                actions=batch["actions"],
+                rewards=batch["rewards"],
+                next_observations=batch["next_observations"],
+                dones=batch["dones"],
                 step=step,
             )
             # ENDTODO
