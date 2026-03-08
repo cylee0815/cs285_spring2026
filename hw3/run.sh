@@ -32,18 +32,18 @@ echo "==================================================="
 # echo "WARNING: HalfCheetah is computationally expensive! This may take a while locally."
 # uv run src/scripts/run_sac.py -cfg experiments/sac/halfcheetah.yaml 
 
-echo "Running SAC Autotune (HalfCheetah)..."
-uv run src/scripts/run_sac.py -cfg experiments/sac/halfcheetah_autotune.yaml 
+# echo "Running SAC Autotune (HalfCheetah)..."
+# uv run src/scripts/run_sac.py -cfg experiments/sac/halfcheetah_autotune.yaml 
 
-# Section 3.6: Stabilizing Target Values (Clipped Double-Q)
-echo "Running SAC Single-Q (Hopper)..."
-uv run src/scripts/run_sac.py -cfg experiments/sac/hopper_singleq.yaml 
+# # Section 3.6: Stabilizing Target Values (Clipped Double-Q)
+# echo "Running SAC Single-Q (Hopper)..."
+# uv run src/scripts/run_sac.py -cfg experiments/sac/hopper_singleq.yaml 
 
-echo "Running SAC Clipped Double-Q (Hopper)..."
-uv run src/scripts/run_sac.py -cfg experiments/sac/hopper_clipq.yaml 
+# echo "Running SAC Clipped Double-Q (Hopper)..."
+# uv run src/scripts/run_sac.py -cfg experiments/sac/hopper_clipq.yaml 
 
-echo "Running SAC 0.01 (HalfCheetah)..."
-uv run src/scripts/run_sac.py -cfg experiments/sac/halfcheetah_autotune_1e-2.yaml 
+# echo "Running SAC 0.01 (HalfCheetah)..."
+# uv run src/scripts/run_sac.py -cfg experiments/sac/halfcheetah_autotune_1e-2.yaml 
 echo "Running SAC 0.05 (HalfCheetah)..."
 uv run src/scripts/run_sac.py -cfg experiments/sac/halfcheetah_autotune_5e-2.yaml 
 echo "Running SAC 0.5 (HalfCheetah)..."
