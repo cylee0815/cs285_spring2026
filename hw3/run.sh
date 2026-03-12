@@ -43,21 +43,21 @@ echo "==================================================="
 # uv run src/scripts/run_sac.py -cfg experiments/sac/hopper_clipq.yaml 
 
 # echo "Running SAC 0.01 (HalfCheetah)..."
-# uv run src/scripts/run_sac.py -cfg experiments/sac/halfcheetah_autotune_1e-2.yaml 
-echo "Running SAC 0.05 (HalfCheetah)..."
-uv run src/scripts/run_sac.py -cfg experiments/sac/halfcheetah_autotune_5e-2.yaml 
-echo "Running SAC 0.5 (HalfCheetah)..."
-uv run src/scripts/run_sac.py -cfg experiments/sac/halfcheetah_autotune_5e-1.yaml 
+# uv run src/scripts/run_sac.py -cfg experiments/sac/halfcheetah_1e-2.yaml 
+# echo "Running SAC 0.05 (HalfCheetah)..."
+# uv run src/scripts/run_sac.py -cfg experiments/sac/halfcheetah_5e-2.yaml 
+# echo "Running SAC 0.5 (HalfCheetah)..."
+# uv run src/scripts/run_sac.py -cfg experiments/sac/halfcheetah_5e-1.yaml 
 echo "Running SAC 1 (HalfCheetah)..."
-uv run src/scripts/run_sac.py -cfg experiments/sac/halfcheetah_autotune_1.yaml 
-echo "Running SAC Autotune 0.01 (HalfCheetah)..."
-uv run src/scripts/run_sac.py -cfg experiments/sac/halfcheetah_autotune_1e-2.yaml 
-echo "Running SAC Autotune 0.05 (HalfCheetah)..."
-uv run src/scripts/run_sac.py -cfg experiments/sac/halfcheetah_autotune_5e-2.yaml 
-echo "Running SAC Autotune 0.5 (HalfCheetah)..."
-uv run src/scripts/run_sac.py -cfg experiments/sac/halfcheetah_autotune_5e-1.yaml 
-echo "Running SAC Autotune 1 (HalfCheetah)..."
-uv run src/scripts/run_sac.py -cfg experiments/sac/halfcheetah_autotune_1.yaml 
+uv run src/scripts/run_sac.py -cfg experiments/sac/halfcheetah_1.yaml 
+# echo "Running SAC Autotune 0.01 (HalfCheetah)..."
+# uv run src/scripts/run_sac.py -cfg experiments/sac/halfcheetah_autotune_1e-2.yaml 
+# echo "Running SAC Autotune 0.05 (HalfCheetah)..."
+# uv run src/scripts/run_sac.py -cfg experiments/sac/halfcheetah_autotune_5e-2.yaml 
+# echo "Running SAC Autotune 0.5 (HalfCheetah)..."
+# uv run src/scripts/run_sac.py -cfg experiments/sac/halfcheetah_autotune_5e-1.yaml 
+# echo "Running SAC Autotune 1 (HalfCheetah)..."
+# uv run src/scripts/run_sac.py -cfg experiments/sac/halfcheetah_autotune_1.yaml 
 
 echo "==================================================="
 echo "All experiments finished successfully!"
