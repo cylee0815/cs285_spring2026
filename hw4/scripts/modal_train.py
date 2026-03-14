@@ -163,7 +163,7 @@ image = (
 
 # Ensure CUDA-enabled torch inside the remote image for H100 runs.
 image = image.run_commands(
-    "uv pip install --system --index-url https://download.pytorch.org/whl/cu124 'torch>=2.5,<2.7'"
+    "uv pip install --system --index-url https://download.pytorch.org/whl/cu124 'torch>=2.5,<2.7'",
     "uv pip install --system --no-build-isolation flash-attn" # ADDED due to improvement
 )
 
