@@ -204,7 +204,6 @@ def compute_group_advantages(rewards: torch.Tensor, group_size: int, eps: float 
     # Return a flat tensor with the same shape/order as rewards.
     # raise NotImplementedError("student TODO: compute_group_advantages")
 
-    def compute_group_advantages(rewards: torch.Tensor, group_size: int, eps: float = 1e-6) -> torch.Tensor:
     N = rewards.numel()
     
     # Edge case 1: No baseline to compare against
