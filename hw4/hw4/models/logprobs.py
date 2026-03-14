@@ -43,7 +43,30 @@ def compute_per_token_logprobs(
     #
     # Respect enable_grad: when enable_grad=False this function should not build an
     # autograd graph.
-    raise NotImplementedError("student TODO: compute_per_token_logprobs")
+    # raise NotImplementedError("student TODO: compute_per_token_logprobs")
+
+    with torch.set_grad_enabled(enable_grad):
+        # Forward pass to get logits [B, L, V]
+        out = model(input_ids=input_ids, attention_mask=attention_mask, use_cache=False)
+        logits = out.logits
+        
+        B, L, V = logits.shape
+        
+        # Shift logits and labels to align predictions with targets
+        shift_logits = logits[:, :-1, :].contiguous()  # [B, L-1, V]
+        shift_labels = input_ids[:, 1:].contiguous()   # [B, L-1]
+        
+        # Flatten to use F.cross_entropy efficiently
+        shift_logits = shift_logits.view(-1, V)
+        shift_labels = shift_labels.view(-1)
+        
+        # Cross entropy computes the negative log likelihood: -log p(x_t)
+        loss = F.cross_entropy(shift_logits, shift_labels, reduction='none')
+        
+        # Reshape back to [B, L-1] and negate to get log probabilities
+        log_probs = -loss.view(B, L - 1)
+        
+        return log_probs
 
 
 def build_completion_mask(
@@ -66,7 +89,24 @@ def build_completion_mask(
     # prompt_input_len is the (padded) prompt length before completion tokens were
     # appended. You can use attention_mask to exclude padding; pad_token_id is passed
     # for convenience but a direct attention-mask-based solution is fine.
-    raise NotImplementedError("student TODO: build_completion_mask")
+    # raise NotImplementedError("student TODO: build_completion_mask")
+
+    # attention_mask is [B, L], so the shifted mask aligning with logprobs is [B, L-1]
+    shifted_attention = attention_mask[:, 1:].float()
+    
+    B, L_minus_1 = shifted_attention.shape
+    
+    # Create a tensor of sequence positions [B, L-1]
+    positions = torch.arange(L_minus_1, device=input_ids.device).unsqueeze(0).expand(B, -1)
+    
+    # The first completion token is at index prompt_input_len in input_ids.
+    # In our shifted dimension [L-1], this corresponds to index (prompt_input_len - 1).
+    completion_mask = (positions >= (prompt_input_len - 1)).float()
+    
+    # Combine the completion positional mask with the shifted attention mask to exclude padding
+    final_mask = completion_mask * shifted_attention
+    
+    return final_mask
 
 
 def masked_sum(x: torch.Tensor, mask: torch.Tensor, eps: float = 1e-8) -> torch.Tensor:
@@ -110,4 +150,16 @@ def approx_kl_from_logprobs(
     #                             = KL(p_new || p_ref).
     #
     # The clamp to [-20, 20] is for numerical stability / variance control.
-    raise NotImplementedError("student TODO: approx_kl_from_logprobs")
+    # raise NotImplementedError("student TODO: approx_kl_from_logprobs")
+
+    # delta = log p_ref(a) - log p_new(a)
+    delta = ref_logprobs - new_logprobs
+    
+    # Clamp for numerical stability
+    delta = torch.clamp(delta, min=-log_ratio_clip, max=log_ratio_clip)
+    
+    # Compute the sampled-token estimator
+    per_token_kl = torch.exp(delta) - delta - 1.0
+    
+    # Return the masked average over completion tokens
+    return masked_mean(per_token_kl, mask, eps)

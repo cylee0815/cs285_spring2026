@@ -96,8 +96,44 @@ class GRPO(RLAlgorithm):
                 #    (do not add an entropy term to the loss)
                 # 10. clipfrac = masked fraction of completion-token positions where
                 #     the PPO ratio was clipped outside [1-clip_eps, 1+clip_eps]
-                raise NotImplementedError("student TODO: GRPO.update minibatch computations")
+                # raise NotImplementedError("student TODO: GRPO.update minibatch computations")
 
+                # 1. Compute per-token log probabilities using the current trainable policy
+                new_logp = compute_per_token_logprobs(model, mb.input_ids, mb.attention_mask)
+                
+                # 2. Compute the log ratio and clamp before exp for numerical stability
+                log_ratio = torch.clamp(new_logp - mb.old_logprobs, min=-20.0, max=20.0)
+                
+                # 3. Compute the actual probability ratio
+                ratio = torch.exp(log_ratio)
+                
+                # 4. Broadcast advantages to per-token shape [B_mb, 1]
+                adv_broad = adv.unsqueeze(1)
+                
+                # 5. Build the PPO-style unclipped and clipped token objectives
+                unclipped_t = ratio * adv_broad
+                clipped_t = torch.clamp(ratio, 1.0 - cfg.clip_eps, 1.0 + cfg.clip_eps) * adv_broad
+                
+                # Take the pessimistic bound (minimum)
+                per_token_obj_t = torch.min(unclipped_t, clipped_t)
+                
+                # 6. Zero out prompt/padding positions with mask, then average over completion tokens
+                # Shape: [B_mb]
+                seq_obj_i = masked_mean_per_row(per_token_obj_t, mask)
+                
+                # 7. Form the final sequence-level loss to minimize
+                pg_loss = -seq_obj_i.mean()
+                
+                # 8. Compute approximate KL divergence proxy
+                kl = approx_kl_from_logprobs(new_logp, mb.ref_logprobs, mask)
+                
+                # 9. Compute entropy for logging only
+                entropy = -masked_mean(new_logp, mask)
+                
+                # 10. Compute the fraction of tokens where the ratio was clipped
+                is_clipped = (ratio < (1.0 - cfg.clip_eps)) | (ratio > (1.0 + cfg.clip_eps))
+                clipfrac = masked_mean(is_clipped.float(), mask)
+                
                 loss = (pg_loss + cfg.kl_coef * kl) / max(1, grad_accum_steps)
                 if not torch.isfinite(loss):
                     skipped_nonfinite += 1

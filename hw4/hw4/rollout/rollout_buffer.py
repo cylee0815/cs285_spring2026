@@ -49,4 +49,86 @@ def iter_minibatches(
     # - Slice ALL tensor fields consistently with the same minibatch indices.
     # - Keep task_names / completion_texts aligned with the same indices when present.
     # - If device is not None, move the minibatch to that device before yielding.
-    raise NotImplementedError("student TODO: iter_minibatches")
+    # raise NotImplementedError("student TODO: iter_minibatches")
+
+    N = batch.input_ids.shape[0]
+
+    # Generate indices once for the whole batch
+    if shuffle:
+        indices = torch.randperm(N, generator=generator, device=batch.input_ids.device)
+    else:
+        indices = torch.arange(N, device=batch.input_ids.device)
+
+    # Yield minibatches
+    for start_idx in range(0, N, minibatch_size):
+        end_idx = min(start_idx + minibatch_size, N)
+        mb_indices = indices[start_idx:end_idx]
+
+        # Slice all tensor fields natively
+        mb_input_ids = batch.input_ids[mb_indices]
+        mb_attention_mask = batch.attention_mask[mb_indices]
+        mb_completion_mask = batch.completion_mask[mb_indices]
+        mb_old_logprobs = batch.old_logprobs[mb_indices]
+        mb_ref_logprobs = batch.ref_logprobs[mb_indices]
+        mb_rewards = batch.rewards[mb_indices]
+        mb_advantages = batch.advantages[mb_indices]
+
+        # Slice optional debug lists if present
+        mb_task_names = None
+        mb_completion_texts = None
+        if batch.task_names is not None or batch.completion_texts is not None:
+            mb_indices_list = mb_indices.tolist()
+            if batch.task_names is not None:
+                mb_task_names = [batch.task_names[i] for i in mb_indices_list]
+            if batch.completion_texts is not None:
+                mb_completion_texts = [batch.completion_texts[i] for i in mb_indices_list]
+
+        # Construct the minibatch
+        mb = RolloutBatch(
+            input_ids=mb_input_ids,
+            attention_mask=mb_attention_mask,
+            completion_mask=mb_completion_mask,
+            old_logprobs=mb_old_logprobs,
+            ref_logprobs=mb_ref_logprobs,
+            rewards=mb_rewards,
+            advantages=mb_advantages,
+            task_names=mb_task_names,
+            completion_texts=mb_completion_texts,
+        )
+
+        # Move to device as a single batched operation if requested
+        if device is not None:
+            mb = mb.to(device)
+
+        yield mb
+
+### EXTRA methods:
+
+def compute_group_advantages(rewards: torch.Tensor, group_size: int, eps: float = 1e-8) -> torch.Tensor:
+    """Computes group-relative advantages. rewards has shape [N], where N is num_groups * group_size."""
+    N = rewards.shape[0]
+    num_groups = N // group_size
+    
+    # 1. Reshape flat rewards to [num_groups, group_size]
+    rewards_grouped = rewards.view(num_groups, group_size)
+    
+    # 2. Compute mean and standard deviation along the group dimension (dim=1)
+    # Note: unbiased=False is standard for RL advantage normalization to match typical PPO/GRPO implementations
+    mean = rewards_grouped.mean(dim=1, keepdim=True)
+    std = rewards_grouped.std(dim=1, unbiased=False, keepdim=True)
+    
+    # 3. Normalize using broadcasting
+    advantages_grouped = (rewards_grouped - mean) / (std + eps)
+    
+    # 4. Flatten back to [N]
+    return advantages_grouped.view(N)
+
+def maybe_normalize_advantages(advantages: torch.Tensor, normalize: bool, eps: float = 1e-8) -> torch.Tensor:
+    """Optionally applies global normalization across the entire batch."""
+    if not normalize:
+        return advantages
+        
+    mean = advantages.mean()
+    std = advantages.std(unbiased=False)
+    
+    return (advantages - mean) / (std + eps)

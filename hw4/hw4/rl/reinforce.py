@@ -87,7 +87,25 @@ class Reinforce(RLAlgorithm):
             # 4. kl = approx_kl_from_logprobs(new_logp, mb.ref_logprobs, mask)
             # 5. entropy = -masked_mean(new_logp, mask) for LOGGING ONLY
             #    (do not add an entropy term to the loss)
-            raise NotImplementedError("student TODO: Reinforce.update minibatch computations")
+            # raise NotImplementedError("student TODO: Reinforce.update minibatch computations")
+
+            # 1. Compute per-token log probabilities using the current policy network
+            new_logp = compute_per_token_logprobs(model, mb.input_ids, mb.attention_mask)
+            
+            # 2. Average completion-token log-probs within each sampled completion
+            # Shape: [B_mb]
+            seq_logp_i = masked_mean_per_row(new_logp, mask)
+            
+            # 3. Form the sequence-level REINFORCE objective
+            # We multiply the group-normalized advantages [B_mb] by the sequence log-probs [B_mb].
+            # Taking the negative mean turns it into a loss that we can minimize.
+            pg_loss = - (adv * seq_logp_i).mean()
+            
+            # 4. Compute the approximate KL divergence proxy for the penalty term
+            kl = approx_kl_from_logprobs(new_logp, mb.ref_logprobs, mask)
+            
+            # 5. Compute entropy for logging purposes only
+            entropy = -masked_mean(new_logp, mask)
 
             loss = (pg_loss + cfg.kl_coef * kl) / max(1, grad_accum_steps)
             if not torch.isfinite(loss):
