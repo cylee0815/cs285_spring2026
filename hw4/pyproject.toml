@@ -21,7 +21,6 @@ remote = [
   "tqdm>=4.66.0",
   "wandb>=0.16.0",
   "numpy<2.0",
-  "flash-attn"
 ]
 
 [tool.setuptools.packages.find]
