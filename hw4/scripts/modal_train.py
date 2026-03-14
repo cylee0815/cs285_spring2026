@@ -168,13 +168,13 @@ image = (
 # Ensure CUDA-enabled torch + FlashAttention for H100
 image = image.run_commands(
     # Core dependencies
-    "uv pip install --system numpy packaging ninja wheel",
+    "uv pip install --python /.uv/.venv numpy packaging ninja wheel",
 
     # Install CUDA-enabled PyTorch (exact version to match FlashAttention wheel)
-    "uv pip install --system --index-url https://download.pytorch.org/whl/cu124 torch==2.6.0",
+    "uv pip install --python /.uv/.venv --index-url https://download.pytorch.org/whl/cu124 torch==2.6.0",
 
     # Install prebuilt FlashAttention wheel (no compilation needed)
-    "uv pip install --system https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.4.post1/flash_attn-2.7.4.post1+cu12torch2.6cxx11abiFALSE-cp312-cp312-linux_x86_64.whl"
+    "uv pip install --python /.uv/.venv https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.4.post1/flash_attn-2.7.4.post1+cu12torch2.6cxx11abiFALSE-cp312-cp312-linux_x86_64.whl"
 )
 
 if NETRC_PATH.is_file():
