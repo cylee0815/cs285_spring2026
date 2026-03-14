@@ -202,7 +202,37 @@ def compute_group_advantages(rewards: torch.Tensor, group_size: int, eps: float 
     #   of your choice for that group
     #
     # Return a flat tensor with the same shape/order as rewards.
-    raise NotImplementedError("student TODO: compute_group_advantages")
+    # raise NotImplementedError("student TODO: compute_group_advantages")
+
+    def compute_group_advantages(rewards: torch.Tensor, group_size: int, eps: float = 1e-6) -> torch.Tensor:
+    N = rewards.numel()
+    
+    # Edge case 1: No baseline to compare against
+    if group_size <= 1:
+        return torch.zeros_like(rewards)
+        
+    # Edge case 2: Shape mismatch
+    if N % group_size != 0:
+        raise ValueError(f"rewards length {N} not divisible by group_size {group_size}")
+        
+    # 1. Reshape flat rewards to [num_groups, group_size]. 
+    # Using -1 lets PyTorch's C++ backend compute the dimension instantly.
+    rewards_grouped = rewards.view(-1, group_size)
+    
+    # 2. Compute mean and standard deviation along the group dimension (dim=1)
+    mean = rewards_grouped.mean(dim=1, keepdim=True)
+    std = rewards_grouped.std(dim=1, unbiased=False, keepdim=True)
+    
+    # 3. Normalize using broadcasting
+    advantages_grouped = (rewards_grouped - mean) / (std + eps)
+    
+    # 4. Handle near-zero std edge case with max speed.
+    # masked_fill_ is an IN-PLACE operation. It modifies the tensor directly in GPU memory, 
+    # completely bypassing the overhead of creating/allocating a new tensor like torch.where does.
+    advantages_grouped.masked_fill_(std <= 1e-8, 0.0)
+    
+    # 5. Flatten back to [N] natively
+    return advantages_grouped.view(N)
 
 
 def maybe_normalize_advantages(advantages: torch.Tensor, enabled: bool, eps: float = 1e-6) -> torch.Tensor:
@@ -211,7 +241,17 @@ def maybe_normalize_advantages(advantages: torch.Tensor, enabled: bool, eps: flo
     # Again use the population standard deviation (unbiased=False).
     # Otherwise return A unchanged.
     # Keep the output shape identical to the input shape.
-    raise NotImplementedError("student TODO: maybe_normalize_advantages")
+    # raise NotImplementedError("student TODO: maybe_normalize_advantages")
+
+    # If disabled or nothing to normalize over, return unmodified
+    if not enabled or advantages.numel() <= 1:
+        return advantages
+        
+    # Global Z-score normalization over the entire batch
+    mean = advantages.mean()
+    std = advantages.std(unbiased=False)
+    
+    return (advantages - mean) / (std + eps)
 
 
 def maybe_update_warmup_lr(optimizer: torch.optim.Optimizer, base_lr: float, step: int, warmup_steps: int) -> None:

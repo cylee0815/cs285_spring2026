@@ -101,34 +101,3 @@ def iter_minibatches(
             mb = mb.to(device)
 
         yield mb
-
-### EXTRA methods:
-
-def compute_group_advantages(rewards: torch.Tensor, group_size: int, eps: float = 1e-8) -> torch.Tensor:
-    """Computes group-relative advantages. rewards has shape [N], where N is num_groups * group_size."""
-    N = rewards.shape[0]
-    num_groups = N // group_size
-    
-    # 1. Reshape flat rewards to [num_groups, group_size]
-    rewards_grouped = rewards.view(num_groups, group_size)
-    
-    # 2. Compute mean and standard deviation along the group dimension (dim=1)
-    # Note: unbiased=False is standard for RL advantage normalization to match typical PPO/GRPO implementations
-    mean = rewards_grouped.mean(dim=1, keepdim=True)
-    std = rewards_grouped.std(dim=1, unbiased=False, keepdim=True)
-    
-    # 3. Normalize using broadcasting
-    advantages_grouped = (rewards_grouped - mean) / (std + eps)
-    
-    # 4. Flatten back to [N]
-    return advantages_grouped.view(N)
-
-def maybe_normalize_advantages(advantages: torch.Tensor, normalize: bool, eps: float = 1e-8) -> torch.Tensor:
-    """Optionally applies global normalization across the entire batch."""
-    if not normalize:
-        return advantages
-        
-    mean = advantages.mean()
-    std = advantages.std(unbiased=False)
-    
-    return (advantages - mean) / (std + eps)
