@@ -1,0 +1,49 @@
+{
+  "step": 201,
+  "adapter_dir_exists": true,
+  "optimizer_state_exists": true,
+  "adapter_file_count": 10,
+  "adapter_total_bytes": 89796389,
+  "files": [
+    {
+      "path": "adapter/README.md",
+      "size_bytes": 5216
+    },
+    {
+      "path": "adapter/adapter_config.json",
+      "size_bytes": 1062
+    },
+    {
+      "path": "adapter/adapter_model.safetensors",
+      "size_bytes": 73911112
+    },
+    {
+      "path": "adapter/added_tokens.json",
+      "size_bytes": 605
+    },
+    {
+      "path": "adapter/chat_template.jinja",
+      "size_bytes": 2513
+    },
+    {
+      "path": "adapter/merges.txt",
+      "size_bytes": 1671853
+    },
+    {
+      "path": "adapter/special_tokens_map.json",
+      "size_bytes": 613
+    },
+    {
+      "path": "adapter/tokenizer.json",
+      "size_bytes": 11421896
+    },
+    {
+      "path": "adapter/tokenizer_config.json",
+      "size_bytes": 4686
+    },
+    {
+      "path": "adapter/vocab.json",
+      "size_bytes": 2776833
+    }
+  ]
+}
