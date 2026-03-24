@@ -44,14 +44,14 @@ class FQLAgent(nn.Module):
         self.flow_steps = flow_steps
         self.alpha = alpha
 
+    @torch.inference_mode()
     def get_action(self, observation: np.ndarray):
         """
         Used for evaluation.
         """
         observation = ptu.from_numpy(np.asarray(observation))[None]
-        # TODO(student): Compute the action for evaluation
-        # Hint: Unlike SAC+BC and IQL, the evaluation action is *sampled* (i.e., not the mode or mean) from the policy
-        action = ...
+        noise = torch.randn(1, self.action_dim, device=ptu.device)
+        action = self.onestep_actor(observation, noise)
         action = torch.clamp(action, -1, 1)
         return ptu.to_numpy(action)[0]
 
@@ -62,7 +62,12 @@ class FQLAgent(nn.Module):
         """
         # TODO(student): Compute the BC flow action using the Euler method for `self.flow_steps` steps
         # Hint: This function should *only* be used in `update_onestep_actor`
-        action = ...
+        action = noise
+        dt = 1.0 / self.flow_steps
+        for i in range(self.flow_steps):
+            t = torch.full((action.shape[0], 1), i * dt, device=action.device)
+            v = self.bc_actor(observation, action, t)
+            action = action + dt * v
         action = torch.clamp(action, -1, 1)
         return action
 
@@ -78,11 +83,16 @@ class FQLAgent(nn.Module):
         """
         Update Q(s, a)
         """
-        # TODO(student): Compute the Q loss
-        # Hint: Use the one-step actor to compute next actions
-        # Hint: Remember to clamp the actions to be in [-1, 1] when feeding them to the critic!
-        q = ...
-        loss = ...
+        with ptu.autocast():
+            with torch.no_grad():
+                noise = torch.randn(next_observations.shape[0], self.action_dim, device=next_observations.device)
+                next_actions = self.onestep_actor(next_observations, noise)
+                next_actions = torch.clamp(next_actions, -1, 1)
+                target_qs = self.target_critic(next_observations, next_actions)  # (2, batch)
+                target_q = target_qs.mean(dim=0)  # average of two target Qs
+                y = rewards + self.discount * (1 - dones) * target_q
+            q = self.critic(observations, actions)  # (2, batch)
+            loss = ((q - y.unsqueeze(0).expand_as(q)) ** 2).mean()
 
         self.critic_optimizer.zero_grad()
         loss.backward()
@@ -104,8 +114,14 @@ class FQLAgent(nn.Module):
         """
         Update the BC actor
         """
-        # TODO(student): Compute the BC flow loss
-        loss = ...
+        with ptu.autocast():
+            batch_size = observations.shape[0]
+            z = torch.randn(batch_size, self.action_dim, device=observations.device)
+            t = torch.rand(batch_size, 1, device=observations.device)
+            a_tilde = (1 - t) * z + t * actions
+            v = self.bc_actor(observations, a_tilde, t)
+            target = actions - z
+            loss = ((v - target) ** 2).mean(dim=-1).mean()
 
         self.bc_actor_optimizer.zero_grad()
         loss.backward()
@@ -124,18 +140,28 @@ class FQLAgent(nn.Module):
         """
         Update the one-step actor
         """
-        # TODO(student): Compute the one-step actor loss
-        # Hint: Do *not* clip the one-step actor actions when computing the distillation loss
-        distill_loss = ...
+        with ptu.autocast():
+            batch_size = observations.shape[0]
+            z = torch.randn(batch_size, self.action_dim, device=observations.device)
 
-        # Hint: *Do* clip the one-step actor actions when feeding them to the critic
-        q_loss = ...
+            # One-step actor output (unclipped for distillation)
+            onestep_actions = self.onestep_actor(observations, z)
 
-        # Total loss.
-        loss = distill_loss + q_loss
+            # BC flow actions — no gradients through bc_actor
+            with torch.no_grad():
+                bc_actions = self.get_bc_action(observations, z)
 
-        # Additional metrics for logging.
-        mse = ...
+            # Distillation loss: alpha * (1/|A|) * ||π_ω - π_v||^2
+            distill_loss = self.alpha * ((onestep_actions - bc_actions) ** 2).mean(dim=-1).mean()
+
+            # Q loss: maximize Q using clipped one-step actions
+            q_loss = -self.critic(observations, torch.clamp(onestep_actions, -1, 1)).mean(dim=0).mean()
+
+            # Total loss.
+            loss = distill_loss + q_loss
+
+            # MSE between one-step policy and dataset actions for logging.
+            mse = ((onestep_actions.detach() - actions) ** 2).mean()
 
         self.onestep_actor_optimizer.zero_grad()
         loss.backward()
@@ -171,5 +197,8 @@ class FQLAgent(nn.Module):
         return metrics
 
     def update_target_critic(self) -> None:
-        # TODO(student): Update target_critic using Polyak averaging with self.target_update_rate
-        ...
+        torch._foreach_lerp_(
+            list(self.target_critic.parameters()),
+            list(self.critic.parameters()),
+            self.target_update_rate,
+        )

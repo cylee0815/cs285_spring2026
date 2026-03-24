@@ -1,3 +1,4 @@
+import contextlib
 from typing import Union
 
 import torch
@@ -18,6 +19,13 @@ _str_to_activation = {
 }
 
 device = None
+
+
+def autocast():
+    """bfloat16 autocast on CUDA (same dynamic range as fp32, no GradScaler needed); no-op on CPU."""
+    if device is not None and device.type == 'cuda':
+        return torch.amp.autocast(device_type='cuda', dtype=torch.bfloat16)
+    return contextlib.nullcontext()
 
 
 def build_mlp(
@@ -117,6 +125,7 @@ def init_gpu(use_gpu=True, gpu_id=0):
     global device
     if torch.cuda.is_available() and use_gpu:
         device = torch.device("cuda:" + str(gpu_id))
+        torch.backends.cudnn.benchmark = True
         print("Using GPU id {}".format(gpu_id))
     else:
         device = torch.device("cpu")

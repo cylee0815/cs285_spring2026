@@ -42,6 +42,7 @@ class SACBCAgent(nn.Module):
 
         self.target_entropy = -action_dim / 2  # Heuristic value (|A| / 2) from the SAC paper.
 
+    @torch.inference_mode()
     def get_action(self, observation: np.ndarray):
         """
         Used for evaluation.
@@ -63,9 +64,15 @@ class SACBCAgent(nn.Module):
         """
         Update Q(s, a)
         """
-        # TODO(student): Compute the Q loss
-        q = ...
-        loss = ...
+        with ptu.autocast():
+            with torch.no_grad():
+                next_dist = self.actor(next_observations)
+                next_actions = next_dist.rsample()
+                target_qs = self.target_critic(next_observations, next_actions)  # (2, batch)
+                target_q = target_qs.mean(dim=0)  # average of two target Qs (no min, per paper)
+                y = rewards + self.discount * (1 - dones) * target_q
+            q = self.critic(observations, actions)  # (2, batch)
+            loss = ((q - y.unsqueeze(0).expand_as(q)) ** 2).mean()
 
         self.critic_optimizer.zero_grad()
         loss.backward()
@@ -87,15 +94,20 @@ class SACBCAgent(nn.Module):
         """
         Update the actor
         """
-        # TODO(student): Compute the actor loss
-        q_loss = ...
+        with ptu.autocast():
+            actor_dists = self.actor(observations)
+            actor_actions = actor_dists.rsample()
+            log_probs = actor_dists.log_prob(actor_actions)
 
-        mses = ...
-        bc_loss = ...
+            qs = self.critic(observations, actor_actions)  # (2, batch)
+            q_loss = -qs.mean(dim=0).mean()  # -(1/2)(Q1+Q2) averaged over batch
 
-        entropy_loss = ...
+            mses = ((actions - actor_actions) ** 2).mean(dim=-1)  # per-sample MSE over action dim
+            bc_loss = self.alpha * mses.mean()
 
-        loss = q_loss + bc_loss + entropy_loss
+            entropy_loss = self.beta() * log_probs.mean()
+
+            loss = q_loss + bc_loss + entropy_loss
 
         self.actor_optimizer.zero_grad()
         loss.backward()
@@ -117,11 +129,12 @@ class SACBCAgent(nn.Module):
         """
         Update the beta parameter using dual gradient descent.
         """
-        actor_dists = self.actor(observations)
-        actor_actions = actor_dists.rsample()
-        log_probs = actor_dists.log_prob(actor_actions)
+        with ptu.autocast():
+            actor_dists = self.actor(observations)
+            actor_actions = actor_dists.rsample()
+            log_probs = actor_dists.log_prob(actor_actions)
 
-        loss = self.beta() * (-log_probs - self.target_entropy).detach().mean()
+            loss = self.beta() * (-log_probs - self.target_entropy).detach().mean()
 
         self.beta_optimizer.zero_grad()
         loss.backward()
@@ -155,5 +168,8 @@ class SACBCAgent(nn.Module):
         return metrics
 
     def update_target_critic(self) -> None:
-        # TODO(student): Update target_critic using Polyak averaging with self.target_update_rate
-        ...
+        torch._foreach_lerp_(
+            list(self.target_critic.parameters()),
+            list(self.critic.parameters()),
+            self.target_update_rate,
+        )
