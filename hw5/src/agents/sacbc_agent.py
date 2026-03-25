@@ -168,8 +168,9 @@ class SACBCAgent(nn.Module):
         return metrics
 
     def update_target_critic(self) -> None:
-        torch._foreach_lerp_(
-            list(self.target_critic.parameters()),
-            list(self.critic.parameters()),
-            self.target_update_rate,
-        )
+        with torch.no_grad():
+            torch._foreach_lerp_(
+                list(self.target_critic.parameters()),
+                list(self.critic.parameters()),
+                self.target_update_rate,
+            )
