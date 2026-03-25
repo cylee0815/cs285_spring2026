@@ -1,8 +1,16 @@
 """
 PortfolioEnv: Gymnasium environment for portfolio optimization.
 
-State: concatenation of [current_weights (n_assets), flattened price features (n_assets * n_features)]
-  where price features per asset include: [log_return, rolling_mean_return, rolling_std_return, rsi, macd, bb_upper, bb_lower]
+State: concatenation of:
+  [current_weights (n_assets),
+   flattened per-asset features (n_assets × n_features),    ← price/TA
+   global macro features (n_macro),                          ← FRED: rates, CPI, etc.
+   sentiment features (n_sentiment)]                         ← SF Fed DNSI / Alpaca
+
+Per-asset features: [log_return, rolling_mean_return, rolling_std_return, rsi, macd, bb_pct]
+Macro features (optional, N_MACRO_FEATURES=8): dgs10, dff, yield_spread, cpi_yoy, unrate,
+  gdp_growth, umcsent_norm, nfci
+Sentiment features (optional): SF Fed DNSI scalar (+ Alpaca embeddings if precomputed)
 
 Action: raw logits of shape (n_assets,), converted to portfolio weights via softmax.
   (supports a cash position by having n_assets+1 action dim with last = cash)
@@ -25,20 +33,30 @@ class PortfolioEnv(gym.Env):
 
     def __init__(
         self,
-        price_returns: np.ndarray,    # shape (T, n_assets), log returns
-        features: np.ndarray,          # shape (T, n_assets, n_features)
-        episode_length: int = 63,      # ~1 quarter of trading days
+        price_returns: np.ndarray,              # (T, n_assets) log returns
+        features: np.ndarray,                    # (T, n_assets, n_features) per-asset TA
+        episode_length: int = 63,
         transaction_cost: float = 0.001,
-        reward_type: str = "log_return",  # "log_return" or "diff_sharpe"
+        reward_type: str = "log_return",         # "log_return" or "diff_sharpe"
         include_cash: bool = False,
-        sharpe_eta: float = 0.01,       # EMA decay for diff Sharpe
+        sharpe_eta: float = 0.01,
+        macro_features: Optional[np.ndarray] = None,     # (T, n_macro) global macro
+        sentiment_features: Optional[np.ndarray] = None, # (T, n_sentiment) news sentiment
     ):
         super().__init__()
         self.price_returns = price_returns.astype(np.float32)  # (T, n_assets)
         self.features = features.astype(np.float32)             # (T, n_assets, n_features)
+        self.macro_features = (
+            macro_features.astype(np.float32) if macro_features is not None else None
+        )
+        self.sentiment_features = (
+            sentiment_features.astype(np.float32) if sentiment_features is not None else None
+        )
 
         self.T, self.n_assets = price_returns.shape
         self.n_features = features.shape[2]
+        self.n_macro = macro_features.shape[1] if macro_features is not None else 0
+        self.n_sentiment = sentiment_features.shape[1] if sentiment_features is not None else 0
         self.episode_length = episode_length
         self.transaction_cost = transaction_cost
         self.reward_type = reward_type
@@ -47,8 +65,13 @@ class PortfolioEnv(gym.Env):
 
         self.n_actions = self.n_assets + (1 if include_cash else 0)
 
-        # Observation: [weights(n_assets), flattened features(n_assets * n_features)]
-        obs_dim = self.n_assets + self.n_assets * self.n_features
+        # Observation: [weights(n_assets), per-asset features(n×f), macro(m), sentiment(s)]
+        obs_dim = (
+            self.n_assets
+            + self.n_assets * self.n_features
+            + self.n_macro
+            + self.n_sentiment
+        )
         self.observation_space = spaces.Box(
             low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32
         )
@@ -135,10 +158,21 @@ class PortfolioEnv(gym.Env):
     def _get_obs(self):
         idx = min(self._start + self._t, self.T - 1)
         feat = self.features[idx]  # (n_assets, n_features)
-        # Replace NaNs in features
         feat = np.where(np.isnan(feat), 0.0, feat)
-        obs = np.concatenate([self._weights, feat.flatten()], axis=0)
-        return obs.astype(np.float32)
+
+        parts = [self._weights, feat.flatten()]
+
+        if self.macro_features is not None:
+            macro = self.macro_features[idx]
+            macro = np.where(np.isnan(macro), 0.0, macro)
+            parts.append(macro)
+
+        if self.sentiment_features is not None:
+            sent = self.sentiment_features[idx]
+            sent = np.where(np.isnan(sent), 0.0, sent)
+            parts.append(sent)
+
+        return np.concatenate(parts, axis=0).astype(np.float32)
 
     def _differential_sharpe(self, r: float) -> float:
         """Moody & Saffell (2001) differential Sharpe ratio."""
