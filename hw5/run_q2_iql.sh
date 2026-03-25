@@ -41,37 +41,37 @@ RUN_GROUP=q2
 # IQL tip: with correct implementation and good alpha, success should appear
 # around 100-150K steps on antmaze-medium.
 # -----------------------------------------------------------------------------
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] === Q2 IQL [OPTIONAL DEBUG]: antmaze-medium alpha sweep {1, 3, 10, 30} ==="
-uv run src/scripts/run.py --njobs=4 --training_steps=300000 \
-  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=antmaze-medium-navigate-singletask-task1-v0 --seed=${SEED} --alpha=1" \
-  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=antmaze-medium-navigate-singletask-task1-v0 --seed=${SEED} --alpha=3" \
-  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=antmaze-medium-navigate-singletask-task1-v0 --seed=${SEED} --alpha=10" \
-  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=antmaze-medium-navigate-singletask-task1-v0 --seed=${SEED} --alpha=30"
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] antmaze-medium done."
+# echo "[$(date '+%Y-%m-%d %H:%M:%S')] === Q2 IQL [OPTIONAL DEBUG]: antmaze-medium alpha sweep {1, 3, 10, 30} ==="
+# uv run src/scripts/run.py --njobs=4 --training_steps=300000 \
+#   "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=antmaze-medium-navigate-singletask-task1-v0 --seed=${SEED} --alpha=1" \
+#   "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=antmaze-medium-navigate-singletask-task1-v0 --seed=${SEED} --alpha=3" \
+#   "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=antmaze-medium-navigate-singletask-task1-v0 --seed=${SEED} --alpha=10" \
+#   "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=antmaze-medium-navigate-singletask-task1-v0 --seed=${SEED} --alpha=30"
+# echo "[$(date '+%Y-%m-%d %H:%M:%S')] antmaze-medium done."
 
 # -----------------------------------------------------------------------------
 # [REQUIRED] cube-single — 1M steps, target >60% success rate.
-# Alpha sweep: {1, 3, 10, 30}.
+# Alpha sweep: {30, 100, 300, 1000}.
 # Report must include training curves for ≥3 different alpha values on this task.
 # -----------------------------------------------------------------------------
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] === Q2 IQL: cube-single alpha sweep {1, 3, 10, 30} ==="
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] === Q2 IQL: cube-single alpha sweep {30, 100, 300, 1000} ==="
 uv run src/scripts/run.py --njobs=4 \
-  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=1" \
-  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=3" \
-  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=10" \
-  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=30"
+  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=30" \
+  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=100" \
+  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=300" \
+  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=1000"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] cube-single done."
 
 # -----------------------------------------------------------------------------
 # [REQUIRED] antsoccer-arena — 1M steps, target >5% success rate.
 # Alpha sweep: {1, 3, 10, 30}.
 # -----------------------------------------------------------------------------
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] === Q2 IQL: antsoccer-arena alpha sweep {1, 3, 10, 30} ==="
-uv run src/scripts/run.py --njobs=4 \
-  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=antsoccer-arena-navigate-singletask-task1-v0 --seed=${SEED} --alpha=1" \
-  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=antsoccer-arena-navigate-singletask-task1-v0 --seed=${SEED} --alpha=3" \
-  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=antsoccer-arena-navigate-singletask-task1-v0 --seed=${SEED} --alpha=10" \
-  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=antsoccer-arena-navigate-singletask-task1-v0 --seed=${SEED} --alpha=30"
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] antsoccer-arena done."
+# echo "[$(date '+%Y-%m-%d %H:%M:%S')] === Q2 IQL: antsoccer-arena alpha sweep {1, 3, 10, 30} ==="
+# uv run src/scripts/run.py --njobs=4 \
+#   "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=antsoccer-arena-navigate-singletask-task1-v0 --seed=${SEED} --alpha=1" \
+#   "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=antsoccer-arena-navigate-singletask-task1-v0 --seed=${SEED} --alpha=3" \
+#   "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=antsoccer-arena-navigate-singletask-task1-v0 --seed=${SEED} --alpha=10" \
+#   "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=antsoccer-arena-navigate-singletask-task1-v0 --seed=${SEED} --alpha=30"
+# echo "[$(date '+%Y-%m-%d %H:%M:%S')] antsoccer-arena done."
 
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] === Q2 IQL complete ==="
