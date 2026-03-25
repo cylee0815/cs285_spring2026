@@ -22,7 +22,7 @@ mkdir -p logs
 
 SEED=285
 RUN_GROUP=q2
-MODAL_CMD="uv run modal run src/scripts/modal_run.py"
+MODAL_CMD="uv run modal run --detach src/scripts/modal_run.py"
 
 # -----------------------------------------------------------------------------
 # [OPTIONAL DEBUG] antmaze-medium — 200K steps
@@ -38,12 +38,16 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] antmaze-medium done."
 # -----------------------------------------------------------------------------
 # [REQUIRED] cube-single — 1M steps
 # -----------------------------------------------------------------------------
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] === Q2 IQL: cube-single alpha sweep {1, 3, 10, 30} ==="
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] === Q2 IQL: cube-single alpha sweep {30, 100, 300, 1000} ==="
 $MODAL_CMD --njobs=4 \
-  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=1" \
-  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=3" \
-  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=10" \
-  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=30"
+  # "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=1" \
+  # "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=3" \
+  # "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=10" \
+  # "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=30"
+  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=30" \
+  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=100" \
+  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=300" \
+  "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=1000"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] cube-single done."
 
 # -----------------------------------------------------------------------------
