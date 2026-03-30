@@ -28,7 +28,7 @@ MODAL_CMD="uv run modal run --detach src/scripts/modal_run.py"
 # [OPTIONAL DEBUG] antmaze-medium — 200K steps
 # -----------------------------------------------------------------------------
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] === Q2 IQL [OPTIONAL DEBUG]: antmaze-medium alpha sweep {1, 3, 10, 30} ==="
-$MODAL_CMD --njobs=4 --training_steps=300000 \
+$MODAL_CMD --njobs=4 --training_steps=200000 \
   "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=antmaze-medium-navigate-singletask-task1-v0 --seed=${SEED} --alpha=1" \
   "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=antmaze-medium-navigate-singletask-task1-v0 --seed=${SEED} --alpha=3" \
   "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=antmaze-medium-navigate-singletask-task1-v0 --seed=${SEED} --alpha=10" \
@@ -40,10 +40,6 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] antmaze-medium done."
 # -----------------------------------------------------------------------------
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] === Q2 IQL: cube-single alpha sweep {30, 100, 300, 1000} ==="
 $MODAL_CMD --njobs=4 \
-  # "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=1" \
-  # "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=3" \
-  # "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=10" \
-  # "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=30"
   "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=30" \
   "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=100" \
   "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=cube-single-play-singletask-task1-v0 --seed=${SEED} --alpha=300" \

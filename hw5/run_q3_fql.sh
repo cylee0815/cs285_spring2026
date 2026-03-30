@@ -39,13 +39,13 @@ SEED=285
 RUN_GROUP=q3
 
 # -----------------------------------------------------------------------------
-# [OPTIONAL DEBUG] antmaze-medium — 300K steps, target >80% at 200K steps.
+# [OPTIONAL DEBUG] antmaze-medium — 1M steps, target >80% at 1M steps.
 # Runs first as a quick sanity check. Comment out this block to skip.
 # FQL tip: bc_actor/loss should decrease steadily; onestep_actor/mse should
 # follow bc actions closely for large alpha, diverge for small alpha.
 # -----------------------------------------------------------------------------
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] === Q3 FQL [OPTIONAL DEBUG]: antmaze-medium alpha sweep {1, 3, 10, 30} ==="
-uv run src/scripts/run.py --njobs=4 --training_steps=300000 \
+uv run src/scripts/run.py --njobs=4 --training_steps=1000000 \
   "JOB --run_group=${RUN_GROUP} --base_config=fql --env_name=antmaze-medium-navigate-singletask-task1-v0 --seed=${SEED} --alpha=1" \
   "JOB --run_group=${RUN_GROUP} --base_config=fql --env_name=antmaze-medium-navigate-singletask-task1-v0 --seed=${SEED} --alpha=3" \
   "JOB --run_group=${RUN_GROUP} --base_config=fql --env_name=antmaze-medium-navigate-singletask-task1-v0 --seed=${SEED} --alpha=10" \
