@@ -7,13 +7,13 @@
 #   cd hw5 && bash run_q2_iql.sh 2>&1 | tee logs/q2_iql.log
 #
 # Usage (SLURM batch — uncomment #SBATCH lines, then: sbatch run_q2_iql.sh):
-#SBATCH --job-name=hw5_q2_iql
-#SBATCH --partition=GPU-shared
-#SBATCH --gres=gpu:1
-#SBATCH --time=08:00:00
-#SBATCH --cpus-per-task=5
-#SBATCH --mem=22G
-#SBATCH --output=logs/slurm_q2_iql_%j.log
+##SBATCH --job-name=hw5_q2_iql
+##SBATCH --partition=GPU-shared
+##SBATCH --gres=gpu:1
+##SBATCH --time=08:00:00
+##SBATCH --cpus-per-task=5
+##SBATCH --mem=22G
+##SBATCH --output=logs/slurm_q2_iql_%j.log
 #
 # Expected runtime (4 parallel jobs/task, 1M steps unless noted):
 #   V100: antmaze ~0.5h | cube-single ~3-5h | antsoccer ~3-5h
