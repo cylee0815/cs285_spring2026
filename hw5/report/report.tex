@@ -1,0 +1,382 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage{enumitem}
+
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+
+\title{\textbf{CS285/185 Assignment 5: Offline Reinforcement Learning}}
+\author{Seed: 285}
+\date{Due: April 15, 2026}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% =============================================================================
+\section{Part 1: SAC+BC (Section 2.2)}
+% =============================================================================
+
+\subsection{Algorithm Overview}
+
+SAC+BC \cite{td3bc} regularizes a soft actor-critic policy by adding a behavior-cloning (BC)
+term to the actor loss:
+\[
+  \mathcal{L}_\pi(\phi)
+  = \mathbb{E}_{(s,a)\sim\mathcal{D}}\!\Bigl[
+      -Q_\theta(s, \pi_\phi(s))
+      + \alpha \,\underbrace{\|\pi_\phi(s) - a\|^2}_{\text{BC term}}
+      - \mathcal{H}(\pi_\phi(\cdot|s))
+    \Bigr],
+\]
+where $\alpha$ controls the strength of behavioral regularization.
+The critic is trained with a standard TD objective using the \emph{average} (not minimum)
+of the two ensemble Q-values in the target, which avoids over-pessimism in offline settings.
+A learned entropy coefficient $\beta$ is updated via dual gradient descent to maintain
+target entropy $-d_\mathcal{A}/2$.
+
+\subsection{Results}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{../figures/q1_sacbc_success_curves.png}
+  \caption{SAC+BC success rate curves for different values of $\alpha$ on
+           \texttt{cube-single} (left) and \texttt{antsoccer-arena} (right).
+           Dotted horizontal lines mark the performance targets.}
+  \label{fig:q1_success}
+\end{figure}
+
+Figure~\ref{fig:q1_success} shows success rate curves across a sweep of $\alpha \in \{30, 100, 300, 1000\}$
+on \texttt{cube-single} and $\alpha \in \{1, 3, 10, 30\}$ on \texttt{antsoccer-arena}.
+
+\paragraph{Cube-Single.}
+$\alpha = 100$ achieves the best final performance of $\mathbf{100\%}$, comfortably exceeding the
+75\% target. $\alpha = 300$ and $\alpha = 1000$ reach 76\%, and $\alpha = 30$ reaches only
+44\%---too little regularization allows the actor to overfit to erroneous Q-values.
+The sweet spot is a moderate $\alpha$ that keeps the policy close to the data while
+still benefiting from Q-maximization.
+
+\paragraph{AntSoccer-Arena.}
+This task is considerably harder. Only $\alpha = 3$ achieves non-trivial performance
+($\sim$12\%), meeting the $>5\%$ target. Larger $\alpha$ values collapse to 0\%,
+suggesting that the dataset actions alone are insufficient and the policy must deviate
+from them to find the reward.
+
+\subsection{Training Diagnostics}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{../figures/q1_sacbc_diagnostics.png}
+  \caption{SAC+BC training diagnostics on \texttt{cube-single} with $\alpha=100$
+           (best performing run). \emph{Top-left}: Q loss converges steadily.
+           \emph{Top-right}: Q values settle in a negative range bounded well away from zero,
+           consistent with short-horizon task with $r \in \{0,1\}$ (expected $Q_\text{min} \approx -100$,
+           $Q_\text{max} \approx 0$). \emph{Bottom-left}: actor Q-maximization and BC losses
+           both decrease. \emph{Bottom-right}: $\beta$ converges below 0.5, indicating the
+           policy learns a moderately deterministic behavior.}
+  \label{fig:q1_diag}
+\end{figure}
+
+As shown in Figure~\ref{fig:q1_diag}, Q values quickly converge to a negative range with
+$Q_\text{max} \approx 0$ and bounded minima---the expected signal for a sparse success task.
+The BC loss decreases throughout training, confirming the policy stays close to the dataset
+distribution while the Q-maximization loss also decreases, indicating successful policy improvement.
+
+\subsection{Effect of $\alpha$}
+
+A large $\alpha$ makes the policy conservative (close to behavior cloning) while small $\alpha$
+allows more aggressive Q-maximization but risks distributional shift errors. On \texttt{cube-single}
+the optimal $\alpha = 100$ reflects a dataset rich enough in near-optimal trajectories that moderate
+BC regularization suffices. On the harder \texttt{antsoccer-arena}, where the dataset likely
+contains more suboptimal data, a smaller $\alpha = 3$ is needed so the actor can deviate from
+the behavioral distribution to discover rewarding actions.
+
+\newpage
+% =============================================================================
+\section{Part 2: IQL (Section 3.2)}
+% =============================================================================
+
+\subsection{Algorithm Overview}
+
+Implicit Q-Learning \cite{iql} avoids querying out-of-distribution actions during training
+by introducing a separate value function $V_\psi(s)$ trained with \emph{expectile regression}:
+\[
+  \mathcal{L}_V(\psi)
+  = \mathbb{E}_{(s,a)\sim\mathcal{D}}\!\Bigl[
+      L_2^\tau\!\bigl(Q_\theta(s,a) - V_\psi(s)\bigr)
+    \Bigr], \quad
+  L_2^\tau(\delta) = |\tau - \mathbf{1}[\delta < 0]|\,\delta^2,
+\]
+with expectile $\tau = 0.9$.
+The Q-network is bootstrapped through $V_\psi(s')$ rather than $\max_a Q(s', a')$:
+\[
+  \mathcal{L}_Q(\theta)
+  = \mathbb{E}\!\Bigl[(r + \gamma V_\psi(s') - Q_\theta(s,a))^2\Bigr].
+\]
+The actor is updated via advantage-weighted behavior cloning:
+\[
+  \mathcal{L}_\pi(\phi)
+  = -\mathbb{E}_{(s,a)\sim\mathcal{D}}\!\Bigl[
+      e^{\alpha(Q_\theta(s,a) - V_\psi(s))} \log \pi_\phi(a|s)
+    \Bigr],
+\]
+where $\alpha$ controls the temperature of the advantage weighting.
+
+\subsection{Results}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{../figures/q2_iql_success_curves.png}
+  \caption{IQL success rate curves for $\alpha \in \{30,100,300,1000\}$ on
+           \texttt{cube-single} (left) and $\alpha \in \{1,3,10,30\}$ on
+           \texttt{antsoccer-arena} (right, dashed $=$ incomplete at 600K/1M steps).
+           Note: additional runs with $\alpha \in \{1,3,10\}$ were also conducted for
+           \texttt{cube-single} and are included in the $\alpha$-sensitivity analysis.}
+  \label{fig:q2_success}
+\end{figure}
+
+\paragraph{Cube-Single.}
+IQL performs strongly across all tested $\alpha$ values.
+The best run uses $\alpha = 30$, achieving $\mathbf{100\%}$ success at 1M steps,
+with $\alpha = 300$ reaching 96\% and $\alpha \in \{1, 100, 1000\}$ reaching 84--92\%.
+IQL is notably less sensitive to $\alpha$ than SAC+BC, with all values exceeding the 60\% target.
+
+\paragraph{AntSoccer-Arena.}
+\textit{These runs are incomplete} (stopped at 600K steps due to compute interruption).
+At 600K steps, $\alpha = 10$ leads at 16\% success.
+The target is $>5\%$; the current partial results suggest IQL can meet this target but
+final confirmation requires completing the 1M-step runs. See Section~\ref{sec:missing} for details.
+
+\subsection{Training Diagnostics}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{../figures/q2_iql_diagnostics.png}
+  \caption{IQL training diagnostics on \texttt{cube-single} with best $\alpha$ (30).
+           \emph{Top-left}: V loss (expectile regression) decreases steadily.
+           \emph{Top-right}: V and Q values---V stays below Q as expected by the
+           expectile formulation (V approximates an upper quantile of the Q-distribution).
+           \emph{Bottom-left}: Q loss converges.
+           \emph{Bottom-right}: Advantage-weighted actor loss decreases as the policy
+           improves toward high-advantage actions.}
+  \label{fig:q2_diag}
+\end{figure}
+
+Figure~\ref{fig:q2_diag} validates the IQL design: the value network $V(s)$ correctly
+sits below the Q-network $Q(s,a)$, since $V$ approximates the $\tau$-expectile of Q
+(which for $\tau > 0.5$ lies below the maximum but above the mean).
+This relationship is the key mechanism that avoids out-of-distribution action evaluation.
+
+\subsection{Comparison with SAC+BC}
+
+On \texttt{cube-single}, IQL achieves comparable peak performance (100\%) to SAC+BC
+but with less sensitivity to $\alpha$---any $\alpha \in \{1,\ldots,1000\}$ reliably
+exceeds 80\%. This robustness makes IQL more practical when compute for hyperparameter
+search is limited. The IQL advantage stems from bootstrapping through $V(s')$, which
+avoids evaluating the actor on next states, sidestepping distributional shift.
+
+\newpage
+% =============================================================================
+\section{Part 3: FQL (Section 4.4)}
+% =============================================================================
+
+\subsection{Algorithm Overview}
+
+Flow Q-Learning \cite{fql} trains an expressive multimodal policy using conditional
+flow matching. Two policies are maintained:
+\begin{itemize}[noitemsep]
+  \item \textbf{BC actor} $v_\theta(s, a, t)$: a vector-field network trained to match
+        the diffusion path $\tilde{a}_t = (1-t)\epsilon + ta$, where $\epsilon \sim \mathcal{N}(0,I)$.
+  \item \textbf{One-step actor} $\pi_\omega(s, \epsilon)$: a standard feedforward network
+        distilled from the BC actor and trained to maximize Q, avoiding backpropagation
+        through the ODE.
+\end{itemize}
+
+The one-step actor is optimized with:
+\[
+  \mathcal{L}_{\pi_\omega}
+  = \underbrace{-\mathbb{E}[Q(s, \mathrm{clip}(\pi_\omega(s,\epsilon)))]}_{\text{Q-maximization}}
+  + \underbrace{\alpha\,\mathbb{E}\!\bigl[\|\pi_\omega(s,\epsilon) - \pi_\theta(s,\epsilon)\|^2\bigr]}_{\text{distillation from BC actor}},
+\]
+where $\pi_\theta$ denotes the BC flow policy solved via ODE integration.
+Crucially, actions are \emph{clipped} to $[-1,1]$ in the Q-maximization term but
+\emph{not} in the distillation term, allowing out-of-bound corrections.
+
+The Bellman target uses the \textbf{average} of the two Q-ensemble heads and the
+one-step actor for next-state action generation.
+
+\subsection{Results}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{../figures/q3_fql_success_curves.png}
+  \caption{FQL success rate curves for $\alpha \in \{30,100,300,1000\}$ on
+           \texttt{cube-single} (left) and $\alpha \in \{1,3,10,30\}$ on
+           \texttt{antsoccer-arena} (right).}
+  \label{fig:q3_success}
+\end{figure}
+
+\paragraph{Cube-Single.}
+FQL achieves 100\% success with $\alpha = 300$ and 96\% with $\alpha = 100$,
+meeting the 80\% target with a comfortable margin. Performance is high across
+all four alpha values (84--100\%), demonstrating that the flow policy's multimodality
+is not strictly necessary for this relatively structured task.
+
+\paragraph{AntSoccer-Arena.}
+FQL dramatically outperforms SAC+BC and (partial) IQL on this harder environment.
+$\alpha = 10$ achieves \textbf{40\%} success at 1M steps, far exceeding the 30\% target.
+$\alpha = 3$ reaches 24\%, $\alpha = 30$ reaches 8\%, and $\alpha = 1$ collapses to 0\%.
+The multimodal flow policy appears crucial for the complex behavior required by AntSoccer,
+where the dataset likely contains diverse movement strategies.
+
+\subsection{Training Diagnostics}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{../figures/q3_fql_diagnostics.png}
+  \caption{FQL training diagnostics on \texttt{cube-single} with best $\alpha$ (300).
+           \emph{Top-left}: BC actor flow loss decreases as the vector field learns the
+           diffusion path from noise to dataset actions.
+           \emph{Top-middle}: One-step actor distillation (purple) and Q-maximization
+           (red) losses; the Q-max loss dominates early and decreases as the actor
+           learns to exploit the critic.
+           \emph{Top-right}: MSE between one-step actor and BC actor decreases,
+           confirming successful distillation.
+           \emph{Bottom-left/middle}: Q loss and Q values converge.
+           \emph{Bottom-right}: Evaluation success rate.}
+  \label{fig:q3_diag}
+\end{figure}
+
+The interplay between distillation and Q-maximization is visible in the top-middle panel
+of Figure~\ref{fig:q3_diag}. Early in training, the Q-maximization loss is large as the
+critic has not yet converged; distillation keeps the one-step actor anchored near the BC
+policy. As training progresses, Q-maximization loss decreases while the MSE vs. BC actor
+(top-right) also decreases, indicating the one-step policy successfully interpolates
+between behavioral anchoring and Q-guided improvement.
+
+\subsection{Comparison with SAC+BC and IQL}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.95\linewidth]{../figures/comparison_all_algorithms.png}
+  \caption{Best-$\alpha$ success rate curves for all three algorithms on each environment.}
+  \label{fig:comparison}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.6\linewidth]{../figures/comparison_bar_chart.png}
+  \caption{Final success rates at 1M steps for all algorithms.
+           Dotted lines indicate performance targets; hatching marks the incomplete
+           IQL antsoccer run.}
+  \label{fig:bar}
+\end{figure}
+
+Figures~\ref{fig:comparison} and~\ref{fig:bar} reveal the key trend:
+
+\begin{itemize}
+  \item On \textbf{Cube-Single} (easier), all three algorithms achieve high performance
+        ($\geq$84\% for the best $\alpha$), with SAC+BC and FQL reaching 100\%.
+  \item On \textbf{AntSoccer-Arena} (harder), FQL (40\%) dramatically outperforms
+        SAC+BC (12\%) and (incomplete) IQL (16\% at 600K).
+\end{itemize}
+
+The advantage of FQL on the harder task arises from the flow policy's capacity to
+represent multimodal action distributions. When the offline dataset contains diverse
+behaviors (e.g., multiple valid navigation strategies in AntSoccer), a unimodal
+Gaussian policy (SAC+BC, IQL) cannot capture all modes, leading to blurred behavior.
+The flow policy avoids mode averaging, allowing the one-step actor to pick high-quality
+modes when guided by the Q-function.
+
+\newpage
+% =============================================================================
+\section{Hyperparameter Analysis}
+% =============================================================================
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{../figures/alpha_sensitivity.png}
+  \caption{Final success rate vs.\ $\alpha$ (log scale) for all three algorithms.}
+  \label{fig:alpha}
+\end{figure}
+
+Figure~\ref{fig:alpha} summarizes the $\alpha$ sensitivity across all algorithms and environments.
+
+\paragraph{Cube-Single.}
+All three algorithms are robust to $\alpha$ on this task, achieving $\geq$44\% for all tested
+values. SAC+BC peaks at $\alpha = 100$ while degrading at both extremes; IQL is nearly flat
+across two orders of magnitude; FQL peaks at $\alpha = 300$.
+
+\paragraph{AntSoccer-Arena.}
+$\alpha$ sensitivity is more pronounced. SAC+BC and FQL both peak at intermediate values
+($\alpha = 3$ and $\alpha = 10$ respectively) and collapse at extremes. Too small an $\alpha$
+removes the behavioral anchor entirely (distributional shift), while too large an $\alpha$
+reduces the policy to pure behavior cloning with no Q-guided improvement.
+
+% =============================================================================
+\section{Missing Experiments}
+\label{sec:missing}
+% =============================================================================
+
+\textbf{Q2 IQL AntSoccer-Arena} runs are incomplete:
+
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+$\alpha$ & Steps completed & Final success (partial) \\
+\midrule
+1  & 600K & 0\%  \\
+3  & 600K & 8\%  \\
+10 & 600K & 16\% \\
+30 & 600K & 12\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+To complete these experiments:
+\begin{verbatim}
+# In run_q2_iql.sh, uncomment the antsoccer block, then:
+cd hw5 && bash run_q2_iql.sh 2>&1 | tee logs/q2_iql_antsoccer.log
+\end{verbatim}
+
+Based on the partial results (up to 16\% at 600K with $\alpha=10$), IQL is on track
+to meet the $>5\%$ target at 1M steps. The comparison plots will be updated once runs complete.
+
+% =============================================================================
+\bibliographystyle{plain}
+\begin{thebibliography}{9}
+
+\bibitem{td3bc}
+S.~Fujimoto and S.-A.~Gu.
+\newblock A minimalist approach to offline reinforcement learning.
+\newblock \emph{NeurIPS}, 2021.
+
+\bibitem{iql}
+I.~Kostrikov, A.~Nair, and S.~Levine.
+\newblock Offline reinforcement learning with implicit Q-learning.
+\newblock \emph{ICLR}, 2022.
+
+\bibitem{fql}
+S.~Park, Q.~Li, and S.~Levine.
+\newblock Flow Q-learning.
+\newblock \emph{ICML}, 2025.
+
+\bibitem{ogbench}
+S.~Park, K.~Frans, B.~Eysenbach, and S.~Levine.
+\newblock OGBench: Benchmarking offline goal-conditioned RL.
+\newblock \emph{ICLR}, 2025.
+
+\bibitem{sac}
+T.~Haarnoja, A.~Zhou, P.~Abbeel, and S.~Levine.
+\newblock Soft actor-critic: Off-policy maximum entropy deep reinforcement learning with a stochastic actor.
+\newblock \emph{ICML}, 2018.
+
+\end{thebibliography}
+
+\end{document}

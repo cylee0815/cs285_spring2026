@@ -1,0 +1,25 @@
+\contentsline {section}{\numberline {1}Part 1: SAC+BC (Section 2.2)}{2}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Algorithm Overview}{2}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Results}{2}{subsection.1.2}%
+\contentsline {paragraph}{Cube-Single.}{2}{section*.3}%
+\contentsline {paragraph}{AntSoccer-Arena.}{2}{section*.4}%
+\contentsline {subsection}{\numberline {1.3}Training Diagnostics}{3}{subsection.1.3}%
+\contentsline {subsection}{\numberline {1.4}Effect of $\alpha $}{3}{subsection.1.4}%
+\contentsline {section}{\numberline {2}Part 2: IQL (Section 3.2)}{4}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Algorithm Overview}{4}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Results}{4}{subsection.2.2}%
+\contentsline {paragraph}{Cube-Single.}{4}{section*.7}%
+\contentsline {paragraph}{AntSoccer-Arena.}{4}{section*.8}%
+\contentsline {subsection}{\numberline {2.3}Training Diagnostics}{5}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Comparison with SAC+BC}{5}{subsection.2.4}%
+\contentsline {section}{\numberline {3}Part 3: FQL (Section 4.4)}{6}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Algorithm Overview}{6}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Results}{6}{subsection.3.2}%
+\contentsline {paragraph}{Cube-Single.}{6}{section*.11}%
+\contentsline {paragraph}{AntSoccer-Arena.}{7}{section*.12}%
+\contentsline {subsection}{\numberline {3.3}Training Diagnostics}{7}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Comparison with SAC+BC and IQL}{7}{subsection.3.4}%
+\contentsline {section}{\numberline {4}Hyperparameter Analysis}{9}{section.4}%
+\contentsline {paragraph}{Cube-Single.}{9}{section*.17}%
+\contentsline {paragraph}{AntSoccer-Arena.}{9}{section*.18}%
+\contentsline {section}{\numberline {5}Missing Experiments}{9}{section.5}%

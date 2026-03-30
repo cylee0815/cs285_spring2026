@@ -1,0 +1,73 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyperFirstAtBeginDocument{\AtBeginDocument}
+\HyperFirstAtBeginDocument{\ifx\hyper@anchor\@undefined
+\global\let\oldcontentsline\contentsline
+\gdef\contentsline#1#2#3#4{\oldcontentsline{#1}{#2}{#3}}
+\global\let\oldnewlabel\newlabel
+\gdef\newlabel#1#2{\newlabelxx{#1}#2}
+\gdef\newlabelxx#1#2#3#4#5#6{\oldnewlabel{#1}{{#2}{#3}}}
+\AtEndDocument{\ifx\hyper@anchor\@undefined
+\let\contentsline\oldcontentsline
+\let\newlabel\oldnewlabel
+\fi}
+\fi}
+\global\let\hyper@last\relax 
+\gdef\HyperFirstAtBeginDocument#1{#1}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{td3bc}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Part 1: SAC+BC (Section 2.2)}{2}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Algorithm Overview}{2}{subsection.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Results}{2}{subsection.1.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces SAC+BC success rate curves for different values of $\alpha $ on \texttt  {cube-single} (left) and \texttt  {antsoccer-arena} (right). Dotted horizontal lines mark the performance targets.\relax }}{2}{figure.caption.2}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:q1_success}{{1}{2}{SAC+BC success rate curves for different values of $\alpha $ on \texttt {cube-single} (left) and \texttt {antsoccer-arena} (right). Dotted horizontal lines mark the performance targets.\relax }{figure.caption.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Cube-Single.}{2}{section*.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{AntSoccer-Arena.}{2}{section*.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces SAC+BC training diagnostics on \texttt  {cube-single} with $\alpha =100$ (best performing run). \emph  {Top-left}: Q loss converges steadily. \emph  {Top-right}: Q values settle in a negative range bounded well away from zero, consistent with short-horizon task with $r \in \{0,1\}$ (expected $Q_\text  {min} \approx -100$, $Q_\text  {max} \approx 0$). \emph  {Bottom-left}: actor Q-maximization and BC losses both decrease. \emph  {Bottom-right}: $\beta $ converges below 0.5, indicating the policy learns a moderately deterministic behavior.\relax }}{3}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:q1_diag}{{2}{3}{SAC+BC training diagnostics on \texttt {cube-single} with $\alpha =100$ (best performing run). \emph {Top-left}: Q loss converges steadily. \emph {Top-right}: Q values settle in a negative range bounded well away from zero, consistent with short-horizon task with $r \in \{0,1\}$ (expected $Q_\text {min} \approx -100$, $Q_\text {max} \approx 0$). \emph {Bottom-left}: actor Q-maximization and BC losses both decrease. \emph {Bottom-right}: $\beta $ converges below 0.5, indicating the policy learns a moderately deterministic behavior.\relax }{figure.caption.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.3}Training Diagnostics}{3}{subsection.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.4}Effect of $\alpha $}{3}{subsection.1.4}\protected@file@percent }
+\citation{iql}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Part 2: IQL (Section 3.2)}{4}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Algorithm Overview}{4}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Results}{4}{subsection.2.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces IQL success rate curves for $\alpha \in \{30,100,300,1000\}$ on \texttt  {cube-single} (left) and $\alpha \in \{1,3,10,30\}$ on \texttt  {antsoccer-arena} (right, dashed $=$ incomplete at 600K/1M steps). Note: additional runs with $\alpha \in \{1,3,10\}$ were also conducted for \texttt  {cube-single} and are included in the $\alpha $-sensitivity analysis.\relax }}{4}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:q2_success}{{3}{4}{IQL success rate curves for $\alpha \in \{30,100,300,1000\}$ on \texttt {cube-single} (left) and $\alpha \in \{1,3,10,30\}$ on \texttt {antsoccer-arena} (right, dashed $=$ incomplete at 600K/1M steps). Note: additional runs with $\alpha \in \{1,3,10\}$ were also conducted for \texttt {cube-single} and are included in the $\alpha $-sensitivity analysis.\relax }{figure.caption.6}{}}
+\@writefile{toc}{\contentsline {paragraph}{Cube-Single.}{4}{section*.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{AntSoccer-Arena.}{4}{section*.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Training Diagnostics}{5}{subsection.2.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces IQL training diagnostics on \texttt  {cube-single} with best $\alpha $ (30). \emph  {Top-left}: V loss (expectile regression) decreases steadily. \emph  {Top-right}: V and Q values---V stays below Q as expected by the expectile formulation (V approximates an upper quantile of the Q-distribution). \emph  {Bottom-left}: Q loss converges. \emph  {Bottom-right}: Advantage-weighted actor loss decreases as the policy improves toward high-advantage actions.\relax }}{5}{figure.caption.9}\protected@file@percent }
+\newlabel{fig:q2_diag}{{4}{5}{IQL training diagnostics on \texttt {cube-single} with best $\alpha $ (30). \emph {Top-left}: V loss (expectile regression) decreases steadily. \emph {Top-right}: V and Q values---V stays below Q as expected by the expectile formulation (V approximates an upper quantile of the Q-distribution). \emph {Bottom-left}: Q loss converges. \emph {Bottom-right}: Advantage-weighted actor loss decreases as the policy improves toward high-advantage actions.\relax }{figure.caption.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Comparison with SAC+BC}{5}{subsection.2.4}\protected@file@percent }
+\citation{fql}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Part 3: FQL (Section 4.4)}{6}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Algorithm Overview}{6}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Results}{6}{subsection.3.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces FQL success rate curves for $\alpha \in \{30,100,300,1000\}$ on \texttt  {cube-single} (left) and $\alpha \in \{1,3,10,30\}$ on \texttt  {antsoccer-arena} (right).\relax }}{6}{figure.caption.10}\protected@file@percent }
+\newlabel{fig:q3_success}{{5}{6}{FQL success rate curves for $\alpha \in \{30,100,300,1000\}$ on \texttt {cube-single} (left) and $\alpha \in \{1,3,10,30\}$ on \texttt {antsoccer-arena} (right).\relax }{figure.caption.10}{}}
+\@writefile{toc}{\contentsline {paragraph}{Cube-Single.}{6}{section*.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{AntSoccer-Arena.}{7}{section*.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Training Diagnostics}{7}{subsection.3.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces FQL training diagnostics on \texttt  {cube-single} with best $\alpha $ (300). \emph  {Top-left}: BC actor flow loss decreases as the vector field learns the diffusion path from noise to dataset actions. \emph  {Top-middle}: One-step actor distillation (purple) and Q-maximization (red) losses; the Q-max loss dominates early and decreases as the actor learns to exploit the critic. \emph  {Top-right}: MSE between one-step actor and BC actor decreases, confirming successful distillation. \emph  {Bottom-left/middle}: Q loss and Q values converge. \emph  {Bottom-right}: Evaluation success rate.\relax }}{7}{figure.caption.13}\protected@file@percent }
+\newlabel{fig:q3_diag}{{6}{7}{FQL training diagnostics on \texttt {cube-single} with best $\alpha $ (300). \emph {Top-left}: BC actor flow loss decreases as the vector field learns the diffusion path from noise to dataset actions. \emph {Top-middle}: One-step actor distillation (purple) and Q-maximization (red) losses; the Q-max loss dominates early and decreases as the actor learns to exploit the critic. \emph {Top-right}: MSE between one-step actor and BC actor decreases, confirming successful distillation. \emph {Bottom-left/middle}: Q loss and Q values converge. \emph {Bottom-right}: Evaluation success rate.\relax }{figure.caption.13}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Comparison with SAC+BC and IQL}{7}{subsection.3.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Best-$\alpha $ success rate curves for all three algorithms on each environment.\relax }}{8}{figure.caption.14}\protected@file@percent }
+\newlabel{fig:comparison}{{7}{8}{Best-$\alpha $ success rate curves for all three algorithms on each environment.\relax }{figure.caption.14}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Final success rates at 1M steps for all algorithms. Dotted lines indicate performance targets; hatching marks the incomplete IQL antsoccer run.\relax }}{8}{figure.caption.15}\protected@file@percent }
+\newlabel{fig:bar}{{8}{8}{Final success rates at 1M steps for all algorithms. Dotted lines indicate performance targets; hatching marks the incomplete IQL antsoccer run.\relax }{figure.caption.15}{}}
+\bibstyle{plain}
+\bibcite{td3bc}{1}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Hyperparameter Analysis}{9}{section.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Final success rate vs.\ $\alpha $ (log scale) for all three algorithms.\relax }}{9}{figure.caption.16}\protected@file@percent }
+\newlabel{fig:alpha}{{9}{9}{Final success rate vs.\ $\alpha $ (log scale) for all three algorithms.\relax }{figure.caption.16}{}}
+\@writefile{toc}{\contentsline {paragraph}{Cube-Single.}{9}{section*.17}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{AntSoccer-Arena.}{9}{section*.18}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Missing Experiments}{9}{section.5}\protected@file@percent }
+\newlabel{sec:missing}{{5}{9}{Missing Experiments}{section.5}{}}
+\bibcite{iql}{2}
+\bibcite{fql}{3}
+\bibcite{ogbench}{4}
+\bibcite{sac}{5}
+\gdef \@abspage@last{10}
