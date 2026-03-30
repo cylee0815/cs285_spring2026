@@ -8,6 +8,7 @@
 #
 # Usage (SLURM batch — uncomment #SBATCH lines, then: sbatch run_q2_iql.sh):
 #SBATCH --job-name=hw5_q2_iql
+#SBATCH --partition=GPU-shared
 #SBATCH --gres=gpu:1
 #SBATCH --time=08:00:00
 #SBATCH --cpus-per-task=8
