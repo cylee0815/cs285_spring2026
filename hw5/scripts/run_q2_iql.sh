@@ -12,7 +12,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --time=08:00:00
 #SBATCH --cpus-per-task=5
-#SBATCH --mem=32G
+#SBATCH --mem=22G
 #SBATCH --output=logs/slurm_q2_iql_%j.log
 #
 # Expected runtime (4 parallel jobs/task, 1M steps unless noted):
