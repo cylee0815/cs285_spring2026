@@ -68,7 +68,7 @@ RUN_GROUP=q2
 # Alpha sweep: {1, 3, 10, 30}.
 # -----------------------------------------------------------------------------
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] === Q2 IQL: antsoccer-arena alpha sweep {1, 3, 10, 30} ==="
-uv run src/scripts/run.py --njobs=4 \
+uv run ../src/scripts/run.py --njobs=4 \
   "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=antsoccer-arena-navigate-singletask-task1-v0 --seed=${SEED} --alpha=1" \
   "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=antsoccer-arena-navigate-singletask-task1-v0 --seed=${SEED} --alpha=3" \
   "JOB --run_group=${RUN_GROUP} --base_config=iql --env_name=antsoccer-arena-navigate-singletask-task1-v0 --seed=${SEED} --alpha=10" \
