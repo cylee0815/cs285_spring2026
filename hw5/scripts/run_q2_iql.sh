@@ -11,7 +11,7 @@
 #SBATCH --partition=GPU-shared
 #SBATCH --gres=gpu:1
 #SBATCH --time=08:00:00
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=5
 #SBATCH --mem=32G
 #SBATCH --output=logs/slurm_q2_iql_%j.log
 #
