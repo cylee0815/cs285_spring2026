@@ -133,32 +133,29 @@ where $\alpha$ controls the temperature of the advantage weighting.
 \begin{figure}[h]
   \centering
   \includegraphics[width=\linewidth]{../figures/q2_iql_success_curves.png}
-  \caption{IQL success rate curves for $\alpha \in \{30,100,300,1000\}$ on
+  \caption{IQL success rate curves for $\alpha \in \{1,3,10,30,100,300,1000\}$ on
            \texttt{cube-single} (left) and $\alpha \in \{1,3,10,30\}$ on
-           \texttt{antsoccer-arena} (right, dashed $=$ incomplete at 600K/1M steps).
-           Note: additional runs with $\alpha \in \{1,3,10\}$ were also conducted for
-           \texttt{cube-single} and are included in the $\alpha$-sensitivity analysis.}
+           \texttt{antsoccer-arena} (right).}
   \label{fig:q2_success}
 \end{figure}
 
 \paragraph{Cube-Single.}
 IQL performs strongly across all tested $\alpha$ values.
-The best run uses $\alpha = 30$, achieving $\mathbf{100\%}$ success at 1M steps,
-with $\alpha = 300$ reaching 96\% and $\alpha \in \{1, 100, 1000\}$ reaching 84--92\%.
-IQL is notably less sensitive to $\alpha$ than SAC+BC, with all values exceeding the 60\% target.
+The best run uses $\alpha = 300$, achieving $\mathbf{96\%}$ success at 1M steps,
+with $\alpha = 1$ reaching 92\% and $\alpha \in \{3, 100\}$ reaching 88\%.
+All values exceed the 60\% target, confirming IQL's robustness to $\alpha$.
 
 \paragraph{AntSoccer-Arena.}
-\textit{These runs are incomplete} (stopped at 600K steps due to compute interruption).
-At 600K steps, $\alpha = 10$ leads at 16\% success.
-The target is $>5\%$; the current partial results suggest IQL can meet this target but
-final confirmation requires completing the 1M-step runs. See Section~\ref{sec:missing} for details.
+$\alpha = 10$ achieves the best final performance of $\mathbf{24\%}$ at 1M steps,
+well above the $>5\%$ target. $\alpha \in \{1, 3, 30\}$ also achieve non-trivial
+success (8--20\%), demonstrating IQL can solve this harder task across a range of $\alpha$.
 
 \subsection{Training Diagnostics}
 
 \begin{figure}[h]
   \centering
   \includegraphics[width=\linewidth]{../figures/q2_iql_diagnostics.png}
-  \caption{IQL training diagnostics on \texttt{cube-single} with best $\alpha$ (30).
+  \caption{IQL training diagnostics on \texttt{cube-single} with best $\alpha$ (300).
            \emph{Top-left}: V loss (expectile regression) decreases steadily.
            \emph{Top-right}: V and Q values---V stays below Q as expected by the
            expectile formulation (V approximates an upper quantile of the Q-distribution).
@@ -175,11 +172,11 @@ This relationship is the key mechanism that avoids out-of-distribution action ev
 
 \subsection{Comparison with SAC+BC}
 
-On \texttt{cube-single}, IQL achieves comparable peak performance (100\%) to SAC+BC
-but with less sensitivity to $\alpha$---any $\alpha \in \{1,\ldots,1000\}$ reliably
-exceeds 80\%. This robustness makes IQL more practical when compute for hyperparameter
-search is limited. The IQL advantage stems from bootstrapping through $V(s')$, which
-avoids evaluating the actor on next states, sidestepping distributional shift.
+On \texttt{cube-single}, IQL reaches 96\% (vs.\ SAC+BC's 100\%) with far less
+sensitivity to $\alpha$---all tested values exceed 84\%. This robustness makes IQL
+more practical when compute for hyperparameter search is limited. The IQL advantage
+stems from bootstrapping through $V(s')$, which avoids evaluating the actor on next
+states, sidestepping distributional shift.
 
 \newpage
 % =============================================================================
@@ -273,8 +270,7 @@ between behavioral anchoring and Q-guided improvement.
   \centering
   \includegraphics[width=0.6\linewidth]{../figures/comparison_bar_chart.png}
   \caption{Final success rates at 1M steps for all algorithms.
-           Dotted lines indicate performance targets; hatching marks the incomplete
-           IQL antsoccer run.}
+           Dotted lines indicate performance targets.}
   \label{fig:bar}
 \end{figure}
 
@@ -282,9 +278,10 @@ Figures~\ref{fig:comparison} and~\ref{fig:bar} reveal the key trend:
 
 \begin{itemize}
   \item On \textbf{Cube-Single} (easier), all three algorithms achieve high performance
-        ($\geq$84\% for the best $\alpha$), with SAC+BC and FQL reaching 100\%.
+        ($\geq$84\% for the best $\alpha$), with SAC+BC and FQL reaching 100\%
+        and IQL reaching 96\%.
   \item On \textbf{AntSoccer-Arena} (harder), FQL (40\%) dramatically outperforms
-        SAC+BC (12\%) and (incomplete) IQL (16\% at 600K).
+        SAC+BC (12\%) and IQL (24\%).
 \end{itemize}
 
 The advantage of FQL on the harder task arises from the flow policy's capacity to
@@ -310,8 +307,8 @@ Figure~\ref{fig:alpha} summarizes the $\alpha$ sensitivity across all algorithms
 
 \paragraph{Cube-Single.}
 All three algorithms are robust to $\alpha$ on this task, achieving $\geq$44\% for all tested
-values. SAC+BC peaks at $\alpha = 100$ while degrading at both extremes; IQL is nearly flat
-across two orders of magnitude; FQL peaks at $\alpha = 300$.
+values. SAC+BC peaks at $\alpha = 100$ while degrading at both extremes; IQL ranges from
+84--96\% across all seven tested values, peaking at $\alpha = 300$; FQL also peaks at $\alpha = 300$.
 
 \paragraph{AntSoccer-Arena.}
 $\alpha$ sensitivity is more pronounced. SAC+BC and FQL both peak at intermediate values
@@ -320,33 +317,26 @@ removes the behavioral anchor entirely (distributional shift), while too large a
 reduces the policy to pure behavior cloning with no Q-guided improvement.
 
 % =============================================================================
-\section{Missing Experiments}
+\section{All Experiments Complete}
 \label{sec:missing}
 % =============================================================================
 
-\textbf{Q2 IQL AntSoccer-Arena} runs are incomplete:
+All planned experiments have been completed. The full Q2 IQL AntSoccer-Arena results at 1M steps are:
 
 \begin{center}
 \begin{tabular}{lrr}
 \toprule
-$\alpha$ & Steps completed & Final success (partial) \\
+$\alpha$ & Steps completed & Final success \\
 \midrule
-1  & 600K & 0\%  \\
-3  & 600K & 8\%  \\
-10 & 600K & 16\% \\
-30 & 600K & 12\% \\
+1  & 1M & 8\%  \\
+3  & 1M & 20\% \\
+10 & 1M & 24\% \\
+30 & 1M & 12\% \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-To complete these experiments:
-\begin{verbatim}
-# In run_q2_iql.sh, uncomment the antsoccer block, then:
-cd hw5 && bash run_q2_iql.sh 2>&1 | tee logs/q2_iql_antsoccer.log
-\end{verbatim}
-
-Based on the partial results (up to 16\% at 600K with $\alpha=10$), IQL is on track
-to meet the $>5\%$ target at 1M steps. The comparison plots will be updated once runs complete.
+All four runs exceed the $>5\%$ target, with $\alpha = 10$ achieving the best performance of 24\%.
 
 % =============================================================================
 \bibliographystyle{plain}
