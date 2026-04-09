@@ -70,6 +70,19 @@ class DirichletActor(nn.Module):
         return w, log_prob, entropy, dist.concentration
 
 
+class MLPPortfolioActor(nn.Module):
+    """
+    Deterministic MLP actor with softmax output for portfolio allocation.
+    Used by TD3+BC and other deterministic offline algorithms.
+    """
+    def __init__(self, obs_dim: int, action_dim: int, hidden_dim: int = 256, n_layers: int = 2):
+        super().__init__()
+        self.net = mlp(obs_dim, hidden_dim, action_dim, n_layers)
+
+    def forward(self, obs: torch.Tensor) -> torch.Tensor:
+        return torch.softmax(self.net(obs), dim=-1)
+
+
 class DoubleCritic(nn.Module):
     """
     Two independent Q-networks for double Q-learning.

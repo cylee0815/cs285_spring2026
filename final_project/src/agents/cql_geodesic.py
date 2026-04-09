@@ -30,6 +30,9 @@ import gymnasium as gym
 
 from src.networks.dirichlet_policy import DirichletActor, DoubleCritic
 from src.networks.regime_encoder import RegimeEncoder, RegimeConditionedActor, RegimeConditionedCritic
+from src.networks.bayesian_regime_encoder import (
+    BayesianRegimeEncoder, BayesianRegimeConditionedActor, BayesianRegimeConditionedCritic,
+)
 from src.agents.replay_buffer import ReplayBuffer
 
 
@@ -74,26 +77,41 @@ class GeodesicCQL:
         self.config = config
         self.device = device
         self.action_dim = action_dim
-
-        # Regime encoder
-        self.regime_encoder = RegimeEncoder(
-            obs_dim=obs_dim,
-            regime_dim=config.regime_dim,
-            window_len=config.regime_window,
-        ).to(device)
+        self.bayesian = getattr(config, 'bayesian', False)
+        self.n_step = getattr(config, 'n_step', 1)
 
         regime_dim = config.regime_dim
 
-        # Actor and double critic (regime-conditioned)
-        self.actor = RegimeConditionedActor(
-            obs_dim=obs_dim, action_dim=action_dim,
-            regime_dim=regime_dim, hidden_dim=config.hidden_dim,
-        ).to(device)
+        # Regime encoder — Bayesian or deterministic
+        if self.bayesian:
+            self.regime_encoder = BayesianRegimeEncoder(
+                obs_dim=obs_dim,
+                regime_dim=regime_dim,
+                window_len=config.regime_window,
+            ).to(device)
+            self.actor = BayesianRegimeConditionedActor(
+                obs_dim=obs_dim, action_dim=action_dim,
+                regime_dim=regime_dim, hidden_dim=config.hidden_dim,
+            ).to(device)
+            self.critic = BayesianRegimeConditionedCritic(
+                obs_dim=obs_dim, action_dim=action_dim,
+                regime_dim=regime_dim, hidden_dim=config.hidden_dim,
+            ).to(device)
+        else:
+            self.regime_encoder = RegimeEncoder(
+                obs_dim=obs_dim,
+                regime_dim=regime_dim,
+                window_len=config.regime_window,
+            ).to(device)
+            self.actor = RegimeConditionedActor(
+                obs_dim=obs_dim, action_dim=action_dim,
+                regime_dim=regime_dim, hidden_dim=config.hidden_dim,
+            ).to(device)
+            self.critic = RegimeConditionedCritic(
+                obs_dim=obs_dim, action_dim=action_dim,
+                regime_dim=regime_dim, hidden_dim=config.hidden_dim,
+            ).to(device)
 
-        self.critic = RegimeConditionedCritic(
-            obs_dim=obs_dim, action_dim=action_dim,
-            regime_dim=regime_dim, hidden_dim=config.hidden_dim,
-        ).to(device)
         self.target_critic = copy.deepcopy(self.critic)
         for p in self.target_critic.parameters():
             p.requires_grad = False
@@ -104,6 +122,10 @@ class GeodesicCQL:
 
         # Offline buffer
         self.offline_buffer = offline_buffer
+
+        # Bayesian hyperparams
+        self.kl_beta = getattr(config, 'kl_beta', 0.1)
+        self.var_scale = getattr(config, 'var_scale', 1.0)
 
         # Optimizers
         self.actor_opt = optim.Adam(
@@ -116,6 +138,26 @@ class GeodesicCQL:
     @property
     def temperature(self):
         return self.log_temperature.exp()
+
+    def _encode_regime(self, obs_seq: Optional[torch.Tensor], batch_size: int):
+        """
+        Encode regime context, handling both Bayesian and deterministic encoders.
+
+        Returns:
+            regime: (batch, regime_dim)
+            regime_std: (batch, regime_dim) or None if deterministic
+            kl_loss: scalar or 0.0 if deterministic
+        """
+        if obs_seq is None:
+            regime = torch.zeros(batch_size, self.config.regime_dim, device=self.device)
+            return regime, None, 0.0
+
+        if self.bayesian:
+            regime, regime_std, kl_loss, _ = self.regime_encoder(obs_seq)
+            return regime, regime_std, kl_loss
+        else:
+            regime, _ = self.regime_encoder(obs_seq)
+            return regime, None, 0.0
 
     def update_critic_geodesic_cql(self, batch: Dict[str, torch.Tensor]) -> Dict[str, float]:
         """
@@ -135,20 +177,18 @@ class GeodesicCQL:
         obs_seq = batch.get('obs_seq')
         next_obs_seq = batch.get('next_obs_seq')
 
-        # Regime context
-        if obs_seq is not None:
-            regime, _ = self.regime_encoder(obs_seq)
-            next_regime, _ = self.regime_encoder(next_obs_seq)
-        else:
-            bsz = obs.shape[0]
-            regime = torch.zeros(bsz, self.config.regime_dim, device=self.device)
-            next_regime = torch.zeros(bsz, self.config.regime_dim, device=self.device)
+        bsz = obs.shape[0]
 
-        # --- Bellman target ---
+        # Regime context (Bayesian or deterministic)
+        regime, regime_std, kl_loss = self._encode_regime(obs_seq, bsz)
+        next_regime, _, _ = self._encode_regime(next_obs_seq, bsz)
+
+        # --- Bellman target (n-step aware) ---
+        gamma_n = self.config.gamma ** self.n_step
         with torch.no_grad():
             next_w, next_log_prob, _, _ = self.actor(next_obs, next_regime)
             target_q = self.target_critic.q_min(next_obs, next_w, next_regime)
-            target_q = rewards + (1.0 - dones) * self.config.gamma * (
+            target_q = rewards + (1.0 - dones) * gamma_n * (
                 target_q - self.temperature.detach() * next_log_prob
             )
 
@@ -177,29 +217,43 @@ class GeodesicCQL:
         q_gap = (q_policy_min - q_behavioral).clamp(min=0.0)
         cql_penalty = (d_fr * q_gap).mean()
 
-        total_loss = bellman_loss + self.config.cql_alpha * cql_penalty
+        # Effective CQL weight: optionally scaled by regime uncertainty
+        cql_alpha = self.config.cql_alpha
+        if self.bayesian and regime_std is not None:
+            # beta_t = beta_0 * sigmoid(gamma * Var[h_t])
+            # High uncertainty -> sigmoid closer to 1 -> higher penalty (more conservative)
+            regime_var = regime_std.pow(2).sum(dim=-1).mean()
+            cql_alpha = cql_alpha * torch.sigmoid(self.var_scale * regime_var).item()
+
+        total_loss = bellman_loss + cql_alpha * cql_penalty
+
+        # Add KL regularization for Bayesian encoder
+        if self.bayesian and kl_loss > 0:
+            total_loss = total_loss + self.kl_beta * kl_loss
 
         self.critic_opt.zero_grad()
         total_loss.backward()
         nn.utils.clip_grad_norm_(self.critic.parameters(), self.config.max_grad_norm)
         self.critic_opt.step()
 
-        return {
+        metrics = {
             'critic/bellman_loss': bellman_loss.item(),
             'critic/cql_penalty': cql_penalty.item(),
+            'critic/cql_alpha_effective': cql_alpha if isinstance(cql_alpha, float) else cql_alpha,
             'critic/total_loss': total_loss.item(),
             'critic/fisher_rao_dist': d_fr.mean().item(),
             'critic/q1_mean': q1.mean().item(),
         }
+        if self.bayesian and regime_std is not None:
+            metrics['critic/regime_var'] = regime_var.item()
+            metrics['critic/kl_loss'] = kl_loss.item() if isinstance(kl_loss, torch.Tensor) else kl_loss
+        return metrics
 
     def update_actor(self, batch: Dict[str, torch.Tensor]) -> Dict[str, float]:
         obs = batch['obs']
         obs_seq = batch.get('obs_seq')
 
-        if obs_seq is not None:
-            regime, _ = self.regime_encoder(obs_seq)
-        else:
-            regime = torch.zeros(obs.shape[0], self.config.regime_dim, device=self.device)
+        regime, regime_std, kl_loss = self._encode_regime(obs_seq, obs.shape[0])
 
         for p in self.critic.parameters():
             p.requires_grad = False
@@ -209,8 +263,13 @@ class GeodesicCQL:
 
         actor_loss = (self.temperature.detach() * log_prob - q_val).mean()
 
+        # Add KL regularization for Bayesian encoder
+        total_actor_loss = actor_loss
+        if self.bayesian and kl_loss > 0:
+            total_actor_loss = total_actor_loss + self.kl_beta * kl_loss
+
         self.actor_opt.zero_grad()
-        actor_loss.backward()
+        total_actor_loss.backward()
         nn.utils.clip_grad_norm_(
             list(self.actor.parameters()) + list(self.regime_encoder.parameters()),
             self.config.max_grad_norm
@@ -232,10 +291,7 @@ class GeodesicCQL:
         obs_seq = batch.get('obs_seq')
 
         with torch.no_grad():
-            if obs_seq is not None:
-                regime, _ = self.regime_encoder(obs_seq)
-            else:
-                regime = torch.zeros(obs.shape[0], self.config.regime_dim, device=self.device)
+            regime, _, _ = self._encode_regime(obs_seq, obs.shape[0])
             _, log_prob, _, _ = self.actor(obs, regime)
 
         temp_loss = -(self.log_temperature * (log_prob + self.target_entropy).detach()).mean()

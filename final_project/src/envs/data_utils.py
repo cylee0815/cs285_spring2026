@@ -136,6 +136,7 @@ def make_train_test_envs_finrl(
     time_window: int = 20,
     transaction_cost: float = 0.001,
     accept_portfolio_weights: bool = False,
+    reward_type: str = "log_return",
     **kwargs,
 ):
     """
@@ -151,6 +152,7 @@ def make_train_test_envs_finrl(
         time_window=time_window,
         commission_fee_pct=transaction_cost,
         accept_portfolio_weights=accept_portfolio_weights,
+        reward_type=reward_type,
         **kwargs,
     )
 

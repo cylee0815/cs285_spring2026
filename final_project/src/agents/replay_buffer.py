@@ -4,10 +4,14 @@ Replay buffer supporting offline and online RL.
 Key features:
   - load_from_env(): generate offline trajectories from a behavioral policy
   - sample(): random transition sampling (for standard TD updates)
-  - sample_sequences(): sequential sampling with context window (for regime encoder)
+  - sample_with_context(): sequential sampling with context window (for regime encoder)
+  - compute_rtg(): precompute return-to-go for Decision Transformer
+  - sample_trajectory_segment(): sample contiguous trajectory windows for sequence models
+  - NStepReplayBuffer: n-step return buffer for multi-step offline RL
 """
 import torch
 import numpy as np
+from collections import deque
 from typing import Optional, Dict
 import gymnasium as gym
 
@@ -144,3 +148,135 @@ class ReplayBuffer:
 
         if verbose:
             print(f"Collected {self._size} transitions in replay buffer.")
+
+    def compute_rtg(self, gamma: float = 1.0):
+        """
+        Precompute return-to-go for each transition (for Decision Transformer).
+        Must be called after freeze(). Stores self.rtg array of shape (capacity,).
+        """
+        self.rtg = np.zeros(self._size, dtype=np.float32)
+        # Process each episode backwards
+        i = self._size - 1
+        running_rtg = 0.0
+        while i >= 0:
+            if i == self._size - 1 or self.episode_starts[i + 1]:
+                running_rtg = 0.0
+            running_rtg = self.rewards[i] + gamma * running_rtg
+            self.rtg[i] = running_rtg
+            i -= 1
+
+    def sample_trajectory_segment(
+        self, batch_size: int, context_len: int
+    ) -> Dict[str, torch.Tensor]:
+        """
+        Sample contiguous trajectory windows for sequence models (DT, TT).
+        Returns segments that do not cross episode boundaries.
+        Requires compute_rtg() to have been called first.
+        """
+        if not hasattr(self, 'rtg'):
+            self.compute_rtg()
+
+        # Find valid episode start/end indices
+        episode_boundaries = []
+        ep_start = 0
+        for i in range(1, self._size):
+            if self.episode_starts[i]:
+                episode_boundaries.append((ep_start, i))
+                ep_start = i
+        episode_boundaries.append((ep_start, self._size))
+
+        # Filter episodes long enough for context_len
+        valid_episodes = [(s, e) for s, e in episode_boundaries if e - s >= context_len]
+        if not valid_episodes:
+            # Fallback: use whatever we have, pad with zeros
+            valid_episodes = episode_boundaries
+
+        obs_seqs = np.zeros((batch_size, context_len, self.obs_dim), dtype=np.float32)
+        action_seqs = np.zeros((batch_size, context_len, self.action_dim), dtype=np.float32)
+        reward_seqs = np.zeros((batch_size, context_len), dtype=np.float32)
+        rtg_seqs = np.zeros((batch_size, context_len), dtype=np.float32)
+        timestep_seqs = np.zeros((batch_size, context_len), dtype=np.int64)
+
+        for b in range(batch_size):
+            ep_idx = np.random.randint(len(valid_episodes))
+            ep_start, ep_end = valid_episodes[ep_idx]
+            ep_len = ep_end - ep_start
+            max_start = max(0, ep_len - context_len)
+            seg_start = ep_start + np.random.randint(0, max_start + 1)
+            seg_end = min(seg_start + context_len, ep_end)
+            seg_len = seg_end - seg_start
+
+            obs_seqs[b, :seg_len] = self.obs[seg_start:seg_end]
+            action_seqs[b, :seg_len] = self.actions[seg_start:seg_end]
+            reward_seqs[b, :seg_len] = self.rewards[seg_start:seg_end]
+            rtg_seqs[b, :seg_len] = self.rtg[seg_start:seg_end]
+            timestep_seqs[b, :seg_len] = np.arange(seg_start - ep_start,
+                                                     seg_start - ep_start + seg_len)
+
+        return {
+            'obs_seq': torch.tensor(obs_seqs, device=self.device),
+            'action_seq': torch.tensor(action_seqs, device=self.device),
+            'reward_seq': torch.tensor(reward_seqs, device=self.device),
+            'rtg_seq': torch.tensor(rtg_seqs, device=self.device),
+            'timestep_seq': torch.tensor(timestep_seqs, device=self.device),
+        }
+
+
+class NStepReplayBuffer(ReplayBuffer):
+    """
+    Replay buffer that stores n-step returns for multi-step offline RL.
+    Accumulates n transitions and computes the discounted return before storing.
+    """
+
+    def __init__(
+        self,
+        capacity: int,
+        obs_dim: int,
+        action_dim: int,
+        device: torch.device,
+        seq_len: int = 20,
+        n_step: int = 3,
+        gamma: float = 0.99,
+    ):
+        super().__init__(capacity, obs_dim, action_dim, device, seq_len)
+        self.n_step = n_step
+        self.gamma = gamma
+        self._n_step_buffer: deque = deque(maxlen=n_step)
+
+    def add(self, obs, action, reward, next_obs, done, episode_start=False):
+        if self._frozen:
+            return
+
+        self._n_step_buffer.append((obs, action, reward, next_obs, done, episode_start))
+
+        # If episode ends, flush all remaining transitions
+        if done:
+            while self._n_step_buffer:
+                self._store_n_step_transition()
+            return
+
+        # Store when buffer is full
+        if len(self._n_step_buffer) == self.n_step:
+            self._store_n_step_transition()
+
+    def _store_n_step_transition(self):
+        """Compute n-step return and store the compressed transition."""
+        if not self._n_step_buffer:
+            return
+
+        obs_0, action_0, _, _, _, ep_start_0 = self._n_step_buffer[0]
+
+        # Compute n-step discounted return
+        n_step_return = 0.0
+        last_next_obs = self._n_step_buffer[0][3]
+        last_done = self._n_step_buffer[0][4]
+
+        for i, (_, _, r, next_obs, d, _) in enumerate(self._n_step_buffer):
+            n_step_return += (self.gamma ** i) * r
+            last_next_obs = next_obs
+            last_done = d
+            if d:
+                break
+
+        super().add(obs_0, action_0, n_step_return, last_next_obs, last_done, ep_start_0)
+        self._n_step_buffer.popleft()

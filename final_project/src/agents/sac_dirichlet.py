@@ -17,6 +17,9 @@ import gymnasium as gym
 
 from src.networks.dirichlet_policy import DirichletActor, DoubleCritic
 from src.networks.regime_encoder import RegimeEncoder, RegimeConditionedActor, RegimeConditionedCritic
+from src.networks.bayesian_regime_encoder import (
+    BayesianRegimeEncoder, BayesianRegimeConditionedActor, BayesianRegimeConditionedCritic,
+)
 from src.agents.replay_buffer import ReplayBuffer
 
 
@@ -37,32 +40,45 @@ class SACDirichlet:
         self.env = env
         self.config = config
         self.device = device
+        self.bayesian = getattr(config, 'bayesian', False)
 
         obs_dim = env.observation_space.shape[0]
         action_dim = env.action_space.shape[0]  # = n_assets
         self.obs_dim = obs_dim
         self.action_dim = action_dim
 
-        # Regime encoder
-        self.regime_encoder = RegimeEncoder(
-            obs_dim=obs_dim,
-            regime_dim=config.regime_dim,
-            window_len=config.regime_window,
-        ).to(device)
-
         regime_dim = config.regime_dim
 
-        # Actor (regime-conditioned Dirichlet)
-        self.actor = RegimeConditionedActor(
-            obs_dim=obs_dim, action_dim=action_dim,
-            regime_dim=regime_dim, hidden_dim=config.hidden_dim,
-        ).to(device)
+        # Regime encoder — Bayesian or deterministic
+        if self.bayesian:
+            self.regime_encoder = BayesianRegimeEncoder(
+                obs_dim=obs_dim,
+                regime_dim=regime_dim,
+                window_len=config.regime_window,
+            ).to(device)
+            self.actor = BayesianRegimeConditionedActor(
+                obs_dim=obs_dim, action_dim=action_dim,
+                regime_dim=regime_dim, hidden_dim=config.hidden_dim,
+            ).to(device)
+            self.critic = BayesianRegimeConditionedCritic(
+                obs_dim=obs_dim, action_dim=action_dim,
+                regime_dim=regime_dim, hidden_dim=config.hidden_dim,
+            ).to(device)
+        else:
+            self.regime_encoder = RegimeEncoder(
+                obs_dim=obs_dim,
+                regime_dim=regime_dim,
+                window_len=config.regime_window,
+            ).to(device)
+            self.actor = RegimeConditionedActor(
+                obs_dim=obs_dim, action_dim=action_dim,
+                regime_dim=regime_dim, hidden_dim=config.hidden_dim,
+            ).to(device)
+            self.critic = RegimeConditionedCritic(
+                obs_dim=obs_dim, action_dim=action_dim,
+                regime_dim=regime_dim, hidden_dim=config.hidden_dim,
+            ).to(device)
 
-        # Double critic (regime-conditioned)
-        self.critic = RegimeConditionedCritic(
-            obs_dim=obs_dim, action_dim=action_dim,
-            regime_dim=regime_dim, hidden_dim=config.hidden_dim,
-        ).to(device)
         self.target_critic = copy.deepcopy(self.critic)
         for p in self.target_critic.parameters():
             p.requires_grad = False
@@ -71,6 +87,9 @@ class SACDirichlet:
         # H_target = log(n_assets): maximum entropy of uniform Dir on simplex
         self.target_entropy = np.log(action_dim)
         self.log_temperature = nn.Parameter(torch.zeros(1, device=device))
+
+        # Bayesian hyperparams
+        self.kl_beta = getattr(config, 'kl_beta', 0.1)
 
         # Optimizers
         self.actor_opt = optim.Adam(
@@ -97,15 +116,29 @@ class SACDirichlet:
         return self.log_temperature.exp()
 
     @torch.no_grad()
-    def _get_regime(self, obs: np.ndarray) -> torch.Tensor:
+    def _get_regime(self, obs: np.ndarray, thompson_sample: bool = False) -> torch.Tensor:
+        """
+        Get regime context for current observation.
+        With Bayesian encoder and thompson_sample=True, samples from the posterior
+        for risk-aware exploration (Thompson sampling).
+        """
         obs_t = torch.tensor(obs, dtype=torch.float32, device=self.device).unsqueeze(0)
-        regime, self._gru_hidden = self.regime_encoder.encode_step(obs_t, self._gru_hidden)
+        if self.bayesian:
+            regime, _, self._gru_hidden = self.regime_encoder.encode_step(
+                obs_t, self._gru_hidden, sample=thompson_sample
+            )
+        else:
+            regime, self._gru_hidden = self.regime_encoder.encode_step(obs_t, self._gru_hidden)
         return regime  # (1, regime_dim)
 
     @torch.no_grad()
     def collect_step(self):
-        """Collect one transition from the environment."""
-        regime = self._get_regime(self._obs)
+        """
+        Collect one transition from the environment.
+        With Bayesian encoder, uses Thompson sampling: each episode samples a
+        regime hypothesis from the posterior, producing diverse exploration behavior.
+        """
+        regime = self._get_regime(self._obs, thompson_sample=self.bayesian)
         obs_t = torch.tensor(self._obs, dtype=torch.float32, device=self.device).unsqueeze(0)
 
         w, _, _, _ = self.actor(obs_t, regime, deterministic=False)
@@ -125,6 +158,18 @@ class SACDirichlet:
             self._gru_hidden = self.regime_encoder.init_hidden(1, self.device)
             self._episode_return = 0.0
 
+    def _encode_regime(self, obs_seq: Optional[torch.Tensor], batch_size: int):
+        """Encode regime context, handling both Bayesian and deterministic encoders."""
+        if obs_seq is None:
+            regime = torch.zeros(batch_size, self.config.regime_dim, device=self.device)
+            return regime, None, 0.0
+        if self.bayesian:
+            regime, regime_std, kl_loss, _ = self.regime_encoder(obs_seq)
+            return regime, regime_std, kl_loss
+        else:
+            regime, _ = self.regime_encoder(obs_seq)
+            return regime, None, 0.0
+
     def update_critic(self, batch: Dict[str, torch.Tensor], cql_weight: float = 0.0) -> Dict[str, float]:
         """Update Q-networks with Bellman TD error (+ optional CQL penalty for O2O use)."""
         obs, actions, rewards, next_obs = (
@@ -134,15 +179,9 @@ class SACDirichlet:
         obs_seq = batch.get('obs_seq', None)
         next_obs_seq = batch.get('next_obs_seq', None)
 
-        # Compute regime context
-        if obs_seq is not None:
-            regime, _ = self.regime_encoder(obs_seq)
-            next_regime, _ = self.regime_encoder(next_obs_seq)
-        else:
-            # Fallback: zero regime context
-            bsz = obs.shape[0]
-            regime = torch.zeros(bsz, self.config.regime_dim, device=self.device)
-            next_regime = torch.zeros(bsz, self.config.regime_dim, device=self.device)
+        bsz = obs.shape[0]
+        regime, _, kl_loss = self._encode_regime(obs_seq, bsz)
+        next_regime, _, _ = self._encode_regime(next_obs_seq, bsz)
 
         with torch.no_grad():
             # Target: r + γ * (1 - done) * (min_Q(s', a') - τ * log π(a'|s'))
@@ -155,10 +194,16 @@ class SACDirichlet:
         q1, q2 = self.critic(obs, actions, regime)
         critic_loss = nn.functional.mse_loss(q1, target_q) + nn.functional.mse_loss(q2, target_q)
 
+        total_loss = critic_loss
+        if self.bayesian and kl_loss > 0:
+            total_loss = total_loss + self.kl_beta * kl_loss
+
         metrics = {'critic_loss': critic_loss.item()}
+        if self.bayesian:
+            metrics['critic_kl_loss'] = kl_loss.item() if isinstance(kl_loss, torch.Tensor) else kl_loss
 
         self.critic_opt.zero_grad()
-        critic_loss.backward()
+        total_loss.backward()
         nn.utils.clip_grad_norm_(self.critic.parameters(), self.config.max_grad_norm)
         self.critic_opt.step()
 
@@ -169,10 +214,7 @@ class SACDirichlet:
         obs = batch['obs']
         obs_seq = batch.get('obs_seq', None)
 
-        if obs_seq is not None:
-            regime, _ = self.regime_encoder(obs_seq)
-        else:
-            regime = torch.zeros(obs.shape[0], self.config.regime_dim, device=self.device)
+        regime, _, kl_loss = self._encode_regime(obs_seq, obs.shape[0])
 
         # Freeze critic during actor update
         for p in self.critic.parameters():
@@ -184,8 +226,12 @@ class SACDirichlet:
         # Actor loss: minimize (τ * log_prob - Q) = maximize (Q - τ * entropy)
         actor_loss = (self.temperature.detach() * log_prob - q_val).mean()
 
+        total_actor_loss = actor_loss
+        if self.bayesian and kl_loss > 0:
+            total_actor_loss = total_actor_loss + self.kl_beta * kl_loss
+
         self.actor_opt.zero_grad()
-        actor_loss.backward()
+        total_actor_loss.backward()
         nn.utils.clip_grad_norm_(
             list(self.actor.parameters()) + list(self.regime_encoder.parameters()),
             self.config.max_grad_norm
@@ -208,10 +254,7 @@ class SACDirichlet:
         obs_seq = batch.get('obs_seq', None)
 
         with torch.no_grad():
-            if obs_seq is not None:
-                regime, _ = self.regime_encoder(obs_seq)
-            else:
-                regime = torch.zeros(obs.shape[0], self.config.regime_dim, device=self.device)
+            regime, _, _ = self._encode_regime(obs_seq, obs.shape[0])
             _, log_prob, _, _ = self.actor(obs, regime)
 
         # τ loss: -τ * (log π + H_target)
@@ -259,6 +302,7 @@ class SACDirichlet:
     @torch.no_grad()
     def evaluate(self, eval_env: gym.Env, n_episodes: int = 5) -> Dict[str, float]:
         episode_returns, portfolio_values, turnovers = [], [], []
+        all_sharpes, all_max_drawdowns = [], []
 
         for _ in range(n_episodes):
             obs, _ = eval_env.reset()
@@ -266,21 +310,41 @@ class SACDirichlet:
             done = False
             ep_return = 0.0
             ep_turnover = 0.0
+            step_returns = []
+            pv_trajectory = [1.0]
             info = {}
 
             while not done:
                 obs_t = torch.tensor(obs, dtype=torch.float32, device=self.device).unsqueeze(0)
-                regime, gru_hidden = self.regime_encoder.encode_step(obs_t, gru_hidden)
+                if self.bayesian:
+                    regime, _, gru_hidden = self.regime_encoder.encode_step(obs_t, gru_hidden, sample=False)
+                else:
+                    regime, gru_hidden = self.regime_encoder.encode_step(obs_t, gru_hidden)
                 w, _, _, _ = self.actor(obs_t, regime, deterministic=True)
                 action = w.squeeze(0).cpu().numpy()
                 obs, reward, terminated, truncated, info = eval_env.step(action)
                 done = terminated or truncated
                 ep_return += reward
                 ep_turnover += info.get('turnover', 0.0)
+                step_returns.append(reward)
+                pv_trajectory.append(info.get('portfolio_value', pv_trajectory[-1]))
 
             episode_returns.append(ep_return)
             portfolio_values.append(info.get('portfolio_value', 1.0))
             turnovers.append(ep_turnover)
+
+            # Sharpe ratio (annualized)
+            arr = np.array(step_returns)
+            if len(arr) > 1 and arr.std() > 1e-8:
+                all_sharpes.append(float(arr.mean() / arr.std() * np.sqrt(252)))
+            else:
+                all_sharpes.append(0.0)
+
+            # Max drawdown
+            pv_arr = np.array(pv_trajectory)
+            running_max = np.maximum.accumulate(pv_arr)
+            drawdowns = (running_max - pv_arr) / np.maximum(running_max, 1e-8)
+            all_max_drawdowns.append(float(drawdowns.max()))
 
         annual_returns = [(pv - 1.0) * (252 / eval_env.episode_length) for pv in portfolio_values]
         return {
@@ -288,4 +352,6 @@ class SACDirichlet:
             'eval/portfolio_value': float(np.mean(portfolio_values)),
             'eval/annual_return': float(np.mean(annual_returns)),
             'eval/avg_turnover': float(np.mean(turnovers)),
+            'eval/sharpe_ratio': float(np.mean(all_sharpes)),
+            'eval/max_drawdown': float(np.mean(all_max_drawdowns)),
         }

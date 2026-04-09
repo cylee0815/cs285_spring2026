@@ -1,0 +1,185 @@
+\documentclass[10pt]{article}
+\usepackage[margin=.6in]{geometry}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{hyperref}
+
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection.}{0.2em}{}
+\titlespacing*{\section}{0pt}{3ex}{1ex}
+
+\begin{document}
+
+\begin{center}
+    \textbf{\large CS 285 Final Project Proposal - Thomas Lee} \\
+    % \vspace{0.1cm}
+    \textbf{Offline-to-Online (O2O) Deep Reinforcement Learning (RL) for Non-Stationary Portfolio Optimization}
+    % \vspace{0.15cm}
+    % \textit{Spring 2026}
+    % \textit{Thomas Lee}
+\end{center}
+
+% \vspace{0.2cm}
+% \noindent\textbf{Group Members:} [Name 1], [Name 2], [Name 3] \\
+% \textbf{External Collaborators:} None
+
+% \vspace{0.3cm}
+
+\section{Tasks, Problems, and Data Source}
+
+This project studies \textbf{dynamic portfolio optimization} under realistic market frictions such as transaction costs and slippage. The task is to train RL agents that continuously allocate capital across a basket of diverse financial instruments to maximize risk-adjusted returns. Our dataset combines five temporally aligned information streams:
+
+% I will implement a custom \texttt{Gymnasium} trading environment in which the agent observes a multimodal market state and outputs continuous portfolio weights at each time step. The environment will simulate portfolio evolution and trading costs using historical financial data.
+
+% Our dataset will combine five temporally aligned information streams:
+
+\begin{itemize}[noitemsep, topsep=3pt]
+
+\item \textbf{Market Data:}
+% Historical price and volume data will be obtained through the \texttt{yfinance} API and FinRL interfaces. These time series form the primary observable state for the RL agent.
+Historical price and volume data obtained via \texttt{yfinance} and FinRL interfaces.
+
+\item \textbf{Technical Indicators \& Risk Features:}
+% To capture short-term market dynamics, I will compute commonly used technical indicators including Relative Strength Index (RSI), Commodity Channel Index (CCI), Directional Movement Index (DMI), and moving averages (SMA/EMA). In addition, I will include volatility and cross-asset risk signals such as historical volatility, covariance matrices, and the VIX index
+Short-term market dynamics alongside volatility and cross-asset risks.
+
+\item \textbf{Macroeconomic Indicators:}
+% To represent broader economic regimes, I incorporate macroeconomic variables such as GDP growth, CPI inflation, unemployment rate, interest rates (e.g., SOFR and the 10-year Treasury yield), and commodity prices such as oil and gold. These indicators will be retrieved through the FRED API and aligned with trading dates.
+Broader economic regime data (GDP, CPI, and interest) retrieved via FRED API.
+
+\item \textbf{Fundamental Data:}
+% Firm-level financials including P/E ratios, dividend yield, and selected balance-sheet metrics are included to provide longer-horizon valuation signals beyond short-term price movements.
+Firm-level financials (P/E ratios, dividend yields) to provide longer-horizon valuation signals.
+
+\item \textbf{Textual and Sentiment Signals:}
+% I incorporate multiple sentiment-based signals. Financial news and SEC filings (e.g., 10-K and 10-Q reports) will be collected through the Alpaca News API and transformed into dense semantic embeddings using a locally hosted language model. Additionally, I incorporate the \textit{Daily News Sentiment Index} published by the Federal Reserve Bank of San Francisco, a high-frequency measure of U.S. economic sentiment derived from lexical analysis of economics-related news articles across major newspapers.
+% Multiple sentiment-based signals are incorporated:
+%     \begin{itemize}[noitemsep, topsep=2pt]
+%         \item Financial news and SEC filings collected via Alpaca News API and transformed into semantic embeddings
+%         \item \textit{Daily News Sentiment Index} published by the Federal Reserve Bank of San Francisco.
+%     \end{itemize}
+Multiple sentiment signals, including financial news and SEC filings (via Alpaca News API) transformed into semantic embeddings, and the \textit{Daily News Sentiment Index} from the SF Fed.
+\end{itemize}
+
+% The simulator therefore provides a realistic sequential decision-making environment with multimodal inputs and continuous action outputs.
+
+% I will implement a custom \texttt{Gymnasium}-based trading environment that formalizes portfolio allocation as a sequential decision-making problem. At each time step $t$, the agent observes a high-dimensional multimodal market state consisting of price dynamics, technical indicators, macroeconomic variables, and textual sentiment features. Based on this observation, the policy outputs a continuous action vector representing portfolio weights across the asset universe, subject to a budget constraint that enforces weights summing to one.
+
+% The environment simulates portfolio evolution using historical market data while incorporating realistic trading frictions, including proportional transaction costs and portfolio rebalancing constraints. After each action, the environment updates the portfolio value according to realized asset returns and computes the next market state.
+
+% The reward function will be designed to capture risk-adjusted performance, with candidate formulations including log portfolio returns and the differential Sharpe ratio. This setup allows us to evaluate how different deep reinforcement learning algorithms learn trading policies in a realistic financial simulation while accounting for non-stationary market dynamics and delayed reward signals.
+
+% A custom \texttt{Gymnasium}-based environment modeling portfolio allocation as a sequential decision-making problem is implemented. At each time step $t$, the agent observes a multimodal market state and outputs a continuous action vector representing portfolio weights across assets, subject to a budget constraint. The environment simulates portfolio evolution using historical data while incorporating realistic trading frictions, including transaction costs. After each action, portfolio value is updated according to realized asset returns to produce the next state. The reward function captures risk-adjusted performance using metrics such as log returns or the differential Sharpe ratio, enabling evaluation of how deep RL algorithms learn policies under non-stationary market conditions.
+
+% In addition to defining the environment, the project compares several reinforcement learning training paradigms. Historical market data naturally supports \textbf{offline reinforcement learning}, where policies are trained from logged trajectories without further interaction with the environment. However, using a trading simulator built on top of historical data also allows \textbf{online learning}, where agents iteratively interact with the environment to generate new trajectories. This project therefore evaluates three settings: (1) purely online learning from scratch using algorithms such as PPO and SAC, (2) strictly offline learning from historical datasets using off-policy methods, and (3) \textbf{offline-to-online fine-tuning}, where policies are first pre-trained on historical data and then adapted through online interaction. This comparison allows us to study how different RL paradigms handle non-stationary financial markets and distribution shifts across time.
+
+% A custom \texttt{Gymnasium}-based trading environment is implemented to model portfolio allocation as a sequential decision-making problem. At each time step $t$, the agent observes a multimodal market state and outputs a continuous action vector representing portfolio weights across assets subject to a budget constraint. Portfolio value evolves according to historical returns while incorporating trading frictions such as transaction costs, and rewards capture risk-adjusted performance using metrics such as log returns or the differential Sharpe ratio. This environment also enables construction of offline datasets from historical trajectories for \textbf{offline reinforcement learning}. For interactive training, the project additionally leverages the \textbf{FinRL} framework as a financial market simulator for \textbf{online RL}.
+% A custom \texttt{Gymnasium}-based trading environment is implemented to model portfolio allocation as a sequential decision-making problem. At each time $t$, the agent observes a multimodal market state and outputs a continuous action vector representing portfolio weights across assets subject to a budget constraint. Portfolio value evolves according to returns while incorporating trading frictions, and rewards capture risk-adjusted performance using metrics like log returns or the differential Sharpe ratio. It also enables construction of offline datasets from historical trajectories for \textbf{offline reinforcement learning}. For interactive training, the project additionally leverages the \textbf{FinRL} framework as a financial market simulator for \textbf{online RL}.
+
+% Together, these environments support three training paradigms: (1) purely online learning via trading simulator, (2) strictly offline learning from historical market data, and (3) an \textbf{offline-to-online} pipeline where policies are first pre-trained on historical data and then fine-tuned through simulator interaction to study how RL agents adapt to non-stationary market dynamics and distribution shifts.
+% Together, these environments support three training paradigms: (1) purely online learning via trading simulator, (2) offline learning from historical data, and (3) an \textbf{offline-to-online} pipeline where policies are pre-trained on historical data and fine-tuned through simulator interaction to study how RL agents adapt to non-stationary market dynamics and distribution shifts.
+
+A custom \texttt{Gymnasium}-based trading environment is implemented to model this as a sequential decision-making problem. At each time $t$, the agent observes the multimodal market state and outputs a continuous action vector of portfolio weights subject to a budget constraint. Portfolio value evolves according to historical returns while incorporating trading frictions, and rewards capture risk-adjusted performance using metrics like log returns or the differential Sharpe ratio. 
+
+Crucially, this environment enables the construction of offline datasets from historical trajectories. Together, leveraging the \textbf{FinRL} framework, we support three training paradigms: (1) purely online learning via the trading simulator, (2) strictly offline learning from historical data, and (3) an \textbf{O2O} pipeline where policies are pre-trained on historical data and fine-tuned through simulator interaction to study adaptation to non-stationary distribution shifts.
+
+
+% \section{Main Research Hypothesis}
+
+% The project investigates how different deep RL architectures process complex, non-stationary financial information. The study focuses on three main hypotheses:
+
+% \begin{enumerate}[noitemsep, topsep=2pt]
+
+% \item \textbf{Spatiotemporal Representation Learning.}  
+% A recurrent architecture that combines convolutional feature extraction with an LSTM policy head (PPO-LSTM) will outperform standard feedforward policies by capturing both cross-asset relationships and temporal dependencies in financial markets.
+
+% \item \textbf{Risk-Aware Reward Design.}  
+% Using the \textit{Differential Sharpe Ratio} as a dense step-wise reward signal will improve sample efficiency and produce policies with stronger risk-adjusted performance. % compared to standard cumulative return rewards.
+
+% \item \textbf{Multimodal Information Advantage.}  
+% Augmenting the state representation with dense semantic embeddings derived from financial text will lead to more robust policies than models relying only on price. %price-based and macroeconomic features.
+
+% \end{enumerate}
+
+% These hypotheses will be evaluated by comparing several deep RL algorithms (PPO, PPO-LSTM, SAC, and TD3) and benchmarking their performance against classical portfolio strategies. %such as mean-variance optimization and equal-weight allocation.
+
+% % \section{Relation to Deep Reinforcement Learning}
+
+% % Portfolio management naturally fits the reinforcement learning framework as a \textbf{sequential decision-making problem with continuous actions}. At each time step the agent observes a market state and decides how to allocate capital across assets.
+
+% % This project directly explores several core challenges in deep reinforcement learning:
+
+% % \begin{itemize}[noitemsep, topsep=1pt]
+% % \item \textbf{Partial observability:} Financial markets are non-Markovian, motivating the use of recurrent policies (LSTM).
+% % \item \textbf{Exploration in noisy environments:} Comparing on-policy methods (PPO) with off-policy maximum-entropy algorithms (SAC) and deterministic methods (TD3).
+% % \item \textbf{Reward design and credit assignment:} Using differential Sharpe ratio to transform long-horizon financial objectives into step-wise rewards.
+% % \item \textbf{Representation learning:} Investigating whether multimodal inputs (market, macro, and textual signals) improve policy learning.
+% % \end{itemize}
+
+% % Through these experiments, the project aims to evaluate how modern deep RL techniques perform in a challenging real-world sequential decision-making domain.
+
+\section{Main Research Hypothesis}
+
+% This project investigates how different RL training paradigms and model architectures perform in non-stationary financial markets. In particular, it studies both (i) how agents should be trained under historical market data constraints and (ii) how richer representations and reward design influence trading performance.
+The project evaluates how different RL training paradigms and architectures perform in non-stationary financial markets. 
+
+\begin{enumerate}[noitemsep, topsep=3pt]
+
+% \item \textbf{O2O Training Advantage:}  
+% Policies pre-trained using off-policy offline RL methods and fine-tuned through online interaction will achieve higher sample efficiency and stronger risk-adjusted returns than agents trained purely online.
+\item \textbf{O2O Training Advantage:} Policies pre-trained on historical market data using off-policy offline RL methods (e.g., IQL, CQL) and subsequently fine-tuned through online interaction (e.g., AWAC) in a trading simulator will achieve higher sample efficiency and stronger risk-adjusted returns than agents trained purely online.
+
+\item \textbf{Offline RL Limitations under Distribution Shift:}  
+% Policies trained exclusively on historical offline datasets are expected to degrade when evaluated in new, out-of-distribution market regimes due to distribution shift and value overestimation, highlighting the importance of online adaptation.
+Policies trained on historical data are expected to degrade in new regimes due to distribution shift and value overestimation, highlighting the necessity of online adaptation.
+
+\item \textbf{Exploration Efficiency in Online RL:}  
+% Among purely online algorithms, off-policy methods such as SAC and TD3 are expected to explore the action space more efficiently than on-policy algorithms such as PPO, though they may require stronger reward regularization to avoid unstable portfolio allocations in volatile markets.
+Among online algorithms, off-policy methods explore the actions more efficiently than on-policy, though they require reward regularization to avoid unstable allocations in volatile markets.
+
+\item \textbf{Spatiotemporal Representation Learning:}  
+% A recurrent architecture combining convolutional feature extraction with an LSTM policy head (PPO-LSTM) will outperform feedforward policies by capturing both cross-asset relationships and temporal dependencies in financial markets.
+A recurrent architecture (PPO-LSTM) will outperform feedforward policies by capturing both cross-asset relationships and \textit{non-Markovian} temporal dependencies in financial markets.
+
+\item \textbf{Risk-Aware Reward Design:}  
+Using the \textit{Differential Sharpe Ratio} as a dense step-wise reward signal will improve learning stability and produce policies with stronger risk-adjusted performance compared with return-based rewards.
+
+\item \textbf{Multimodal Information Advantage:}  
+Augmenting the state representation with macro indicators and semantic embeddings derived from financial text will lead to more robust policies than models relying only on price.%-based features.
+
+\end{enumerate}
+
+% These hypotheses will be evaluated by comparing several deep RL algorithms (PPO, PPO-LSTM, SAC, and TD3) across offline, online, and offline-to-online training regimes, and benchmarking their performance against classical portfolio strategies.
+These hypotheses will be evaluated by comparing several deep RL algorithms across offline, online, and O2O training regimes, and benchmarking their performance against classical portfolios (Markowitz, Inverse-Volatility, Equal-Weight).
+
+% \section{Relation to Deep Reinforcement Learning}
+
+% Portfolio management can be naturally formulated as an RL problem in which an agent sequentially allocates capital under uncertainty. At each time step, the agent observes a market state and selects a continuous action representing portfolio weights across assets, with rewards determined by resulting portfolio performance. This setting provides a realistic testbed for studying several core challenges in deep RL.
+
+% \begin{itemize}[noitemsep, topsep=2pt]
+% % \item \textbf{Partial observability and temporal dependence:} Financial markets exhibit strong temporal structure and are not strictly Markovian. Recurrent architectures such as PPO-LSTM are therefore evaluated to determine whether temporal memory improves policy learning.
+% \item \textbf{Partial observability and temporal dependence:} Financial markets exhibit temporal structure and aren't Markovian. Recurrent architectures are therefore evaluated to determine whether temporal memory improves policy learning.
+
+% % \item \textbf{Exploration in noisy environments:} Market signals are weak and highly stochastic. The project compares on-policy algorithms (PPO) with off-policy methods such as SAC and TD3 to study how different exploration strategies affect learning stability and performance.
+% \item \textbf{Exploration in noisy environments:} Market signals are weak and stochastic. The project compares on-policy algorithms (PPO) with off-policy ones (SAC, TD3) to study how exploration strategies affect learning stability and performance.
+
+% % \item \textbf{Reward design and credit assignment:} Financial objectives are typically long-horizon and risk-sensitive. Using the differential Sharpe ratio transforms these objectives into dense step-wise rewards that better align RL optimization with risk-adjusted performance.
+% \item \textbf{Reward design and credit assignment:} Financial objectives are long-horizon and risk-sensitive, and using the differential Sharpe ratio transforms them into step-wise rewards that better align RL optimization with risk-adjusted performance.
+
+% % \item \textbf{Multimodal representation learning:} The project examines whether policies can leverage heterogeneous inputs—including price data, macroeconomic indicators, and textual sentiment embeddings—to learn richer market representations.
+% \item \textbf{Multimodal representation learning:} The project examines whether policies can leverage heterogeneous inputs (price data, macro indicators, and text sentiment embeddings) to learn richer market representations.
+% \end{itemize}
+
+% % Overall, this project evaluates how modern deep RL methods handle non-stationary, partially observable environments with multimodal inputs, providing insight into their effectiveness for real-world sequential decision-making problems such as portfolio allocation.
+
+\section{Relation to Deep Reinforcement Learning}
+
+Portfolio management naturally formulates as a continuous-action RL problem under severe uncertainty. At each time step, the agent observes a market state and selects a continuous action representing portfolio weights across assets, with rewards determined by resulting portfolio performance. This setting provides a realistic testbed for studying several core challenges in deep RL:
+
+\begin{itemize}[noitemsep, topsep=3pt]
+\item \textbf{Partial observability and temporal dependence:} Financial markets exhibit hidden temporal structures and aren't Markovian. Recurrent architectures are used to determine if temporal memory mitigates POMDP challenges.
+\item \textbf{Exploration in noisy environments:} Market signals are notoriously weak and stochastic. The project compares on-policy algorithms (PPO) with off-policy max-entropy methods (SAC) to study exploration-exploitation trade-offs.
+\item \textbf{Reward design and credit assignment:} Financial objectives are long-horizon. Using the differential Sharpe ratio transforms global metrics into dense, step-wise rewards, addressing the temporal credit assignment problem.
+\item \textbf{Multimodal representation learning:} The project examines whether policies can successfully fuse heterogeneous inputs (price, macro, and semantic embeddings) without overfitting to historical noise.
+\end{itemize}
+
+\end{document}

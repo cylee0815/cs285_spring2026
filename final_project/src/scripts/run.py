@@ -111,6 +111,12 @@ def main():
     print(f"Downloading market data for: {tickers}")
 
     if args.use_finrl:
+        if args.use_macro:
+            print("  WARNING: --use_macro is ignored with --use_finrl. "
+                  "FinRL uses its own feature pipeline (MACD, RSI, CCI, turbulence).")
+        if args.use_sentiment:
+            print("  WARNING: --use_sentiment is ignored with --use_finrl. "
+                  "FinRL uses its own feature pipeline.")
         # PPO outputs raw Gaussian logits → FinRL applies softmax → portfolio weights
         train_env, test_env, metadata = make_train_test_envs_finrl(
             tickers=tickers,
@@ -120,6 +126,7 @@ def main():
             time_window=args.finrl_time_window,
             transaction_cost=args.transaction_cost,
             accept_portfolio_weights=False,  # PPO: raw logits, FinRL normalizes
+            reward_type=args.reward_type,
         )
         print(f"  [FinRL env] obs_dim={metadata['obs_dim']}, action_dim={metadata['action_dim']}")
     else:

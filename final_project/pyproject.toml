@@ -17,12 +17,14 @@ dependencies = [
     "matplotlib>=3.7",
     "fredapi>=0.5",
     "finrl>=0.3.6",
-    "stable-baselines3>=1.6",
+    "stable-baselines3>=2.0",
+    "sb3-contrib>=2.0",
     "alpaca-trade-api>=3.0",
     "gym>=0.21,<0.27",
     "quantstats>=0.0.59",
     "pyportfolioopt>=1.5",
     "stockstats>=0.5",
+    "rich>=14.3.3",
 ]
 
 [build-system]

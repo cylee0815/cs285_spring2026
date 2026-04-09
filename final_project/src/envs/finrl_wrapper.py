@@ -40,10 +40,13 @@ except (ImportError, AttributeError):
 # Wrapper
 # ──────────────────────────────────────────────────────────────────────────────
 
-class FinRLPortfolioWrapper:
+class FinRLPortfolioWrapper(gym.Env):
     """
     Adapts FinRL's PortfolioOptimizationEnv (old gym.Env) to the gymnasium
     interface expected by our agents.
+
+    Inherits from gymnasium.Env so it can be wrapped by ActionBoundedWrapper
+    and other gymnasium wrappers (SB3 requires isinstance(env, gym.Env)).
 
     Observation: flattens (n_features, n_stocks, time_window) → 1D float32 vector.
     Action (accept_portfolio_weights=True, for DirichletActor):
@@ -60,9 +63,20 @@ class FinRLPortfolioWrapper:
         n_stocks: number of risky assets (excludes cash)
     """
 
-    def __init__(self, env, accept_portfolio_weights: bool = False):
+    metadata = {"render_modes": []}
+
+    def __init__(self, env, accept_portfolio_weights: bool = False,
+                 reward_type: str = "log_return"):
+        super().__init__()
         self._env = env
         self.accept_portfolio_weights = accept_portfolio_weights
+        self.reward_type = reward_type
+
+        # Differential Sharpe ratio EMA state (Moody & Saffell, 2001)
+        self._sharpe_A = 0.0  # EMA of returns
+        self._sharpe_B = 0.0  # EMA of squared returns
+        self._sharpe_eta = 0.01
+        self._prev_portfolio_value = None
 
         # Flat observation space (gymnasium Box)
         raw_shape = env.observation_space.shape  # (n_features, n_stocks, time_window)
@@ -90,6 +104,10 @@ class FinRLPortfolioWrapper:
             obs, info = result
         else:
             obs, info = result, {}
+        # Reset diff_sharpe EMA state
+        self._sharpe_A = 0.0
+        self._sharpe_B = 0.0
+        self._prev_portfolio_value = getattr(self._env, "_initial_amount", 100_000)
         return self._flatten_obs(obs), info
 
     def step(self, action: np.ndarray):
@@ -104,6 +122,24 @@ class FinRLPortfolioWrapper:
             obs, reward, done, info = result
             terminated, truncated = bool(done), False
 
+        # Translate FinRL's internal portfolio metrics to our standard info keys
+        # so that PPOAgent.evaluate() and PortfolioEvalCallback can read them.
+        raw = self._env
+        pv = getattr(raw, "_portfolio_value", None)
+        if pv is not None:
+            info["portfolio_value"] = pv / raw._initial_amount  # normalize to start at 1.0
+        weights = getattr(raw, "_final_weights", None)
+        if weights is not None and len(weights) >= 2:
+            prev_w = np.asarray(weights[-2], dtype=np.float32)
+            curr_w = np.asarray(weights[-1], dtype=np.float32)
+            info["turnover"] = float(np.sum(np.abs(curr_w - prev_w)))
+
+        # Override reward with differential Sharpe ratio if requested
+        if self.reward_type == "diff_sharpe" and pv is not None and self._prev_portfolio_value is not None:
+            port_return = (pv - self._prev_portfolio_value) / self._prev_portfolio_value
+            reward = self._differential_sharpe(port_return)
+            self._prev_portfolio_value = pv
+
         return self._flatten_obs(obs), float(reward), terminated, truncated, info
 
     def render(self):
@@ -117,8 +153,26 @@ class FinRLPortfolioWrapper:
     # Internal helpers
     # ------------------------------------------------------------------
 
+    def _differential_sharpe(self, r: float) -> float:
+        """Moody & Saffell (2001) differential Sharpe ratio."""
+        eta = self._sharpe_eta
+        delta_A = r - self._sharpe_A
+        delta_B = r ** 2 - self._sharpe_B
+        denom = (self._sharpe_B - self._sharpe_A ** 2) ** 1.5
+        if denom < 1e-8:
+            dsr = 0.0
+        else:
+            dsr = (self._sharpe_B * delta_A - 0.5 * self._sharpe_A * delta_B) / denom
+        self._sharpe_A += eta * delta_A
+        self._sharpe_B += eta * delta_B
+        return float(np.clip(dsr, -1.0, 1.0))
+
     def _flatten_obs(self, obs: np.ndarray) -> np.ndarray:
-        return np.asarray(obs, dtype=np.float32).flatten()
+        flat = np.asarray(obs, dtype=np.float32).flatten()
+        # FinRL's "by_previous_time" normalization can produce inf when dividing
+        # by near-zero values; replace inf/NaN with 0 to prevent downstream crashes.
+        flat = np.where(np.isfinite(flat), flat, 0.0)
+        return flat
 
     def _convert_action(self, action: np.ndarray) -> np.ndarray:
         if self.accept_portfolio_weights:
@@ -278,6 +332,7 @@ def make_finrl_envs(
     accept_portfolio_weights: bool = False,
     tech_indicators: Optional[List[str]] = None,
     include_turbulence: bool = True,
+    reward_type: str = "log_return",
 ) -> Tuple["FinRLPortfolioWrapper", "FinRLPortfolioWrapper", Dict]:
     """
     Download data via FinRL and create wrapped train/test environments.
@@ -343,7 +398,8 @@ def make_finrl_envs(
             normalize_df="by_previous_time",
         )
         wrapped = FinRLPortfolioWrapper(
-            raw_env, accept_portfolio_weights=accept_portfolio_weights
+            raw_env, accept_portfolio_weights=accept_portfolio_weights,
+            reward_type=reward_type,
         )
         # Inject episode_length from the number of trading days
         wrapped.episode_length = len(df_split["date"].unique()) - time_window

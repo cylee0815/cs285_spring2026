@@ -36,7 +36,7 @@ from src.envs.data_utils import (
 from src.agents.cql_geodesic import GeodesicCQL
 from src.agents.sac_dirichlet import SACDirichlet
 from src.agents.o2o_agent import O2OAgent
-from src.agents.replay_buffer import ReplayBuffer
+from src.agents.replay_buffer import ReplayBuffer, NStepReplayBuffer
 
 
 def parse_args():
@@ -100,6 +100,15 @@ def parse_args():
     parser.add_argument("--n_online_steps", type=int, default=None)
     parser.add_argument("--offline_data_steps", type=int, default=50_000)
     parser.add_argument("--eval_interval", type=int, default=5_000)
+    # Bayesian regime encoder
+    parser.add_argument(
+        "--bayesian", action="store_true",
+        help="Use BayesianRegimeEncoder for uncertainty-aware regime detection. "
+             "Enables Var[h_t]-weighted CQL penalty and Thompson sampling exploration.",
+    )
+    # Multi-step returns
+    parser.add_argument("--n_step", type=int, default=1,
+                        help="N-step returns (1=standard, 3/5/10 for multi-step)")
     return parser.parse_args()
 
 
@@ -172,7 +181,9 @@ def main():
     print(f"Test  (online):  {metadata['test_start']} → {metadata['test_end']}  ({metadata['T_test']} days)")
 
     # Load config
-    if args.phase in ["offline", "o2o"]:
+    if args.bayesian and args.phase in ["offline", "o2o"]:
+        from src.configs.bayesian_o2o_config import get_config
+    elif args.phase in ["offline", "o2o"]:
         from src.configs.o2o_config import get_config
     else:
         from src.configs.sac_dirichlet_config import get_config
@@ -183,6 +194,10 @@ def main():
         config.n_offline_updates = args.n_offline_updates
     if args.n_online_steps:
         config.n_online_steps = args.n_online_steps
+    if args.bayesian:
+        config.bayesian = True
+    if args.n_step > 1:
+        config.n_step = args.n_step
 
     # Init WandB
     run_name = f"{args.phase}_seed{args.seed}"
@@ -249,8 +264,14 @@ def main():
     elif args.phase == "offline":
         obs_dim = train_env.observation_space.shape[0]
         action_dim = train_env.action_space.shape[0]
-        offline_buffer = ReplayBuffer(config.offline_buffer_size, obs_dim, action_dim, device,
-                                      seq_len=config.regime_window)
+        if args.n_step > 1:
+            offline_buffer = NStepReplayBuffer(
+                config.offline_buffer_size, obs_dim, action_dim, device,
+                seq_len=config.regime_window, n_step=args.n_step, gamma=config.gamma,
+            )
+        else:
+            offline_buffer = ReplayBuffer(config.offline_buffer_size, obs_dim, action_dim, device,
+                                          seq_len=config.regime_window)
         offline_buffer.load_from_env(train_env, n_steps=args.offline_data_steps)
         offline_buffer.freeze()
         agent = GeodesicCQL(obs_dim, action_dim, config, device, offline_buffer=offline_buffer)

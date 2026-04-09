@@ -60,6 +60,7 @@ class O2OAgent:
         self.eval_env = eval_env
         self.config = config
         self.device = device
+        self.bayesian = getattr(config, 'bayesian', False)
 
         obs_dim = train_env.observation_space.shape[0]
         action_dim = train_env.action_space.shape[0]
@@ -72,7 +73,7 @@ class O2OAgent:
             seq_len=config.regime_window,
         )
 
-        # Offline pre-trainer
+        # Offline pre-trainer (Bayesian mode propagated via config)
         self.cql_agent = GeodesicCQL(
             obs_dim=obs_dim, action_dim=action_dim,
             config=config, device=device,
@@ -84,6 +85,8 @@ class O2OAgent:
 
         # Regime statistics for KL monitoring (accumulated during offline training)
         self._offline_regime_samples: List[torch.Tensor] = []
+        # Bayesian: also store regime variances for uncertainty-weighted CQL
+        self._offline_regime_vars: List[torch.Tensor] = []
         self._phase = 'offline'  # 'offline' or 'online'
 
     def load_offline_data(
@@ -112,15 +115,18 @@ class O2OAgent:
             history.append(metrics)
 
             # Accumulate regime samples for offline distribution
-            if step % 100 == 0 and 'obs_seq' not in self.offline_buffer.sample_with_context(1):
-                pass
             if step % 100 == 0:
                 batch = self.offline_buffer.sample_with_context(min(256, len(self.offline_buffer)))
                 with torch.no_grad():
                     obs_seq = batch.get('obs_seq')
                     if obs_seq is not None:
-                        regime, _ = self.cql_agent.regime_encoder(obs_seq)
-                        self._offline_regime_samples.append(regime.cpu())
+                        if self.bayesian:
+                            regime, regime_std, _, _ = self.cql_agent.regime_encoder(obs_seq, sample=False)
+                            self._offline_regime_samples.append(regime.cpu())
+                            self._offline_regime_vars.append(regime_std.pow(2).cpu())
+                        else:
+                            regime, _ = self.cql_agent.regime_encoder(obs_seq)
+                            self._offline_regime_samples.append(regime.cpu())
 
         return history
 
@@ -138,15 +144,23 @@ class O2OAgent:
         self.sac_agent.regime_encoder.load_state_dict(policy_state['regime_encoder'])
         self.sac_agent.log_temperature.data.copy_(policy_state['log_temperature'])
 
-    def _compute_adaptive_cql_weight(self, online_regime_samples: torch.Tensor) -> float:
+    def _compute_adaptive_cql_weight(
+        self,
+        online_regime_samples: torch.Tensor,
+        online_regime_var: Optional[torch.Tensor] = None,
+    ) -> float:
         """
-        Compute CQL conservatism weight based on regime KL divergence.
+        Compute CQL conservatism weight based on regime KL divergence
+        and (optionally) epistemic uncertainty.
 
-        KL(offline_regime || online_regime) measures distribution shift.
+        Full formula (Bayesian):
+          β_t = β₀ · sigmoid(λ · KL(h_offline || h_online) + γ · Var[h_t])
+
+        Deterministic fallback:
+          β_t = β₀ · sigmoid(λ · KL)
+
         High KL → maintain conservatism (large CQL weight).
-        Low KL  → relax conservatism (small CQL weight).
-
-        cql_weight = sigmoid(λ * KL) ∈ (0.5, 1.0)
+        High Var[h_t] → uncertain regime → more conservative.
         """
         if not self._offline_regime_samples:
             return self.config.cql_alpha
@@ -155,7 +169,15 @@ class O2OAgent:
         h_online = online_regime_samples
 
         kl = regime_kl_divergence(h_offline.to(self.device), h_online)
-        weight = torch.sigmoid(torch.tensor(self.config.regime_kl_scale * kl)).item()
+
+        # Combine KL term with variance term (Bayesian extension)
+        score = self.config.regime_kl_scale * kl
+        if self.bayesian and online_regime_var is not None:
+            var_scale = getattr(self.config, 'var_scale', 1.0)
+            mean_var = online_regime_var.mean().item()
+            score += var_scale * mean_var
+
+        weight = torch.sigmoid(torch.tensor(score)).item()
         return self.config.cql_alpha * weight
 
     def finetune_online(self, n_steps: int) -> List[Dict]:
@@ -170,6 +192,7 @@ class O2OAgent:
 
         print(f"Phase 2: Online fine-tuning for {n_steps} steps...")
         recent_regimes = []
+        recent_vars = []
 
         for step in range(n_steps):
             # Collect online step
@@ -185,15 +208,24 @@ class O2OAgent:
             # Monitor online regime distribution
             if step % 50 == 0 and 'obs_seq' in online_batch:
                 with torch.no_grad():
-                    online_regime, _ = self.sac_agent.regime_encoder(online_batch['obs_seq'])
-                    recent_regimes.append(online_regime.cpu())
+                    if self.bayesian:
+                        online_regime, online_std, _, _ = self.sac_agent.regime_encoder(
+                            online_batch['obs_seq'], sample=False
+                        )
+                        recent_regimes.append(online_regime.cpu())
+                        recent_vars.append(online_std.pow(2).cpu())
+                    else:
+                        online_regime, _ = self.sac_agent.regime_encoder(online_batch['obs_seq'])
+                        recent_regimes.append(online_regime.cpu())
                     if len(recent_regimes) > 20:
                         recent_regimes = recent_regimes[-20:]
+                        recent_vars = recent_vars[-20:]
 
-            # Adaptive CQL weight
+            # Adaptive CQL weight (with optional Bayesian variance term)
             if recent_regimes:
                 h_online = torch.cat(recent_regimes[-5:], dim=0).to(self.device)
-                cql_w = self._compute_adaptive_cql_weight(h_online)
+                var_online = torch.cat(recent_vars[-5:], dim=0) if recent_vars else None
+                cql_w = self._compute_adaptive_cql_weight(h_online, var_online)
             else:
                 cql_w = self.config.cql_alpha
 
@@ -227,28 +259,53 @@ class O2OAgent:
     @torch.no_grad()
     def _evaluate_cql(self, n_episodes: int) -> Dict[str, float]:
         episode_returns, portfolio_values = [], []
+        all_sharpes, all_max_drawdowns = [], []
 
         for _ in range(n_episodes):
             obs, _ = self.eval_env.reset()
             gru_hidden = self.cql_agent.regime_encoder.init_hidden(1, self.device)
             done = False
             ep_return = 0.0
+            step_returns = []
+            pv_trajectory = [1.0]
             info = {}
 
             while not done:
                 obs_t = torch.tensor(obs, dtype=torch.float32, device=self.device).unsqueeze(0)
-                regime, gru_hidden = self.cql_agent.regime_encoder.encode_step(obs_t, gru_hidden)
+                if self.bayesian:
+                    regime, _, gru_hidden = self.cql_agent.regime_encoder.encode_step(
+                        obs_t, gru_hidden, sample=False
+                    )
+                else:
+                    regime, gru_hidden = self.cql_agent.regime_encoder.encode_step(obs_t, gru_hidden)
                 w, _, _, _ = self.cql_agent.actor(obs_t, regime, deterministic=True)
                 obs, reward, terminated, truncated, info = self.eval_env.step(w.squeeze(0).cpu().numpy())
                 done = terminated or truncated
                 ep_return += reward
+                step_returns.append(reward)
+                pv_trajectory.append(info.get('portfolio_value', pv_trajectory[-1]))
 
             episode_returns.append(ep_return)
             portfolio_values.append(info.get('portfolio_value', 1.0))
+
+            # Sharpe ratio
+            arr = np.array(step_returns)
+            if len(arr) > 1 and arr.std() > 1e-8:
+                all_sharpes.append(float(arr.mean() / arr.std() * np.sqrt(252)))
+            else:
+                all_sharpes.append(0.0)
+
+            # Max drawdown
+            pv_arr = np.array(pv_trajectory)
+            running_max = np.maximum.accumulate(pv_arr)
+            drawdowns = (running_max - pv_arr) / np.maximum(running_max, 1e-8)
+            all_max_drawdowns.append(float(drawdowns.max()))
 
         annual_returns = [(pv - 1.0) * (252 / self.eval_env.episode_length) for pv in portfolio_values]
         return {
             'eval/episode_return': float(np.mean(episode_returns)),
             'eval/portfolio_value': float(np.mean(portfolio_values)),
             'eval/annual_return': float(np.mean(annual_returns)),
+            'eval/sharpe_ratio': float(np.mean(all_sharpes)),
+            'eval/max_drawdown': float(np.mean(all_max_drawdowns)),
         }
