@@ -14,6 +14,7 @@ import copy
 import importlib
 import os
 import random
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
@@ -259,22 +260,21 @@ def evaluate_agent(
     # Win rate: fraction of days with strictly positive simple return.
     win_rate = float(np.mean(simple_arr > 0.0)) if simple_arr.size > 0 else 0.0
 
-    # ── WandB: log full PV trajectory as a line chart ───────────────────
-    # Unique key per validation phase so curves never overwrite each other.
+    # ── WandB: log full PV trajectory as a Matplotlib image ─────────────
+    # Matplotlib gives us a dynamically-scaled y-axis (so drawdowns and
+    # run-ups are visible) and a thicker, high-contrast line, unlike the
+    # default ``wandb.plot.line`` chart which is faint and pinned to y=0.
     if log_step is not None and wandb.run is not None and len(pv_trajectory) > 1:
-        traj_table = wandb.Table(
-            data=[[i, float(v)] for i, v in enumerate(pv_trajectory)],
-            columns=["Step", "Portfolio Value"],
-        )
+        fig, ax = plt.subplots(figsize=(10, 5))
+        ax.plot(pv_trajectory, color="blue", linewidth=2)
+        ax.axhline(1.0, color="black", linestyle="--", alpha=0.7)
+        ax.set_xlabel("Step")
+        ax.set_ylabel("Portfolio Value")
+        ax.set_title(f"{split_name} trajectory @ train step {log_step}")
+        ax.grid(True, alpha=0.3)
         plot_key = f"{split_name}_trajectory_step_{log_step}"
-        wandb.log({
-            plot_key: wandb.plot.line(
-                traj_table,
-                "Step",
-                "Portfolio Value",
-                title=f"{split_name} trajectory @ train step {log_step}",
-            ),
-        })
+        wandb.log({plot_key: wandb.Image(fig)})
+        plt.close(fig)
 
     # ── Trade history CSV export ────────────────────────────────────────
     if save_csv and csv_path and trade_rows:
@@ -308,8 +308,6 @@ def evaluate_agent(
         'eval/annual_return': mean_annual_return,
         'eval/annual_volatility': annual_vol,
         'eval/avg_turnover': avg_step_turnover,
-        'eval/std_episode_return': float(np.std(episode_log_returns, ddof=1))
-            if len(episode_log_returns) > 1 else 0.0,
         'eval/sharpe_ratio': sharpe,
         'eval/sortino_ratio': sortino,
         'eval/calmar_ratio': calmar,
