@@ -42,6 +42,7 @@ class PortfolioEnv(gym.Env):
         sharpe_eta: float = 0.01,
         macro_features: Optional[np.ndarray] = None,     # (T, n_macro) global macro
         sentiment_features: Optional[np.ndarray] = None, # (T, n_sentiment) news sentiment
+        accept_portfolio_weights: bool = False,
     ):
         super().__init__()
         self.price_returns = price_returns.astype(np.float32)  # (T, n_assets)
@@ -62,6 +63,11 @@ class PortfolioEnv(gym.Env):
         self.reward_type = reward_type
         self.include_cash = include_cash
         self.sharpe_eta = sharpe_eta
+        # When True, treat the incoming action as already-normalized portfolio
+        # weights on the simplex (e.g. DirichletActor.mean or an MLP softmax head)
+        # and skip the softmax in step(). Fixes the double-softmax bug where
+        # softmax(weights) collapses toward uniform.
+        self.accept_portfolio_weights = accept_portfolio_weights
 
         self.n_actions = self.n_assets + (1 if include_cash else 0)
 
@@ -101,20 +107,29 @@ class PortfolioEnv(gym.Env):
         return self._get_obs(), {}
 
     def step(self, action: np.ndarray):
-        # Convert action logits to weights via softmax
         action = np.array(action, dtype=np.float32)
-        # Clip to avoid overflow in softmax
-        action = np.clip(action, -20.0, 20.0)
 
-        if self.include_cash:
-            new_weights_with_cash = softmax(action)
-            new_weights = new_weights_with_cash[:self.n_assets].astype(np.float32)
+        if self.accept_portfolio_weights:
+            # Agent already outputs weights on the simplex — use them directly.
+            raw = action[:self.n_assets]
+            if np.any(np.isnan(raw)) or np.any(np.isinf(raw)) or np.any(raw < 0):
+                new_weights = np.ones(self.n_assets, dtype=np.float32) / self.n_assets
+            else:
+                s = float(raw.sum())
+                if s <= 1e-8:
+                    new_weights = np.ones(self.n_assets, dtype=np.float32) / self.n_assets
+                else:
+                    new_weights = (raw / s).astype(np.float32)
         else:
-            new_weights = softmax(action[:self.n_assets]).astype(np.float32)
-
-        # Handle NaN weights (fall back to equal weights)
-        if np.any(np.isnan(new_weights)) or np.any(np.isinf(new_weights)):
-            new_weights = np.ones(self.n_assets, dtype=np.float32) / self.n_assets
+            # Agent outputs logits — convert via softmax.
+            action = np.clip(action, -20.0, 20.0)
+            if self.include_cash:
+                new_weights_with_cash = softmax(action)
+                new_weights = new_weights_with_cash[:self.n_assets].astype(np.float32)
+            else:
+                new_weights = softmax(action[:self.n_assets]).astype(np.float32)
+            if np.any(np.isnan(new_weights)) or np.any(np.isinf(new_weights)):
+                new_weights = np.ones(self.n_assets, dtype=np.float32) / self.n_assets
 
         # Transaction cost: L1 distance between old and new weights
         turnover = float(np.sum(np.abs(new_weights - self._weights)))
@@ -122,25 +137,27 @@ class PortfolioEnv(gym.Env):
 
         # Get returns for this step — clamp index to valid range
         idx = min(self._start + self._t, self.T - 1)
-        returns = self.price_returns[idx]  # (n_assets,)
+        log_r = self.price_returns[idx]  # (n_assets,) log returns
+        log_r = np.where(np.isnan(log_r) | np.isinf(log_r), 0.0, log_r)
 
-        # Replace any NaN returns with 0
-        returns = np.where(np.isnan(returns), 0.0, returns)
+        # Exact portfolio simple return from per-asset log returns, minus
+        # proportional transaction cost. Mixing log and simple returns in the
+        # old code produced O(sigma^2/2) drift and inconsistent PV tracking.
+        simple_r = np.expm1(log_r)                            # exp(log_r) - 1
+        port_simple = float(np.dot(new_weights, simple_r)) - tc
+        # log return of the portfolio step (safe for port_simple <= -1)
+        port_log = float(np.log1p(max(port_simple, -0.999999)))
 
-        # Portfolio return
-        port_return = float(np.dot(new_weights, returns)) - tc
-
-        # Compute reward
         if self.reward_type == "log_return":
-            reward = float(port_return)
+            reward = port_log
         elif self.reward_type == "diff_sharpe":
-            reward = self._differential_sharpe(port_return)
+            reward = self._differential_sharpe(port_simple)
         else:
             raise ValueError(f"Unknown reward_type: {self.reward_type}")
 
-        # Update state
+        # Update state — compound PV with the consistent simple return
         self._weights = new_weights
-        self._portfolio_value *= (1.0 + port_return)
+        self._portfolio_value *= (1.0 + port_simple)
         self._t += 1
 
         terminated = False
@@ -148,9 +165,14 @@ class PortfolioEnv(gym.Env):
 
         info = {
             "portfolio_value": self._portfolio_value,
-            "portfolio_return": port_return,
+            "portfolio_return": port_simple,
+            "portfolio_log_return": port_log,
             "turnover": turnover,
             "transaction_cost": tc,
+            # The actual weights used to compute returns this step. Offline
+            # buffers should store THIS (not the raw action) so downstream
+            # algorithms train Q/actor on the true behavioral policy.
+            "executed_weights": new_weights.copy(),
         }
 
         return self._get_obs(), reward, terminated, truncated, info

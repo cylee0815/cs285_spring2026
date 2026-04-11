@@ -24,8 +24,8 @@ Usage:
     # Use mutual fund proxies for extended history (1995–)
     uv run src/scripts/run_finrl_drl.py --run_group=finrl_mf --use_mutual_funds --start_date=1995-01-01 --seed=0
 
-    # Add macro features
-    uv run src/scripts/run_finrl_drl.py --run_group=finrl_macro --use_macro --seed=0
+    # Note: --use_macro is NOT supported here (FinRL has its own features).
+    # Use run_sb3.py or run.py with --use_macro for FRED macro features.
 """
 import argparse
 import importlib
@@ -228,9 +228,11 @@ def main():
     DRLAgent = _import_drl_agent()
 
     if args.use_macro:
-        print("WARNING: --use_macro is not supported for FinRL-native training. "
-              "FinRL uses its own feature pipeline (MACD, RSI, CCI, turbulence). "
-              "Use run_sb3.py or run.py with --use_macro for FRED macro features.")
+        raise ValueError(
+            "--use_macro is not supported for FinRL-native training. "
+            "FinRL uses its own feature pipeline (MACD, RSI, CCI, turbulence). "
+            "Use run_sb3.py or run.py with --use_macro for FRED macro features."
+        )
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Device: {device}")

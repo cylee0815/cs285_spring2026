@@ -121,7 +121,8 @@ class IQLAgent:
             weights = torch.exp(advantage / self.config.iql_beta)
             weights = weights.clamp(max=self.config.iql_max_weight)
 
-        # Normalize behavioral actions to simplex
+        # Buffer stores the env's executed weights (already on the simplex);
+        # this clamp+renormalize is a numerical safety net, not a transform.
         behavioral_w = actions.clamp(1e-7, 1.0)
         behavioral_w = behavioral_w / behavioral_w.sum(dim=-1, keepdim=True)
 

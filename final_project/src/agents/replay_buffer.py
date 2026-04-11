@@ -118,26 +118,42 @@ class ReplayBuffer:
     ):
         """
         Collect offline data by rolling out a behavioral policy in the environment.
-        Uses a uniform-random behavioral policy if none provided.
+
+        Uses a uniform-Dirichlet behavioral policy by default (proper simplex
+        samples rather than the unbounded Gaussian draws that
+        ``env.action_space.sample()`` produces for Box(-inf, inf) spaces).
+
+        Whenever the env reports ``info['executed_weights']`` we store THAT as
+        the transition's action. This way the buffer always holds the true
+        behavioral policy on the simplex — downstream algorithms that compute a
+        behavioral log-prob or BC loss get a consistent, valid target regardless
+        of whether the env was in logit or portfolio-weight mode.
         """
         obs, _ = env.reset()
         episode_start = True
         collected = 0
 
+        action_dim = env.action_space.shape[0]
+
+        def _default_policy(_obs):
+            # Uniform sample on the (action_dim)-simplex via the exponential /
+            # Gamma(1) trick. Equivalent to Dirichlet(alpha=1).
+            u = np.random.exponential(scale=1.0, size=action_dim).astype(np.float32)
+            return u / (u.sum() + 1e-12)
+
         if verbose:
             print(f"Collecting {n_steps} offline transitions...")
 
         while collected < n_steps:
-            if policy is not None:
-                action = policy(obs)
-            else:
-                # Default behavioral: momentum + equal-weight mixture (more realistic than pure random)
-                action = env.action_space.sample()
+            action = policy(obs) if policy is not None else _default_policy(obs)
 
             next_obs, reward, terminated, truncated, info = env.step(action)
             done = terminated or truncated
 
-            self.add(obs, action, reward, next_obs, done, episode_start=episode_start)
+            # Prefer the actually-executed weights if the env exposes them.
+            stored_action = info.get("executed_weights", action)
+            self.add(obs, stored_action, reward, next_obs, done,
+                     episode_start=episode_start)
             obs = next_obs
             episode_start = False
             collected += 1

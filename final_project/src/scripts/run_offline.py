@@ -81,43 +81,70 @@ def set_seed(seed):
     torch.manual_seed(seed)
 
 
-def compute_sharpe_ratio(step_returns: list, annualize: bool = True) -> float:
-    """Compute Sharpe ratio from per-step returns."""
-    if len(step_returns) < 2:
+TRADING_DAYS_PER_YEAR = 252
+
+
+def compute_sharpe_ratio(simple_returns: np.ndarray, rf_daily: float = 0.0) -> float:
+    """
+    Annualized Sharpe ratio from per-step *simple* returns.
+
+    Uses unbiased std (ddof=1) and subtracts the daily risk-free rate. Callers
+    should pass a single concatenated return stream, not per-episode Sharpes,
+    to avoid the small-sample-per-episode bias that inflates the score.
+    """
+    arr = np.asarray(simple_returns, dtype=np.float64)
+    if arr.size < 2:
         return 0.0
-    arr = np.array(step_returns)
-    mean_r = arr.mean()
-    std_r = arr.std()
-    if std_r < 1e-8:
+    excess = arr - rf_daily
+    mu = excess.mean()
+    sig = excess.std(ddof=1)
+    if sig < 1e-12:
         return 0.0
-    sharpe = mean_r / std_r
-    if annualize:
-        sharpe *= np.sqrt(252)
-    return float(sharpe)
+    return float(mu / sig * np.sqrt(TRADING_DAYS_PER_YEAR))
 
 
 def compute_max_drawdown(portfolio_values: list) -> float:
     """Compute maximum drawdown from a sequence of portfolio values."""
     if len(portfolio_values) < 2:
         return 0.0
-    arr = np.array(portfolio_values)
+    arr = np.array(portfolio_values, dtype=np.float64)
     running_max = np.maximum.accumulate(arr)
     drawdowns = (running_max - arr) / np.maximum(running_max, 1e-8)
     return float(drawdowns.max())
 
 
 @torch.no_grad()
-def evaluate_agent(agent, env, n_episodes, device):
-    """Unified evaluation for all offline agents."""
-    episode_returns, portfolio_values, turnovers = [], [], []
-    all_sharpes, all_max_drawdowns = [], []
+def evaluate_agent(agent, env, n_episodes, device, rf_daily: float = 0.0):
+    """
+    Unified evaluation for all offline agents.
+
+    Returns per-split metrics under the ``eval/`` namespace. The caller is
+    responsible for renaming the namespace (e.g. to ``final_train/``) when
+    logging multiple splits side by side.
+
+    Notes on the math:
+      * ``episode_return``  — mean cumulative log-return across episodes.
+      * ``portfolio_value`` — mean final PV across episodes.
+      * ``annual_return``   — geometric annualization of per-episode PV.
+      * ``sharpe_ratio``    — computed once on the concatenated per-step
+        simple-return stream across all eval episodes. Averaging per-episode
+        Sharpes over 63-step windows is biased high and is not a meaningful
+        financial quantity.
+      * ``avg_turnover``    — MEAN per-step L1 turnover (previously a per-episode
+        sum, which hid whether the agent was actually rebalancing).
+    """
+    episode_log_returns = []
+    portfolio_values = []
+    episode_total_turnover = []
+    all_step_simple_returns = []
+    all_max_drawdowns = []
+    n_steps_total = 0
 
     for _ in range(n_episodes):
         obs, _ = env.reset()
         done = False
-        ep_return = 0.0
+        ep_log_return = 0.0
         ep_turnover = 0.0
-        step_returns = []
         pv_trajectory = [1.0]
         info = {}
 
@@ -126,25 +153,43 @@ def evaluate_agent(agent, env, n_episodes, device):
             action = agent.get_action(obs_t)
             obs, reward, terminated, truncated, info = env.step(action)
             done = terminated or truncated
-            ep_return += reward
-            ep_turnover += info.get('turnover', 0.0)
-            step_returns.append(reward)
-            pv_trajectory.append(info.get('portfolio_value', pv_trajectory[-1]))
+            # Prefer the env-reported log/simple returns if present; fall back
+            # to the reward scalar (which equals the log return for
+            # reward_type='log_return' in PortfolioEnv after the return fix).
+            step_log = float(info.get('portfolio_log_return', reward))
+            step_simple = float(info.get('portfolio_return', np.expm1(reward)))
+            ep_log_return += step_log
+            ep_turnover += float(info.get('turnover', 0.0))
+            all_step_simple_returns.append(step_simple)
+            pv_trajectory.append(float(info.get('portfolio_value', pv_trajectory[-1])))
+            n_steps_total += 1
 
-        episode_returns.append(ep_return)
-        portfolio_values.append(info.get('portfolio_value', 1.0))
-        turnovers.append(ep_turnover)
-        all_sharpes.append(compute_sharpe_ratio(step_returns))
+        episode_log_returns.append(ep_log_return)
+        portfolio_values.append(float(info.get('portfolio_value', 1.0)))
+        episode_total_turnover.append(ep_turnover)
         all_max_drawdowns.append(compute_max_drawdown(pv_trajectory))
 
-    annual_returns = [(pv - 1.0) * (252 / env.episode_length) for pv in portfolio_values]
+    # Geometric annualization — no more linear (pv-1)*252/L shortcut.
+    annual_returns = [
+        pv ** (TRADING_DAYS_PER_YEAR / env.episode_length) - 1.0
+        for pv in portfolio_values
+    ]
+    # Per-step mean turnover across ALL steps in the eval run.
+    avg_step_turnover = (
+        float(np.sum(episode_total_turnover) / max(n_steps_total, 1))
+        if n_steps_total > 0 else 0.0
+    )
+    # Single Sharpe over the concatenated simple-return stream.
+    sharpe = compute_sharpe_ratio(np.asarray(all_step_simple_returns), rf_daily=rf_daily)
+
     return {
-        'eval/episode_return': float(np.mean(episode_returns)),
+        'eval/episode_return': float(np.mean(episode_log_returns)),
         'eval/portfolio_value': float(np.mean(portfolio_values)),
         'eval/annual_return': float(np.mean(annual_returns)),
-        'eval/avg_turnover': float(np.mean(turnovers)),
-        'eval/std_episode_return': float(np.std(episode_returns)),
-        'eval/sharpe_ratio': float(np.mean(all_sharpes)),
+        'eval/avg_turnover': avg_step_turnover,
+        'eval/std_episode_return': float(np.std(episode_log_returns, ddof=1))
+            if len(episode_log_returns) > 1 else 0.0,
+        'eval/sharpe_ratio': sharpe,
         'eval/max_drawdown': float(np.mean(all_max_drawdowns)),
     }
 
@@ -178,6 +223,10 @@ def main():
         use_macro=args.use_macro,
         use_sentiment=args.use_sentiment,
         use_alpaca_embeddings=args.use_alpaca_embeddings,
+        # Every offline agent in this repo outputs weights on the simplex
+        # (Dirichlet mean / softmax head), so the env must NOT apply another
+        # softmax to them — that bug silently collapses the policy to uniform.
+        accept_portfolio_weights=True,
         fred_api_key=os.environ.get("FRED_API_KEY"),
     )
 
@@ -240,10 +289,37 @@ def main():
                 "step": step,
             })
 
-    # Final evaluation on test set
-    test_metrics = evaluate_agent(agent, test_env, args.n_eval_episodes * 2, device)
-    wandb.log({f"test/{k.split('/')[-1]}": v for k, v in test_metrics.items()})
-    print(f"Test results: {test_metrics}")
+    # Final evaluation on all three splits so the comparison is apples-to-apples.
+    n_final = args.n_eval_episodes * 2
+    final_train = evaluate_agent(agent, train_env, n_final, device)
+    final_val   = evaluate_agent(agent, val_env,   n_final, device)
+    final_test  = evaluate_agent(agent, test_env,  n_final, device)
+
+    def _rename(metrics: dict, prefix: str) -> dict:
+        return {f"{prefix}/{k.split('/')[-1]}": v for k, v in metrics.items()}
+
+    wandb.log({
+        **_rename(final_train, "final_train"),
+        **_rename(final_val,   "final_val"),
+        **_rename(final_test,  "final_test"),
+        # Keep the legacy 'test/...' keys so old dashboards still work.
+        **_rename(final_test,  "test"),
+    })
+
+    def _fmt(m: dict) -> str:
+        return (
+            f"ret={m['eval/episode_return']:+.4f}  "
+            f"pv={m['eval/portfolio_value']:.4f}  "
+            f"annret={m['eval/annual_return']:+.4f}  "
+            f"sharpe={m['eval/sharpe_ratio']:+.3f}  "
+            f"mdd={m['eval/max_drawdown']:.4f}  "
+            f"turnover={m['eval/avg_turnover']:.4f}"
+        )
+
+    print("\n=== Final evaluation ===")
+    print(f"Train : {_fmt(final_train)}")
+    print(f"Val   : {_fmt(final_val)}")
+    print(f"Test  : {_fmt(final_test)}")
 
     wandb.finish()
     print("Done.")

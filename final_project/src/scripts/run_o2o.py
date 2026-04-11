@@ -150,24 +150,43 @@ def main():
         use_macro=args.use_macro,
         use_sentiment=args.use_sentiment,
         use_alpaca_embeddings=args.use_alpaca_embeddings,
+        # Geodesic-CQL (offline) and SAC-Dirichlet (online) both output weights
+        # on the simplex via DirichletActor, so the custom env must accept
+        # those directly and not apply another softmax.
+        accept_portfolio_weights=True,
         fred_api_key=os.environ.get("FRED_API_KEY"),
     )
 
     # Online phase: optionally use FinRL env for richer observations
     if use_finrl_online and args.phase in ("sac", "o2o", "online"):
-        print("  [Online] Using FinRL environment (test split)")
-        # DirichletActor outputs portfolio weights → accept_portfolio_weights=True
-        online_train_env, online_test_env, finrl_meta = make_train_test_envs_finrl(
-            tickers=metadata["tickers"],
-            start=args.test_start,
-            end=args.end_date,
-            time_window=args.finrl_time_window,
-            transaction_cost=args.transaction_cost,
-            accept_portfolio_weights=True,  # DirichletActor: weights → log(w) → softmax → w
-        )
-        metadata.update({k: v for k, v in finrl_meta.items() if k not in metadata})
-        metadata["env_backend"] = "finrl"
-        print(f"  [FinRL] obs_dim={finrl_meta['obs_dim']}, action_dim={finrl_meta['action_dim']}")
+        if args.phase == "o2o":
+            # O2O transfer requires matching obs_dim between offline (custom) and online envs.
+            # FinRL env has a completely different obs_dim (e.g. ~1600 vs ~56), which would
+            # crash during weight transfer (regime encoder GRU input dim mismatch).
+            print("  WARNING: --use_finrl_online is incompatible with --phase=o2o.")
+            print("  The offline phase uses custom env (obs_dim={}) but FinRL env has a"
+                  " different obs_dim.".format(metadata['obs_dim']))
+            print("  Falling back to custom env for online phase.")
+            use_finrl_online = False
+            online_train_env, online_test_env = custom_test_env, custom_test_env
+            metadata["env_backend"] = "custom"
+        else:
+            print("  [Online] Using FinRL environment (test split)")
+            if args.use_macro:
+                print("  WARNING: --use_macro is ignored with FinRL env. "
+                      "FinRL uses its own feature pipeline (MACD, RSI, CCI, turbulence).")
+            # DirichletActor outputs portfolio weights → accept_portfolio_weights=True
+            online_train_env, online_test_env, finrl_meta = make_train_test_envs_finrl(
+                tickers=metadata["tickers"],
+                start=args.test_start,
+                end=args.end_date,
+                time_window=args.finrl_time_window,
+                transaction_cost=args.transaction_cost,
+                accept_portfolio_weights=True,  # DirichletActor: weights → log(w) → softmax → w
+            )
+            metadata.update({k: v for k, v in finrl_meta.items() if k not in metadata})
+            metadata["env_backend"] = "finrl"
+            print(f"  [FinRL] obs_dim={finrl_meta['obs_dim']}, action_dim={finrl_meta['action_dim']}")
     else:
         online_train_env, online_test_env = custom_test_env, custom_test_env
         metadata["env_backend"] = "custom"

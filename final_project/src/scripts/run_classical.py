@@ -146,7 +146,9 @@ def main():
     random.seed(args.seed)
     np.random.seed(args.seed)
 
-    # Create environments
+    # Create environments. Classical baselines (equal-weight, inverse-vol,
+    # Markowitz) all emit portfolio weights directly on the simplex, so the
+    # env must not apply another softmax to them.
     train_env, val_env, test_env, metadata = make_train_val_test_envs(
         use_mutual_funds=args.use_mutual_funds,
         tickers=args.tickers,
@@ -162,6 +164,7 @@ def main():
         use_macro=args.use_macro,
         use_sentiment=args.use_sentiment,
         use_alpaca_embeddings=args.use_alpaca_embeddings,
+        accept_portfolio_weights=True,
         fred_api_key=os.environ.get("FRED_API_KEY"),
     )
 

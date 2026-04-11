@@ -2,6 +2,7 @@
 Data utilities for portfolio RL.
 Downloads price data via yfinance, computes technical indicators.
 """
+import time
 import numpy as np
 import pandas as pd
 import yfinance as yf
@@ -44,28 +45,64 @@ def download_price_data(
     tickers: List[str],
     start: str = "2008-01-01",
     end: str = "2026-03-31",
+    max_retries: int = 3,
+    retry_sleep: float = 1.5,
 ) -> pd.DataFrame:
-    """Download adjusted close prices via yfinance."""
-    df = yf.download(tickers, start=start, end=end, auto_adjust=True, progress=False)
+    """
+    Download adjusted close prices via yfinance.
 
-    # Handle MultiIndex columns that yfinance may return for multiple tickers
-    if isinstance(df.columns, pd.MultiIndex):
-        closes = df["Close"]
-    else:
-        # Single ticker: df itself is the OHLCV frame
-        closes = df[["Close"]] if "Close" in df.columns else df
+    Retries transient errors (yfinance's sqlite cookie cache sometimes throws
+    ``OperationalError('database is locked')`` under concurrent access). Raises
+    ``RuntimeError`` if any requested ticker is missing after retries, so a
+    silently-shrunken action space can never propagate into training.
+    """
+    requested = list(tickers)
+    last_closes: Optional[pd.DataFrame] = None
 
-    # Flatten MultiIndex columns if still present after slicing
-    if isinstance(closes.columns, pd.MultiIndex):
-        closes.columns = closes.columns.get_level_values(-1)
+    for attempt in range(1, max_retries + 1):
+        df = yf.download(
+            requested, start=start, end=end, auto_adjust=True, progress=False,
+            threads=False,  # avoid concurrent sqlite access to yfinance cache
+        )
 
-    closes = closes.dropna(how="all")
-    closes = closes.ffill()
+        # Handle MultiIndex columns that yfinance may return for multiple tickers
+        if isinstance(df.columns, pd.MultiIndex):
+            closes = df["Close"] if "Close" in df.columns.get_level_values(0) else df
+        else:
+            # Single ticker: df itself is the OHLCV frame
+            closes = df[["Close"]] if "Close" in df.columns else df
 
-    # Drop columns that are entirely NaN after forward-fill
-    closes = closes.dropna(axis=1, how="all")
+        # Flatten MultiIndex columns if still present after slicing
+        if isinstance(closes.columns, pd.MultiIndex):
+            closes.columns = closes.columns.get_level_values(-1)
 
-    return closes  # (T, n_assets)
+        closes = closes.dropna(how="all").ffill()
+        # Reorder to requested order and keep only known tickers
+        present = [t for t in requested if t in closes.columns]
+        closes = closes[present]
+        # Drop columns that are entirely NaN after forward-fill
+        closes = closes.dropna(axis=1, how="all")
+        last_closes = closes
+
+        missing = [t for t in requested if t not in closes.columns]
+        if not missing:
+            return closes
+
+        if attempt < max_retries:
+            print(
+                f"[yfinance] attempt {attempt}/{max_retries}: missing {missing}; "
+                f"retrying in {retry_sleep:.1f}s..."
+            )
+            time.sleep(retry_sleep)
+
+    # Out of retries — fail loudly so the caller can't use a shrunken universe.
+    missing = [t for t in requested if last_closes is None or t not in last_closes.columns]
+    raise RuntimeError(
+        f"yfinance failed to download tickers after {max_retries} attempts: {missing}. "
+        f"Requested={requested}. Surviving columns={list(last_closes.columns) if last_closes is not None else []}. "
+        f"If you see 'database is locked', try deleting the yfinance cache at "
+        f"~/.cache/py-yfinance (or %LOCALAPPDATA%\\py-yfinance on Windows) and retry."
+    )
 
 
 def compute_features(
@@ -167,6 +204,7 @@ def make_train_test_envs(
     reward_type: str = "log_return",
     use_macro: bool = False,
     use_sentiment: bool = False,
+    accept_portfolio_weights: bool = False,
     fred_api_key: Optional[str] = None,
     **env_kwargs,
 ):
@@ -218,6 +256,7 @@ def make_train_test_envs(
             reward_type=reward_type,
             macro_features=macro_arr[s:e] if macro_arr is not None else None,
             sentiment_features=sentiment_arr[s:e] if sentiment_arr is not None else None,
+            accept_portfolio_weights=accept_portfolio_weights,
             **env_kwargs,
         )
 
@@ -256,6 +295,7 @@ def make_train_val_test_envs(
     use_macro: bool = False,
     use_sentiment: bool = False,
     use_alpaca_embeddings: bool = False,
+    accept_portfolio_weights: bool = False,
     fred_api_key: Optional[str] = None,
     **env_kwargs,
 ):
@@ -334,6 +374,7 @@ def make_train_val_test_envs(
             reward_type=reward_type,
             macro_features=macro_arr[s:e] if macro_arr is not None else None,
             sentiment_features=sentiment_arr[s:e] if sentiment_arr is not None else None,
+            accept_portfolio_weights=accept_portfolio_weights,
             **env_kwargs,
         )
 
