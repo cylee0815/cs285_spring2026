@@ -15,6 +15,7 @@ import importlib
 import os
 import random
 import numpy as np
+import pandas as pd
 import torch
 import wandb
 from tqdm import trange
@@ -115,7 +116,19 @@ def compute_max_drawdown(portfolio_values: list) -> float:
 
 
 @torch.no_grad()
-def evaluate_agent(agent, env, n_episodes, device, rf_daily: float = 0.0):
+def evaluate_agent(
+    agent,
+    env,
+    n_episodes,
+    device,
+    rf_daily: float = 0.0,
+    *,
+    ticker_names=None,
+    log_step=None,
+    split_name: str = "val",
+    save_csv: bool = False,
+    csv_path=None,
+):
     """
     Chronological-backtest evaluation for offline agents.
 
@@ -124,6 +137,15 @@ def evaluate_agent(agent, env, n_episodes, device, rf_daily: float = 0.0):
     and forced to 1 — randomized multi-episode evaluation would re-shuffle
     the backtest start and make the Sharpe / drawdown metrics incomparable
     across splits.
+
+    Observability hooks:
+      * ``log_step`` (int | None): if provided AND a wandb run is active,
+        logs the PV trajectory as a ``wandb.plot.line`` chart under the
+        unique key ``"{split_name}_trajectory_step_{log_step}"``.
+      * ``save_csv`` + ``csv_path``: if True, writes a per-step trade log
+        (Step, Portfolio_Value, Step_Reward, w_<ticker>…) to ``csv_path``.
+      * ``ticker_names`` (list[str] | None): column labels for the weight
+        columns in the CSV; falls back to ``w_0, w_1, …``.
 
     Metrics (under the ``eval/`` namespace):
       * ``episode_return``      — cumulative log-return over the full sweep.
@@ -146,6 +168,8 @@ def evaluate_agent(agent, env, n_episodes, device, rf_daily: float = 0.0):
     episode_total_turnover = []
     all_step_simple_returns = []
     all_max_drawdowns = []
+    # Per-step trade log for CSV export (collected across the single sweep).
+    trade_rows = []
     n_steps_total = 0
 
     for _ in range(n_episodes):
@@ -172,7 +196,20 @@ def evaluate_agent(agent, env, n_episodes, device, rf_daily: float = 0.0):
             ep_log_return += step_log
             ep_turnover += float(info.get('turnover', 0.0))
             all_step_simple_returns.append(step_simple)
-            pv_trajectory.append(float(info.get('portfolio_value', pv_trajectory[-1])))
+            step_pv = float(info.get('portfolio_value', pv_trajectory[-1]))
+            pv_trajectory.append(step_pv)
+
+            # Record per-step trade row — raw action output by the agent is
+            # what the user asked to verify; with accept_portfolio_weights=True
+            # these are already normalized simplex weights.
+            action_np = np.asarray(action, dtype=np.float64).flatten()
+            trade_rows.append({
+                'Step': n_steps_total,
+                'Date': info.get('date', ''),
+                'Portfolio_Value': step_pv,
+                'Step_Reward': float(reward),
+                '_action': action_np,
+            })
             n_steps_total += 1
 
         episode_log_returns.append(ep_log_return)
@@ -221,6 +258,49 @@ def evaluate_agent(agent, env, n_episodes, device, rf_daily: float = 0.0):
 
     # Win rate: fraction of days with strictly positive simple return.
     win_rate = float(np.mean(simple_arr > 0.0)) if simple_arr.size > 0 else 0.0
+
+    # ── WandB: log full PV trajectory as a line chart ───────────────────
+    # Unique key per validation phase so curves never overwrite each other.
+    if log_step is not None and wandb.run is not None and len(pv_trajectory) > 1:
+        traj_table = wandb.Table(
+            data=[[i, float(v)] for i, v in enumerate(pv_trajectory)],
+            columns=["Step", "Portfolio Value"],
+        )
+        plot_key = f"{split_name}_trajectory_step_{log_step}"
+        wandb.log({
+            plot_key: wandb.plot.line(
+                traj_table,
+                "Step",
+                "Portfolio Value",
+                title=f"{split_name} trajectory @ train step {log_step}",
+            ),
+        })
+
+    # ── Trade history CSV export ────────────────────────────────────────
+    if save_csv and csv_path and trade_rows:
+        n_weights = int(trade_rows[0]['_action'].size)
+        if ticker_names is not None and len(ticker_names) >= n_weights:
+            weight_cols = [f"w_{t}" for t in ticker_names[:n_weights]]
+        else:
+            weight_cols = [f"w_{i}" for i in range(n_weights)]
+
+        df_rows = []
+        for r in trade_rows:
+            row = {
+                'Step': r['Step'],
+                'Date': r['Date'],
+                'Portfolio_Value': r['Portfolio_Value'],
+                'Step_Reward': r['Step_Reward'],
+            }
+            for col, w in zip(weight_cols, r['_action']):
+                row[col] = float(w)
+            df_rows.append(row)
+        df = pd.DataFrame(df_rows)
+
+        out_dir = os.path.dirname(csv_path)
+        if out_dir:
+            os.makedirs(out_dir, exist_ok=True)
+        df.to_csv(csv_path, index=False)
 
     return {
         'eval/episode_return': float(np.mean(episode_log_returns)),
@@ -332,6 +412,12 @@ def main():
     AgentClass = getattr(agent_module, class_name)
     agent = AgentClass(obs_dim, action_dim, config, device, offline_buffer=offline_buffer)
 
+    # Observability outputs: per-step trade logs are written to a local
+    # directory (one CSV per validation phase + one per final split).
+    trades_dir = os.path.join("results", "trades", run_name)
+    os.makedirs(trades_dir, exist_ok=True)
+    eval_tickers = metadata.get('tickers')
+
     # Training loop — intermediate evaluation is strictly on the VALIDATION
     # split. The test set is held out until the single final evaluation
     # after training completes, to prevent data leakage / test-set HP tuning.
@@ -339,7 +425,15 @@ def main():
     for step in trange(n_updates, desc=args.base_config):
         metrics = agent.update()
         if step % args.eval_interval == 0 and metrics:
-            eval_metrics = evaluate_agent(agent, val_env, args.n_eval_episodes, device)
+            val_csv = os.path.join(trades_dir, f"val_trades_step_{step}.csv")
+            eval_metrics = evaluate_agent(
+                agent, val_env, args.n_eval_episodes, device,
+                ticker_names=eval_tickers,
+                log_step=step,
+                split_name="val",
+                save_csv=True,
+                csv_path=val_csv,
+            )
             wandb.log({
                 **{f"train/{k}": v for k, v in metrics.items()},
                 **eval_metrics,
@@ -349,9 +443,30 @@ def main():
     # Final chronological backtest on all three splits. Each call runs a
     # single full-sweep episode (evaluate_agent forces n_episodes=1 and
     # passes randomize=False). This is the ONE time we touch the test set.
-    final_train = evaluate_agent(agent, eval_train_env, 1, device)
-    final_val   = evaluate_agent(agent, val_env,        1, device)
-    final_test  = evaluate_agent(agent, test_env,       1, device)
+    final_train = evaluate_agent(
+        agent, eval_train_env, 1, device,
+        ticker_names=eval_tickers,
+        log_step=n_updates,
+        split_name="final_train",
+        save_csv=True,
+        csv_path=os.path.join(trades_dir, "final_train_trades.csv"),
+    )
+    final_val = evaluate_agent(
+        agent, val_env, 1, device,
+        ticker_names=eval_tickers,
+        log_step=n_updates,
+        split_name="final_val",
+        save_csv=True,
+        csv_path=os.path.join(trades_dir, "final_val_trades.csv"),
+    )
+    final_test = evaluate_agent(
+        agent, test_env, 1, device,
+        ticker_names=eval_tickers,
+        log_step=n_updates,
+        split_name="final_test",
+        save_csv=True,
+        csv_path=os.path.join(trades_dir, "final_test_trades.csv"),
+    )
 
     def _rename(metrics: dict, prefix: str) -> dict:
         return {f"{prefix}/{k.split('/')[-1]}": v for k, v in metrics.items()}
