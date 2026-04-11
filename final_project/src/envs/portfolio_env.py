@@ -95,9 +95,19 @@ class PortfolioEnv(gym.Env):
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
-        # Sample start index such that episode fits
-        max_start = self.T - self.episode_length - 1
-        self._start = int(self.np_random.integers(0, max(1, max_start)))
+        # `randomize` controls whether we sample a random episode start or
+        # sweep the dataset chronologically from index 0. Default is True so
+        # existing (offline-buffer) callers get random-start episodes.
+        randomize = True if options is None else options.get("randomize", True)
+        if randomize:
+            # Sample start index such that episode fits; bound safely so we
+            # never pass a negative limit to numpy.
+            max_start = self.T - self.episode_length - 1
+            safe_high = max(1, max_start)
+            self._start = int(self.np_random.integers(0, safe_high))
+        else:
+            # Chronological backtest: start at the first day of the split.
+            self._start = 0
         self._t = 0
         # Equal-weight initialization
         self._weights = np.ones(self.n_assets, dtype=np.float32) / self.n_assets

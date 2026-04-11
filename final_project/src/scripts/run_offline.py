@@ -10,6 +10,7 @@ Usage:
     uv run src/scripts/run_offline.py --base_config=td3_bc --run_group=debug --n_offline_updates=1000 --seed=0
 """
 import argparse
+import copy
 import importlib
 import os
 import random
@@ -116,23 +117,30 @@ def compute_max_drawdown(portfolio_values: list) -> float:
 @torch.no_grad()
 def evaluate_agent(agent, env, n_episodes, device, rf_daily: float = 0.0):
     """
-    Unified evaluation for all offline agents.
+    Chronological-backtest evaluation for offline agents.
 
-    Returns per-split metrics under the ``eval/`` namespace. The caller is
-    responsible for renaming the namespace (e.g. to ``final_train/``) when
-    logging multiple splits side by side.
+    Evaluation is a SINGLE trajectory that sweeps the env's dataset from
+    day 0 to the end of the split. The ``n_episodes`` argument is ignored
+    and forced to 1 — randomized multi-episode evaluation would re-shuffle
+    the backtest start and make the Sharpe / drawdown metrics incomparable
+    across splits.
 
-    Notes on the math:
-      * ``episode_return``  — mean cumulative log-return across episodes.
-      * ``portfolio_value`` — mean final PV across episodes.
-      * ``annual_return``   — geometric annualization of per-episode PV.
-      * ``sharpe_ratio``    — computed once on the concatenated per-step
-        simple-return stream across all eval episodes. Averaging per-episode
-        Sharpes over 63-step windows is biased high and is not a meaningful
-        financial quantity.
-      * ``avg_turnover``    — MEAN per-step L1 turnover (previously a per-episode
-        sum, which hid whether the agent was actually rebalancing).
+    Metrics (under the ``eval/`` namespace):
+      * ``episode_return``      — cumulative log-return over the full sweep.
+      * ``portfolio_value``     — final PV at end of sweep.
+      * ``annual_return``       — geometric annualization of the final PV.
+      * ``annual_volatility``   — std(simple_returns) * sqrt(252).
+      * ``sharpe_ratio``        — annualized, on simple-return stream.
+      * ``sortino_ratio``       — annualized, downside-deviation denominator.
+      * ``calmar_ratio``        — annual_return / |max_drawdown|.
+      * ``max_drawdown``        — worst peak-to-trough drawdown over sweep.
+      * ``win_rate``            — fraction of days with simple return > 0.
+      * ``avg_turnover``        — mean per-step L1 turnover.
     """
+    # Force chronological single-sweep backtest. Any caller-supplied
+    # ``n_episodes`` is intentionally overridden.
+    n_episodes = 1
+
     episode_log_returns = []
     portfolio_values = []
     episode_total_turnover = []
@@ -141,7 +149,10 @@ def evaluate_agent(agent, env, n_episodes, device, rf_daily: float = 0.0):
     n_steps_total = 0
 
     for _ in range(n_episodes):
-        obs, _ = env.reset()
+        # randomize=False ensures the episode starts at day 0 of the split
+        # and runs to env.episode_length — giving a single deterministic
+        # chronological backtest.
+        obs, _ = env.reset(options={"randomize": False})
         done = False
         ep_log_return = 0.0
         ep_turnover = 0.0
@@ -169,9 +180,9 @@ def evaluate_agent(agent, env, n_episodes, device, rf_daily: float = 0.0):
         episode_total_turnover.append(ep_turnover)
         all_max_drawdowns.append(compute_max_drawdown(pv_trajectory))
 
-    # Geometric annualization — no more linear (pv-1)*252/L shortcut.
+    # Geometric annualization of the final PV.
     annual_returns = [
-        pv ** (TRADING_DAYS_PER_YEAR / env.episode_length) - 1.0
+        pv ** (TRADING_DAYS_PER_YEAR / max(env.episode_length, 1)) - 1.0
         for pv in portfolio_values
     ]
     # Per-step mean turnover across ALL steps in the eval run.
@@ -179,18 +190,51 @@ def evaluate_agent(agent, env, n_episodes, device, rf_daily: float = 0.0):
         float(np.sum(episode_total_turnover) / max(n_steps_total, 1))
         if n_steps_total > 0 else 0.0
     )
+
+    simple_arr = np.asarray(all_step_simple_returns, dtype=np.float64)
     # Single Sharpe over the concatenated simple-return stream.
-    sharpe = compute_sharpe_ratio(np.asarray(all_step_simple_returns), rf_daily=rf_daily)
+    sharpe = compute_sharpe_ratio(simple_arr, rf_daily=rf_daily)
+
+    # Annualized volatility: std(daily simple returns) * sqrt(252).
+    if simple_arr.size > 1:
+        annual_vol = float(simple_arr.std(ddof=1) * np.sqrt(TRADING_DAYS_PER_YEAR))
+    else:
+        annual_vol = 0.0
+
+    # Sortino: mean excess return / downside deviation, annualized.
+    # Downside deviation = std of strictly-negative excess returns.
+    excess = simple_arr - rf_daily
+    negative = excess[excess < 0.0]
+    if negative.size > 1:
+        downside_dev = float(negative.std(ddof=1))
+        if downside_dev > 1e-12:
+            sortino = float(excess.mean() / downside_dev * np.sqrt(TRADING_DAYS_PER_YEAR))
+        else:
+            sortino = 0.0
+    else:
+        sortino = 0.0
+
+    # Calmar: annualized return / |max drawdown|. Guard against div-by-zero.
+    mean_annual_return = float(np.mean(annual_returns)) if annual_returns else 0.0
+    mean_max_dd = float(np.mean(all_max_drawdowns)) if all_max_drawdowns else 0.0
+    calmar = mean_annual_return / abs(mean_max_dd) if abs(mean_max_dd) > 1e-12 else 0.0
+
+    # Win rate: fraction of days with strictly positive simple return.
+    win_rate = float(np.mean(simple_arr > 0.0)) if simple_arr.size > 0 else 0.0
 
     return {
         'eval/episode_return': float(np.mean(episode_log_returns)),
         'eval/portfolio_value': float(np.mean(portfolio_values)),
-        'eval/annual_return': float(np.mean(annual_returns)),
+        'eval/annual_return': mean_annual_return,
+        'eval/annual_volatility': annual_vol,
         'eval/avg_turnover': avg_step_turnover,
         'eval/std_episode_return': float(np.std(episode_log_returns, ddof=1))
             if len(episode_log_returns) > 1 else 0.0,
         'eval/sharpe_ratio': sharpe,
-        'eval/max_drawdown': float(np.mean(all_max_drawdowns)),
+        'eval/sortino_ratio': sortino,
+        'eval/calmar_ratio': calmar,
+        'eval/max_drawdown': mean_max_dd,
+        'eval/win_rate': win_rate,
     }
 
 
@@ -229,6 +273,17 @@ def main():
         accept_portfolio_weights=True,
         fred_api_key=os.environ.get("FRED_API_KEY"),
     )
+
+    # Full-horizon evaluation envs. ``train_env`` keeps its 63-day window so
+    # the offline replay buffer still samples random short episodes; the
+    # validation and test envs run their ENTIRE split as one chronological
+    # backtest. ``eval_train_env`` is a shallow copy of train_env so we can
+    # also run a full-train backtest at final eval time without disturbing
+    # the buffer-loading env.
+    val_env.episode_length = metadata['T_val']
+    test_env.episode_length = metadata['T_test']
+    eval_train_env = copy.copy(train_env)
+    eval_train_env.episode_length = metadata['T_train']
 
     obs_dim = train_env.observation_space.shape[0]
     action_dim = train_env.action_space.shape[0]
@@ -277,7 +332,9 @@ def main():
     AgentClass = getattr(agent_module, class_name)
     agent = AgentClass(obs_dim, action_dim, config, device, offline_buffer=offline_buffer)
 
-    # Training loop
+    # Training loop — intermediate evaluation is strictly on the VALIDATION
+    # split. The test set is held out until the single final evaluation
+    # after training completes, to prevent data leakage / test-set HP tuning.
     n_updates = config.n_offline_updates
     for step in trange(n_updates, desc=args.base_config):
         metrics = agent.update()
@@ -289,11 +346,12 @@ def main():
                 "step": step,
             })
 
-    # Final evaluation on all three splits so the comparison is apples-to-apples.
-    n_final = args.n_eval_episodes * 2
-    final_train = evaluate_agent(agent, train_env, n_final, device)
-    final_val   = evaluate_agent(agent, val_env,   n_final, device)
-    final_test  = evaluate_agent(agent, test_env,  n_final, device)
+    # Final chronological backtest on all three splits. Each call runs a
+    # single full-sweep episode (evaluate_agent forces n_episodes=1 and
+    # passes randomize=False). This is the ONE time we touch the test set.
+    final_train = evaluate_agent(agent, eval_train_env, 1, device)
+    final_val   = evaluate_agent(agent, val_env,        1, device)
+    final_test  = evaluate_agent(agent, test_env,       1, device)
 
     def _rename(metrics: dict, prefix: str) -> dict:
         return {f"{prefix}/{k.split('/')[-1]}": v for k, v in metrics.items()}
@@ -311,8 +369,12 @@ def main():
             f"ret={m['eval/episode_return']:+.4f}  "
             f"pv={m['eval/portfolio_value']:.4f}  "
             f"annret={m['eval/annual_return']:+.4f}  "
+            f"annvol={m['eval/annual_volatility']:.4f}  "
             f"sharpe={m['eval/sharpe_ratio']:+.3f}  "
+            f"sortino={m['eval/sortino_ratio']:+.3f}  "
+            f"calmar={m['eval/calmar_ratio']:+.3f}  "
             f"mdd={m['eval/max_drawdown']:.4f}  "
+            f"win={m['eval/win_rate']:.3f}  "
             f"turnover={m['eval/avg_turnover']:.4f}"
         )
 
