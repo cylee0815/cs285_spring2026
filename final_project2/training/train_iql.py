@@ -1,11 +1,61 @@
-"""IQL training loop."""
+"""IQL training loop.
+
+The loop is intentionally thin: it pulls batches from the replay buffer,
+calls ``agent.update``, and forwards the returned losses to whatever
+logger the caller hooks up.
+
+On top of the raw losses, this module also computes a small set of
+**diagnostic** metrics (``q_mean``, ``q_std``, ``advantage_mean``,
+``policy_entropy``) from a second forward pass on the same minibatch.
+This leaves ``algorithms.iql`` untouched — per the project's hard
+constraint that the core update rules must not change — while still
+giving the training script enough signal to populate WandB and the
+milestone-report tearsheet.
+"""
 
 from __future__ import annotations
 
 from typing import Callable
 
+import torch
+
 from algorithms.iql import IQL
 from utils.replay_buffer import ReplayBuffer
+
+
+__all__ = ["train_iql", "compute_diagnostics"]
+
+
+@torch.no_grad()
+def compute_diagnostics(
+    agent: IQL,
+    states: torch.Tensor,
+    actions: torch.Tensor,
+) -> dict[str, float]:
+    """Compute read-only training diagnostics on ``(states, actions)``.
+
+    Returns a dict with the keys:
+
+    * ``q_mean``, ``q_std`` — statistics of Q(s, a) on this batch.
+    * ``advantage_mean``     — mean of (Q(s, a) - V(s)) on this batch.
+    * ``policy_entropy``     — mean entropy H(pi(.|s)) of the softmax
+      portfolio-weight distribution produced by the policy network.
+
+    No gradients are taken and no agent parameters are modified.
+    """
+    q = agent.q_network(states, actions)           # (B, 1)
+    v = agent.value_network(states)                # (B, 1)
+    advantage = q - v                               # (B, 1)
+    probs = agent.policy_network(states)            # (B, N)
+    # Softmax -> valid probability distribution; clamp for log safety.
+    probs_c = probs.clamp(min=1e-12)
+    entropy = -(probs_c * probs_c.log()).sum(dim=-1)  # (B,)
+    return {
+        "q_mean": float(q.mean().item()),
+        "q_std": float(q.std(unbiased=False).item()),
+        "advantage_mean": float(advantage.mean().item()),
+        "policy_entropy": float(entropy.mean().item()),
+    }
 
 
 def train_iql(
@@ -53,6 +103,13 @@ def train_iql(
     for step in range(1, total_steps + 1):
         s, a, r, s_next, done = buffer.sample(batch_size)
         metrics = agent.update(s, a, r, s_next, done)
+
+        # Attach read-only diagnostics for logging. We do this every step
+        # because the cost is small (two forward passes, no backward) and
+        # keeping the metric stream aligned 1-to-1 with `history` makes
+        # downstream aggregation simpler.
+        metrics.update(compute_diagnostics(agent, s, a))
+
         history.append(metrics)
 
         if log_fn is not None:

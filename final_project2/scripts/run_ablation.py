@@ -118,8 +118,18 @@ def run_single_experiment(
     # Build the date-based split — shared across every ablation run.
     states, forward_returns, dates_ns = _load_dataset_with_returns(dataset_path)
     split_idx = compute_split_indices(dates_ns, split_cfg)
+    # Hard assertions on split integrity — identical to scripts/train.py.
+    assert split_idx.train.size > 0 and split_idx.val.size > 0 and split_idx.test.size > 0
+    for name, idx in (("train", split_idx.train),
+                      ("val", split_idx.val),
+                      ("test", split_idx.test)):
+        assert np.all(np.diff(dates_ns[idx]) >= 0), (
+            f"Split '{name}' dates not monotonically non-decreasing."
+        )
     assert int(dates_ns[split_idx.train].max()) < int(dates_ns[split_idx.val].min())
     assert int(dates_ns[split_idx.val].max()) < int(dates_ns[split_idx.test].min())
+    _all = np.concatenate([split_idx.train, split_idx.val, split_idx.test])
+    assert _all.size == np.unique(_all).size, "Split indices overlap."
     print(f"  splits → train={split_idx.train.size}, "
           f"val={split_idx.val.size}, test={split_idx.test.size}")
 
@@ -182,20 +192,26 @@ def run_single_experiment(
         ann_ret = float(m["annual_return"])
         mdd = float(m["max_drawdown"])
         cum_ret = float(m["cumulative_return"])
+        turnover = float(m["turnover"])
 
         print(f"  [val @ step {step:>7d}] sharpe={sharpe:+.4f}  "
-              f"ann_ret={ann_ret:+.4f}  mdd={mdd:.4f}  cum_ret={cum_ret:+.4f}")
+              f"ann_ret={ann_ret:+.4f}  mdd={mdd:.4f}  "
+              f"turnover={turnover:.4f}  cum_ret={cum_ret:+.4f}")
         run_logger.log_validation_metrics(step, {
-            "sharpe": sharpe,
+            "sharpe_ratio": sharpe,
             "annual_return": ann_ret,
             "max_drawdown": mdd,
+            "turnover": turnover,
             "cumulative_return": cum_ret,
         })
+        val_weights = np.asarray(res["weights"])
+        val_dates = dates_ns[split_idx.val][:val_weights.shape[0]].astype(np.int64)
         run_logger.log_validation_curves(
             step=step,
             equity_curve=np.asarray(res["equity_curve"]),
             portfolio_returns=np.asarray(res["portfolio_returns"]),
-            weights=np.asarray(res["weights"]),
+            weights=val_weights,
+            dates=val_dates,
         )
         if sharpe > best_state["sharpe"]:
             best_state["sharpe"] = sharpe
@@ -273,10 +289,14 @@ def run_single_experiment(
     equity_curve = iql_results["equity_curve"]
     cumulative_return = np.cumprod(1 + portfolio_returns) - 1
 
+    test_weights = np.asarray(iql_results["weights"])
+    test_dates = dates_ns[split_idx.test][:test_weights.shape[0]].astype(np.int64)
+
     run_logger.log_curves(equity_curve, cumulative_return)
     run_logger.log_backtest_arrays(
         portfolio_returns=portfolio_returns,
-        weights=iql_results["weights"],
+        weights=test_weights,
+        dates=test_dates,
     )
     run_logger.log_test_artifacts(
         metrics={
@@ -288,7 +308,8 @@ def run_single_experiment(
         },
         equity_curve=np.asarray(equity_curve),
         portfolio_returns=np.asarray(portfolio_returns),
-        weights=np.asarray(iql_results["weights"]),
+        weights=test_weights,
+        dates=test_dates,
     )
     run_logger.log_final_metrics({
         "best_val_sharpe": best_state["sharpe"],

@@ -72,7 +72,31 @@ def _resolve_split_cfg(raw: dict[str, Any] | None) -> SplitConfig:
 
 
 def _check_split_is_valid(split_idx: SplitIndices, dates_ns: np.ndarray) -> None:
-    """Safety assertions that the split is strictly time-ordered and non-overlapping."""
+    """Safety assertions that the split is strictly time-ordered and non-overlapping.
+
+    These are redundant with :func:`compute_split_indices`' internal checks
+    but are re-run here so any future regression in the splitting logic
+    fails loudly at the training entrypoint rather than silently leaking
+    data across the train/val/test boundary.
+    """
+    # 1. Non-empty.
+    assert split_idx.train.size > 0, "Train split is empty."
+    assert split_idx.val.size > 0, "Validation split is empty."
+    assert split_idx.test.size > 0, "Test split is empty."
+
+    # 2. Date monotonicity within each split — the dataset must be
+    #    date-sorted and we must not have shuffled it. This protects
+    #    against anyone introducing a shuffle step upstream.
+    for name, idx in (("train", split_idx.train),
+                      ("val", split_idx.val),
+                      ("test", split_idx.test)):
+        d = dates_ns[idx]
+        assert np.all(np.diff(d) >= 0), (
+            f"Dates for split '{name}' are not monotonically non-decreasing — "
+            f"the dataset must be sorted by date."
+        )
+
+    # 3. Strict time-ordering across splits.
     train_max = int(dates_ns[split_idx.train].max())
     val_min = int(dates_ns[split_idx.val].min())
     val_max = int(dates_ns[split_idx.val].max())
@@ -83,9 +107,8 @@ def _check_split_is_valid(split_idx: SplitIndices, dates_ns: np.ndarray) -> None
     assert val_max < test_min, (
         f"Validation dates overlap test: max val={val_max}, min test={test_min}"
     )
-    # Pairwise index disjointness is already checked inside compute_split_indices,
-    # but reassert here so the training script fails loudly if that invariant
-    # is ever weakened.
+
+    # 4. Pairwise index disjointness.
     all_idx = np.concatenate([split_idx.train, split_idx.val, split_idx.test])
     assert all_idx.size == np.unique(all_idx).size, "Split indices overlap."
 
@@ -275,28 +298,45 @@ def main() -> None:
         ann_ret = float(val_metrics["annual_return"])
         max_dd = float(val_metrics["max_drawdown"])
         cum_ret = float(val_metrics["cumulative_return"])
+        turnover = float(val_metrics["turnover"])
 
         print(f"[val @ step {step:>7d}] sharpe={sharpe:+.4f}  "
-              f"ann_ret={ann_ret:+.4f}  mdd={max_dd:.4f}  cum_ret={cum_ret:+.4f}")
+              f"ann_ret={ann_ret:+.4f}  mdd={max_dd:.4f}  "
+              f"turnover={turnover:.4f}  cum_ret={cum_ret:+.4f}")
 
         run_logger.log_validation_metrics(step, {
-            "sharpe": sharpe,
+            "sharpe_ratio": sharpe,
             "annual_return": ann_ret,
             "max_drawdown": max_dd,
+            "turnover": turnover,
             "cumulative_return": cum_ret,
         })
+
+        # Backtest yields one weight/return row per simulated step.
+        # ``backtest_on_indices`` steps an environment of length
+        # ``len(split_idx.val)`` starting at index 0 and consumes
+        # ``T - 1`` transitions, so the dates align with the first
+        # ``len(weights)`` entries of the validation-indexed date slice.
+        weights_np = np.asarray(res["weights"])
+        T_val = weights_np.shape[0]
+        val_dates = dates_ns[split_idx.val][:T_val].astype(np.int64)
+
         run_logger.log_validation_curves(
             step=step,
             equity_curve=np.asarray(res["equity_curve"]),
             portfolio_returns=np.asarray(res["portfolio_returns"]),
-            weights=np.asarray(res["weights"]),
+            weights=weights_np,
+            dates=val_dates,
         )
+        # Mirror canonical artifacts to results/validation/<run_name>/
+        # so analysis tooling can find them at a stable location.
         global_val_dir = Path(args.results_dir) / "validation" / args.run_name
         global_val_dir.mkdir(parents=True, exist_ok=True)
         np.save(global_val_dir / "equity_curve.npy", np.asarray(res["equity_curve"]))
         np.save(global_val_dir / "portfolio_returns.npy",
                 np.asarray(res["portfolio_returns"]))
-        np.save(global_val_dir / "weights.npy", np.asarray(res["weights"]))
+        np.save(global_val_dir / "weights.npy", weights_np)
+        np.save(global_val_dir / "dates.npy", val_dates)
 
         if sharpe > best_state["sharpe"]:
             best_state["sharpe"] = sharpe
@@ -365,11 +405,16 @@ def main() -> None:
         "turnover": float(test_metrics["turnover"]),
         "cumulative_return": float(test_metrics["cumulative_return"]),
     }
+    test_weights = np.asarray(test_res["weights"])
+    T_test = test_weights.shape[0]
+    test_dates = dates_ns[split_idx.test][:T_test].astype(np.int64)
+
     run_logger.log_test_artifacts(
         metrics=test_metric_dict,
         equity_curve=np.asarray(test_res["equity_curve"]),
         portfolio_returns=np.asarray(test_res["portfolio_returns"]),
-        weights=np.asarray(test_res["weights"]),
+        weights=test_weights,
+        dates=test_dates,
     )
 
     # Also mirror the canonical spec-required layout at results/test/<run_name>/
@@ -386,7 +431,8 @@ def main() -> None:
     np.save(global_test_dir / "equity_curve.npy", np.asarray(test_res["equity_curve"]))
     np.save(global_test_dir / "portfolio_returns.npy",
             np.asarray(test_res["portfolio_returns"]))
-    np.save(global_test_dir / "weights.npy", np.asarray(test_res["weights"]))
+    np.save(global_test_dir / "weights.npy", test_weights)
+    np.save(global_test_dir / "dates.npy", test_dates)
     print(f"Test artifacts mirrored to {global_test_dir}")
 
     run_logger.log_final_metrics({

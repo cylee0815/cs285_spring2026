@@ -137,7 +137,80 @@ def build_dataset_from_env(
     }
     if dates_ns is not None:
         out["dates"] = np.array(dates_list, dtype=np.int64)
+
+    # ------------------------------------------------------------------
+    # Fail-fast integrity checks. Any violation here invalidates offline
+    # RL training, so raise AssertionError rather than a warning. See
+    # `analysis/dataset_diagnostics.py` for the read-only version of the
+    # same checks (run after save, optionally CI-gated).
+    # ------------------------------------------------------------------
+    _assert_dataset_integrity(out)
     return out
+
+
+def _assert_dataset_integrity(ds: Dataset) -> None:
+    """Hard invariants for a freshly rolled-out dataset.
+
+    Checks (all must hold):
+      1. shapes match: states, actions, rewards, next_states, dones have
+         the same first-axis length; states/next_states have the same
+         feature dimension.
+      2. no NaN / Inf anywhere in states, next_states, actions, rewards.
+      3. next_state continuity: for every non-terminal transition t,
+         ``next_states[t] == states[t+1]``.
+      4. only the final transition may be terminal (single-episode rollout),
+         and that last transition IS terminal.
+      5. if dates are present: strictly monotonically increasing.
+    """
+    N = len(ds["states"])
+    for key in ("states", "actions", "rewards", "next_states", "dones"):
+        if len(ds[key]) != N:
+            raise AssertionError(
+                f"Dataset shape mismatch: len({key})={len(ds[key])} vs "
+                f"len(states)={N}."
+            )
+    if ds["states"].shape[1] != ds["next_states"].shape[1]:
+        raise AssertionError(
+            f"state_dim mismatch: states={ds['states'].shape[1]}, "
+            f"next_states={ds['next_states'].shape[1]}."
+        )
+    for key in ("states", "next_states", "actions", "rewards"):
+        arr = ds[key]
+        if not np.isfinite(arr).all():
+            n_bad = int(np.size(arr) - np.isfinite(arr).sum())
+            raise AssertionError(
+                f"Dataset contains {n_bad} non-finite entries in '{key}'."
+            )
+    # Continuity: next_states[t] must equal states[t+1] wherever t is not
+    # an episode boundary. A strict per-element equality is fine here
+    # because both arrays are copied from the same env-produced buffer.
+    dones = ds["dones"]
+    if N >= 2:
+        non_terminal = ~dones[:-1]
+        if non_terminal.any():
+            lhs = ds["next_states"][:-1][non_terminal]
+            rhs = ds["states"][1:][non_terminal]
+            if not np.array_equal(lhs, rhs):
+                raise AssertionError(
+                    "next_states[t] != states[t+1] for at least one "
+                    "non-terminal transition — episode continuity broken."
+                )
+    if not bool(dones[-1]):
+        raise AssertionError(
+            "Last transition is not done=True. build_dataset_from_env "
+            "rolls a single episode to completion and must terminate."
+        )
+    if N >= 2 and bool(dones[:-1].any()):
+        raise AssertionError(
+            "Unexpected intermediate done=True transition; builder emits a "
+            "single episode."
+        )
+    if "dates" in ds:
+        diffs = np.diff(ds["dates"].astype(np.int64))
+        if not bool((diffs > 0).all()):
+            raise AssertionError(
+                "Dataset 'dates' are not strictly monotonically increasing."
+            )
 
 
 # ---------------------------------------------------------------------------
