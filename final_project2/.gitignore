@@ -1,0 +1,41 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# ---- Virtual environments ----
+.venv/
+venv/
+env/.venv/
+
+# ---- uv ----
+uv.lock
+
+# ---- Editors ----
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# ---- Project artifacts ----
+# Raw / cached market data (re-downloadable via scripts/download_data.py).
+.cache/
+# Training outputs: checkpoints, tear-sheets, metrics.
+results/
+# WandB local cache.
+wandb/
+# Offline RL datasets (large; regeneratable).
+datasets/
+*.parquet
+*.h5
+*.hdf5
+*.npz
+
+# ---- Jupyter ----
+.ipynb_checkpoints/

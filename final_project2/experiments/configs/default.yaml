@@ -1,0 +1,130 @@
+# ============================================================================
+# Default experiment configuration for Portfolio IQL.
+#
+# All fields defined here are REQUIRED — downstream dataclasses in
+# `utils/config.py` do not supply defaults. Experiment configs that override
+# this file should copy-and-override rather than rely on implicit defaults.
+#
+# CLI overrides use dotted keys, e.g.:
+#     uv run python -m training.train_iql \
+#         --config experiments/configs/default.yaml \
+#         iql.expectile_tau=0.85 train.seed=7
+# ============================================================================
+
+# ---------------------------------------------------------------------------
+# Data: asset universe, date ranges, walk-forward split boundaries.
+# ---------------------------------------------------------------------------
+data:
+  # Orthogonal 8-asset ETF basket: equity / EM / duration / credit /
+  # commodity / gold / USD / cash proxy. Data begins 2008-01-01 because
+  # UUP (Feb 2007) and DBC (Feb 2006) have the most recent inception.
+  tickers: [SPY, EEM, TLT, HYG, DBC, GLD, UUP, SHY]
+  start: "2008-01-01"
+  end: "2026-03-31"
+  # Walk-forward split (inclusive on train_end / val_end):
+  #   train: 2008-01-01 → 2019-12-31  (~12y, spans GFC recovery + expansion)
+  #   val:   2020-01-01 → 2021-12-31  (COVID crash + recovery; stress test)
+  #   test:  2022-01-01 → 2026-03-31  (rate hikes + 2024+ regime)
+  train_end: "2019-12-31"
+  val_end: "2021-12-31"
+  cache_dir: ".cache/prices"
+  frequency: daily
+
+# ---------------------------------------------------------------------------
+# Feature engineering: all features are CAUSAL (use info ≤ t only). Rolling
+# statistics must respect walk-forward boundaries.
+# ---------------------------------------------------------------------------
+features:
+  lookback_returns: 20        # k in past-k log returns
+  volatility_window: 20       # rolling std window
+  ma_windows: [5, 20, 60]     # moving-average windows (as price ratios)
+  include_momentum: true      # 1m/3m/6m return momentum signals
+  momentum_windows: [21, 63, 126]   # ~1m / 3m / 6m in trading days
+  normalize: true             # z-score normalize using train-window stats
+
+# ---------------------------------------------------------------------------
+# Environment / MDP parameters.
+# ---------------------------------------------------------------------------
+env:
+  episode_length: 252         # ~1 trading year per episode during dataset gen
+  transaction_cost: 0.001     # λ on ||Δw||_1, 10 bps per unit L1 turnover
+  max_weight: 0.40            # box constraint per asset (future extension)
+  # Reward: "log_return" (primary) or "dsr" (differential Sharpe ratio).
+  # Switching reward_type changes the observation dim (DSR appends running
+  # (A, B, sqrt(B-A^2)) state), so the offline dataset must be rebuilt.
+  reward_type: log_return
+  dsr_eta: 0.01               # adaptation rate for differential Sharpe
+  dsr_warmup: 20              # steps before emitting nonzero DSR reward
+
+# ---------------------------------------------------------------------------
+# Offline dataset generation: which behavior policies to roll out and how
+# many episodes of each. More diversity = better IQL policy coverage.
+# ---------------------------------------------------------------------------
+behavior:
+  policies: [dirichlet, equal_weight, momentum, risk_parity]
+  episodes_per_policy: 200
+  dirichlet_alpha: 1.0        # symmetric Dirichlet concentration (1.0 = uniform over simplex)
+  momentum_lookback: 60
+  risk_parity_lookback: 60
+
+# ---------------------------------------------------------------------------
+# Network architectures.
+# ---------------------------------------------------------------------------
+model:
+  hidden_sizes: [256, 256]
+  activation: relu
+  # Policy head: "dirichlet" (default, exact log_prob for AWBC) or
+  # "softmax_mse" (deterministic softmax + MSE AWBC surrogate).
+  policy_head: dirichlet
+  # 2-head Q ensemble with min() target is the IQL-standard default;
+  # setting to 1 reproduces the plain-vanilla spec.
+  q_ensemble_size: 2
+  # Minimum Dirichlet concentration floor (α ≥ 1 + eps) for stable gradients.
+  dirichlet_alpha_floor: 1.0
+
+# ---------------------------------------------------------------------------
+# IQL hyperparameters.
+# ---------------------------------------------------------------------------
+iql:
+  expectile_tau: 0.80         # expectile level for V regression (0.7–0.9)
+  beta: 3.0                   # advantage temperature in exp(β·A)
+  discount: 0.99              # γ
+  target_polyak: 0.005        # τ in target_Q ← (1-τ)·target_Q + τ·Q
+  adv_clip: 100.0             # max exp(βA) weight (prevents runaway weights)
+
+# ---------------------------------------------------------------------------
+# Training loop.
+# ---------------------------------------------------------------------------
+train:
+  steps: 500000
+  batch_size: 256
+  lr_actor: 3.0e-4
+  lr_critic: 3.0e-4
+  lr_value: 3.0e-4
+  grad_clip: 1.0
+  eval_interval: 10000        # steps between validation backtests
+  log_interval: 1000
+  save_interval: 50000
+  device: auto                # "auto" | "cpu" | "cuda" | "mps"
+  seed: 0
+  deterministic_torch: true
+
+# ---------------------------------------------------------------------------
+# Evaluation / backtesting.
+# ---------------------------------------------------------------------------
+eval:
+  metrics: [annual_return, sharpe, max_drawdown, turnover, volatility, calmar, win_rate]
+  baselines: [equal_weight, mean_variance, risk_parity, momentum]
+  rolling_window_days: 252
+  risk_free_rate: 0.0
+
+# ---------------------------------------------------------------------------
+# Experiment tracking.
+# ---------------------------------------------------------------------------
+logging:
+  wandb_project: portfolio-iql
+  wandb_entity: null          # null → wandb uses default entity
+  wandb_mode: disabled        # "online" | "offline" | "disabled"
+  run_name: null              # null → auto-generated from config hash
+  results_dir: results
+  console_level: info         # "debug" | "info" | "warning" | "error"

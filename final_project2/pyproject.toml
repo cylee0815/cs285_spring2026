@@ -1,0 +1,66 @@
+[project]
+name = "portfolio-iql"
+version = "0.1.0"
+description = "Research-grade offline reinforcement learning for portfolio allocation with Implicit Q-Learning."
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+authors = [{ name = "Thomas Lee" }]
+license = { text = "MIT" }
+
+# Core runtime dependencies. Pinned to modern stable releases so
+# reproducibility is preserved across machines and CI environments.
+dependencies = [
+    # numpy 2.x breaks the torch 2.2.2 C-API; pin to the 1.x line that
+    # torch was built against to silence the `_ARRAY_API not found` warning.
+    "numpy>=1.26,<2.0",
+    "pandas>=2.2",
+    "scipy>=1.13",
+    # torch 2.2.x was the last release with macOS x86_64 wheels; cap for
+    # cross-platform dev on Intel Macs. Linux / Apple Silicon still get a
+    # reasonably modern release.
+    "torch>=2.2,<2.3",
+    "pyyaml>=6.0",
+    "pyarrow>=15.0",
+    "yfinance>=0.2.40",
+    "gymnasium>=0.29",
+    "wandb>=0.17",
+    "rich>=13.7",
+    "tqdm>=4.66",
+    "matplotlib>=3.8",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.6.0",
+]
+
+# The repository uses a flat module layout (data/, env/, features/, ...)
+# mirroring CLAUDE.md. It is NOT published as a Python package; uv manages
+# the virtualenv only, and imports resolve via the project root (configured
+# in `conftest.py`). Tell uv not to try to build the project.
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+ignore = [
+    "E501",  # line length handled by formatter
+    "B008",  # allow function calls in default args (used for dataclass factories)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B"]
