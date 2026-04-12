@@ -1,0 +1,8 @@
+Collecting 50000 offline transitions...
+Collected 50000 transitions in replay buffer.
+cql_vanilla: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50000/50000 [11:18<00:00, 73.74it/s]
+
+=== Final evaluation ===
+Train : ret=+0.0008  pv=1.0014  annret=+0.0123  sharpe=+0.084  mdd=0.0326  turnover=0.0000
+Val   : ret=+0.0179  pv=1.0181  annret=+0.0752  sharpe=+1.301  mdd=0.0189  turnover=0.0008
+Test  : ret=+0.0425  pv=1.0436  annret=+0.1879  sharpe=+2.498  mdd=0.0236  turnover=0.0000

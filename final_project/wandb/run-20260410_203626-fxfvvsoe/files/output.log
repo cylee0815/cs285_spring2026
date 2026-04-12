@@ -1,0 +1,8 @@
+Collecting 50000 offline transitions...
+Collected 50000 transitions in replay buffer.
+fisher_bc: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50000/50000 [01:16<00:00, 651.28it/s]
+
+=== Final evaluation ===
+Train : ret=+0.0220  pv=1.0229  annret=+0.1028  sharpe=+1.428  mdd=0.0260  turnover=0.0417
+Val   : ret=+0.0148  pv=1.0150  annret=+0.0627  sharpe=+1.003  mdd=0.0214  turnover=0.0419
+Test  : ret=+0.0243  pv=1.0248  annret=+0.1054  sharpe=+1.272  mdd=0.0292  turnover=0.0423

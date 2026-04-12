@@ -1,0 +1,14 @@
+
+Evaluating equal_weight...
+  Weights: [0.125 0.125 0.125 0.125 0.125 0.125 0.125 0.125]
+  Val:  return=0.0212, PV=1.0216
+  Test: return=0.0147, PV=1.0151
+
+Evaluating inverse_volatility...
+  Val:  return=0.0012, PV=1.0012
+  Test: return=0.0142, PV=1.0145
+
+Evaluating markowitz_mvo...
+  Weights: [0.125 0.125 0.125 0.125 0.125 0.125 0.125 0.125]
+  Val:  return=0.0222, PV=1.0225
+  Test: return=0.0121, PV=1.0126

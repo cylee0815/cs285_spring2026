@@ -173,3 +173,67 @@ class TestDeviceCompatibility:
         metrics = agent.update(s, a, r, s_next, done)
         for v in metrics.values():
             assert np.isfinite(v)
+
+
+# ---------------------------------------------------------------------------
+# TestGPUCompatibility
+# ---------------------------------------------------------------------------
+
+
+class TestGPUCompatibility:
+    """GPU-specific tests: full training step, large batch, device migration."""
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+    def test_cuda_training_step(self, dataset_path: str) -> None:
+        """Move model to CUDA, run one training step, verify no device mismatch."""
+        agent = _make_agent(device="cpu")
+        agent.to("cuda")
+        buf = ReplayBuffer(dataset_path, device="cuda")
+        s, a, r, s_next, done = buf.sample(32)
+        metrics = agent.update(s, a, r, s_next, done)
+        for v in metrics.values():
+            assert np.isfinite(v), f"Non-finite loss on CUDA: {v}"
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+    def test_cuda_get_action(self, dataset_path: str) -> None:
+        """Inference on CUDA produces valid portfolio weights."""
+        agent = _make_agent(device="cuda")
+        buf = ReplayBuffer(dataset_path, device="cuda")
+        s, *_ = buf.sample(1)
+        action = agent.get_action(s.squeeze(0))
+        assert action.device.type == "cuda"
+        assert action.shape == (ACTION_DIM,)
+        action_cpu = action.cpu()
+        assert torch.all(action_cpu >= 0)
+        assert torch.isclose(action_cpu.sum(), torch.tensor(1.0), atol=1e-5)
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+    def test_large_batch_cuda(self, dataset_path: str) -> None:
+        """batch_size=2048 runs without OOM or device mismatch on CUDA.
+
+        Note: the synthetic dataset has only 200 transitions, so indices
+        will repeat — that's fine for a device-compatibility smoke test.
+        """
+        agent = _make_agent(device="cuda")
+        buf = ReplayBuffer(dataset_path, device="cuda")
+        s, a, r, s_next, done = buf.sample(2048)
+        metrics = agent.update(s, a, r, s_next, done)
+        for v in metrics.values():
+            assert np.isfinite(v), f"Non-finite loss with batch=2048: {v}"
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+    def test_sample_device_override(self, dataset_path: str) -> None:
+        """ReplayBuffer.sample(device=...) overrides the buffer default."""
+        buf = ReplayBuffer(dataset_path, device="cpu")
+        s, a, r, s_next, done = buf.sample(16, device="cuda")
+        assert s.device.type == "cuda"
+        assert a.device.type == "cuda"
+        assert r.device.type == "cuda"
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+    def test_cpu_state_to_cuda_agent(self, dataset_path: str) -> None:
+        """get_action auto-moves a CPU state tensor to the agent's CUDA device."""
+        agent = _make_agent(device="cuda")
+        state_cpu = torch.randn(STATE_DIM)  # CPU tensor
+        action = agent.get_action(state_cpu)
+        assert action.device.type == "cuda"

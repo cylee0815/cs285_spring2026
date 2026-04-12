@@ -1,0 +1,19 @@
+# Experiment grid for ablation studies.
+#
+# Used by scripts/run_ablation.py to sweep over hyperparameters.
+
+base:
+  dataset: datasets/dirichlet_dataset.npz
+  batch_size: 256
+  gamma: 0.99
+  lr: 3.0e-4
+  polyak: 0.005
+  steps: 100000
+  seed: 42
+  device: auto
+  log_interval: 1000
+
+grid:
+  expectile: [0.6, 0.7, 0.8]
+  beta: [1.0, 3.0, 10.0]
+  transaction_cost: [0, 0.001, 0.005]

@@ -1,0 +1,18 @@
+# Default IQL training configuration.
+#
+# Usage:
+#   python scripts/train.py --config configs/iql_default.yaml
+#   python scripts/train.py --config configs/iql_default.yaml --expectile 0.8
+
+dataset: datasets/dirichlet_dataset.npz
+batch_size: 256
+gamma: 0.99
+expectile: 0.7
+beta: 3.0
+lr: 3.0e-4
+polyak: 0.005
+steps: 100000
+seed: 42
+device: auto
+log_interval: 1000
+transaction_cost: 0.001

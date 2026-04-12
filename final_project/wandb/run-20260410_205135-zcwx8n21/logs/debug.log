@@ -1,0 +1,24 @@
+2026-04-10 20:51:35,903 INFO    MainThread:82913 [wandb_setup.py:_flush():81] Current SDK version is 0.25.1
+2026-04-10 20:51:35,904 INFO    MainThread:82913 [wandb_setup.py:_flush():81] Configure stats pid to 82913
+2026-04-10 20:51:35,904 INFO    MainThread:82913 [wandb_setup.py:_flush():81] Loading settings from environment variables
+2026-04-10 20:51:35,904 INFO    MainThread:82913 [wandb_init.py:setup_run_log_directory():717] Logging user logs to /jet/home/tlee8/cs285_spring2026/final_project/wandb/run-20260410_205135-zcwx8n21/logs/debug.log
+2026-04-10 20:51:35,904 INFO    MainThread:82913 [wandb_init.py:setup_run_log_directory():718] Logging internal logs to /jet/home/tlee8/cs285_spring2026/final_project/wandb/run-20260410_205135-zcwx8n21/logs/debug-internal.log
+2026-04-10 20:51:35,904 INFO    MainThread:82913 [wandb_init.py:init():844] calling init triggers
+2026-04-10 20:51:35,904 INFO    MainThread:82913 [wandb_init.py:init():849] wandb.init called with sweep_config: {}
+config: {'batch_size': 256, 'cql_alpha': 1.0, 'cql_n_samples': 10, 'gamma': 0.99, 'hidden_dim': 256, 'lr': 0.0003, 'max_grad_norm': 1.0, 'n_offline_updates': 50000, 'offline_buffer_size': 200000, 'polyak_tau': 0.005, 'regime_dim': 64, 'regime_window': 20, 'base_config': 'cql_vanilla', 'run_group': 'milestone_fixed', 'seed': 0, 'tickers': ['SPY', 'EEM', 'TLT', 'HYG', 'DBC', 'GLD', 'UUP', 'SHY'], 'use_mutual_funds': False, 'start_date': '2008-01-01', 'train_end': '2020-12-31', 'val_start': '2021-01-04', 'val_end': '2021-12-31', 'test_start': '2022-01-03', 'end_date': '2026-03-31', 'episode_length': 63, 'transaction_cost': 0.001, 'reward_type': 'log_return', 'use_macro': False, 'use_sentiment': False, 'use_alpaca_embeddings': False, 'offline_data_steps': 50000, 'eval_interval': 5000, 'n_eval_episodes': 5, 'n_step': 1, 'n_assets': 8, 'n_macro_features': 0, 'n_sentiment_features': 0, 'obs_dim': 56, 'train_start': '2008-01-02', 'test_end': '2026-03-30', 'T_train': 3274, 'T_val': 252, 'T_test': 1063, '_wandb': {}}
+2026-04-10 20:51:35,904 INFO    MainThread:82913 [wandb_init.py:init():892] starting backend
+2026-04-10 20:51:36,128 INFO    MainThread:82913 [wandb_init.py:init():895] sending inform_init request
+2026-04-10 20:51:36,131 INFO    MainThread:82913 [wandb_init.py:init():903] backend started and connected
+2026-04-10 20:51:36,132 INFO    MainThread:82913 [wandb_init.py:init():973] updated telemetry
+2026-04-10 20:51:36,137 INFO    MainThread:82913 [wandb_init.py:init():997] communicating run to backend with 90.0 second timeout
+2026-04-10 20:51:36,635 INFO    MainThread:82913 [wandb_init.py:init():1042] starting run threads in backend
+2026-04-10 20:51:36,694 INFO    MainThread:82913 [wandb_run.py:_console_start():2524] atexit reg
+2026-04-10 20:51:36,695 INFO    MainThread:82913 [wandb_run.py:_redirect():2373] redirect: wrap_raw
+2026-04-10 20:51:36,695 INFO    MainThread:82913 [wandb_run.py:_redirect():2442] Wrapping output streams.
+2026-04-10 20:51:36,695 INFO    MainThread:82913 [wandb_run.py:_redirect():2465] Redirects installed.
+2026-04-10 20:51:36,697 INFO    MainThread:82913 [wandb_init.py:init():1082] run started, returning control to user process
+2026-04-10 21:02:57,818 INFO    MainThread:82913 [wandb_run.py:_finish():2291] finishing run tholee-university-of-california-berkeley/cs285-portfolio-rl/zcwx8n21
+2026-04-10 21:02:57,818 INFO    MainThread:82913 [wandb_run.py:_atexit_cleanup():2490] got exitcode: 0
+2026-04-10 21:02:57,819 INFO    MainThread:82913 [wandb_run.py:_restore():2472] restore
+2026-04-10 21:02:57,819 INFO    MainThread:82913 [wandb_run.py:_restore():2478] restore done
+2026-04-10 21:02:58,413 INFO    MainThread:82913 [wandb_run.py:_footer_sync_info():3868] logging synced files

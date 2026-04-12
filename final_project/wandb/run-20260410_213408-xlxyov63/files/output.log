@@ -1,0 +1,8 @@
+Collecting 50000 offline transitions...
+Collected 50000 transitions in replay buffer.
+iql: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000000/1000000 [1:15:04<00:00, 222.00it/s]
+
+=== Final evaluation ===
+Train : ret=-0.6535  pv=0.5202  annret=-0.0491  annvol=0.0967  sharpe=-0.472  sortino=-0.558  calmar=-0.083  mdd=0.5931  win=0.502  turnover=0.3245
+Val   : ret=+0.0146  pv=1.0147  annret=+0.0147  annvol=0.0626  sharpe=+0.264  sortino=+0.400  calmar=+0.402  mdd=0.0365  win=0.516  turnover=0.3010
+Test  : ret=-0.2497  pv=0.7790  annret=-0.0575  annvol=0.0833  sharpe=-0.669  sortino=-0.905  calmar=-0.205  mdd=0.2803  win=0.500  turnover=0.4670

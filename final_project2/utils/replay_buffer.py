@@ -28,21 +28,32 @@ class ReplayBuffer:
         self.size = len(self.states)
         self.device = device
 
-    def sample(self, batch_size: int) -> tuple[
-        torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor
-    ]:
+    def sample(
+        self,
+        batch_size: int,
+        device: str | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """Sample a random minibatch.
+
+        Parameters
+        ----------
+        batch_size:
+            Number of transitions to sample.
+        device:
+            If provided, returned tensors are placed on this device instead
+            of the buffer's default device.
 
         Returns
         -------
         states, actions, rewards, next_states, dones
-            Tensors on ``self.device``. Rewards and dones have shape ``(B, 1)``.
+            Tensors on the target device. Rewards and dones have shape ``(B, 1)``.
         """
+        dev = device if device is not None else self.device
         idx = np.random.randint(0, self.size, size=batch_size)
         return (
-            torch.tensor(self.states[idx], device=self.device),
-            torch.tensor(self.actions[idx], device=self.device),
-            torch.tensor(self.rewards[idx], device=self.device).unsqueeze(-1),
-            torch.tensor(self.next_states[idx], device=self.device),
-            torch.tensor(self.dones[idx], device=self.device).unsqueeze(-1),
+            torch.tensor(self.states[idx], device=dev),
+            torch.tensor(self.actions[idx], device=dev),
+            torch.tensor(self.rewards[idx], device=dev).unsqueeze(-1),
+            torch.tensor(self.next_states[idx], device=dev),
+            torch.tensor(self.dones[idx], device=dev).unsqueeze(-1),
         )

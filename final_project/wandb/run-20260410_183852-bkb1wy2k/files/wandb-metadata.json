@@ -1,0 +1,97 @@
+{
+  "os": "Linux-4.18.0-553.36.1.el8_10.x86_64-x86_64-with-glibc2.28",
+  "python": "CPython 3.12.7",
+  "startedAt": "2026-04-10T22:38:52.866413Z",
+  "args": [
+    "--run_group=milestone",
+    "--base_config=iql",
+    "--n_offline_updates=50000",
+    "--seed=0"
+  ],
+  "program": "/jet/home/tlee8/cs285_spring2026/final_project/src/scripts/run_offline.py",
+  "codePath": "final_project/src/scripts/run_offline.py",
+  "codePathLocal": "src/scripts/run_offline.py",
+  "git": {
+    "remote": "https://github.com/cylee0815/cs285_spring2026",
+    "commit": "3b71bfbea55d1a77b26ea1012cc6628bc9fed2e5"
+  },
+  "email": "tholee@berkeley.edu",
+  "root": "/jet/home/tlee8/cs285_spring2026/final_project",
+  "host": "w001.ib.bridges2.psc.edu",
+  "executable": "/jet/home/tlee8/cs285_spring2026/final_project/.venv/bin/python3",
+  "cpu_count": 104,
+  "cpu_count_logical": 104,
+  "gpu": "NVIDIA H100 80GB HBM3",
+  "gpu_count": 1,
+  "disk": {
+    "/": {
+      "total": "315396816896",
+      "used": "200454766592"
+    }
+  },
+  "memory": {
+    "total": "2164156469248"
+  },
+  "gpu_nvidia": [
+    {
+      "name": "NVIDIA H100 80GB HBM3",
+      "memoryTotal": "85520809984",
+      "cudaCores": 16896,
+      "architecture": "Hopper",
+      "uuid": "GPU-1d0e2107-a66a-38ee-8244-3aa1d54c7329"
+    }
+  ],
+  "cudaVersion": "12.6",
+  "slurm": {
+    "cluster_name": "bridges2",
+    "conf": "/var/spool/slurm/d/conf-cache/slurm.conf",
+    "cpus_on_node": "12",
+    "export_env": "ALL",
+    "gpus_on_node": "1",
+    "gtids": "0",
+    "job_account": "mth250011p",
+    "job_cpus_per_node": "12",
+    "job_cpus_per_node_pack_group_0": "12",
+    "job_gid": "27261",
+    "job_gpus": "0",
+    "job_id": "38766767",
+    "job_name": "Interact",
+    "job_nodelist": "w001",
+    "job_num_nodes": "1",
+    "job_partition": "GPU-shared",
+    "job_qos": "gpuinteract",
+    "job_uid": "101643",
+    "job_user": "tlee8",
+    "jobid": "38766767",
+    "launch_node_ipaddr": "10.8.11.30",
+    "localid": "0",
+    "mpi_type": "none",
+    "nnodes": "1",
+    "node_aliases": "(null)",
+    "nodeid": "0",
+    "nodelist": "w001",
+    "prio_process": "0",
+    "procid": "0",
+    "pty_port": "46095",
+    "pty_win_col": "204",
+    "pty_win_row": "63",
+    "script_context": "prolog_task",
+    "srun_comm_host": "10.8.11.30",
+    "srun_comm_port": "34741",
+    "step_id": "4294967290",
+    "step_launcher_port": "34741",
+    "step_nodelist": "w001",
+    "step_num_nodes": "1",
+    "step_num_tasks": "1",
+    "step_tasks_per_node": "1",
+    "stepid": "4294967290",
+    "submit_dir": "/jet/home/tlee8",
+    "submit_host": "br012.ib.bridges2.psc.edu",
+    "task_pid": "82036",
+    "tasks_per_node": "12",
+    "topology_addr": "w001",
+    "topology_addr_pattern": "node",
+    "working_cluster": "bridges2:br003:6810:9728:109"
+  },
+  "writerId": "ymilvfckh6ifh3rfnlpagqf6cbyjqkpj"
+}

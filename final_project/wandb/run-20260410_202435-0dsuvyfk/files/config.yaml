@@ -1,0 +1,198 @@
+_wandb:
+    value:
+        cli_version: 0.25.1
+        e:
+            ebb0vkxhjk00bsj9zuwwge1hxt0ykjk8:
+                args:
+                    - --run_group=milestone_fixed
+                    - --base_config=iql
+                    - --n_offline_updates=50000
+                    - --seed=0
+                codePath: final_project/src/scripts/run_offline.py
+                codePathLocal: src/scripts/run_offline.py
+                cpu_count: 104
+                cpu_count_logical: 104
+                cudaVersion: "12.6"
+                disk:
+                    /:
+                        total: "315396816896"
+                        used: "82722246656"
+                email: tholee@berkeley.edu
+                executable: /jet/home/tlee8/cs285_spring2026/final_project/.venv/bin/python3
+                git:
+                    commit: f36c5db4d2ae5581e1cc12f540bf43154227a12c
+                    remote: https://github.com/cylee0815/cs285_spring2026
+                gpu: NVIDIA H100 80GB HBM3
+                gpu_count: 1
+                gpu_nvidia:
+                    - architecture: Hopper
+                      cudaCores: 16896
+                      memoryTotal: "85520809984"
+                      name: NVIDIA H100 80GB HBM3
+                      uuid: GPU-c3d5c3f1-f271-8686-399c-0b8b38d935f9
+                host: w005.ib.bridges2.psc.edu
+                memory:
+                    total: "2164156518400"
+                os: Linux-4.18.0-553.36.1.el8_10.x86_64-x86_64-with-glibc2.28
+                program: /jet/home/tlee8/cs285_spring2026/final_project/src/scripts/run_offline.py
+                python: CPython 3.12.7
+                root: /jet/home/tlee8/cs285_spring2026/final_project
+                slurm:
+                    cluster_name: bridges2
+                    conf: /var/spool/slurm/d/conf-cache/slurm.conf
+                    cpus_on_node: "12"
+                    export_env: ALL
+                    gpus_on_node: "1"
+                    gtids: "0"
+                    job_account: mth250011p
+                    job_cpus_per_node: "12"
+                    job_cpus_per_node_pack_group_0: "12"
+                    job_gid: "27261"
+                    job_gpus: "2"
+                    job_id: "38769955"
+                    job_name: Interact
+                    job_nodelist: w005
+                    job_num_nodes: "1"
+                    job_partition: GPU-shared
+                    job_qos: gpuinteract
+                    job_uid: "101643"
+                    job_user: tlee8
+                    jobid: "38769955"
+                    launch_node_ipaddr: 10.8.11.32
+                    localid: "0"
+                    mpi_type: none
+                    nnodes: "1"
+                    node_aliases: (null)
+                    nodeid: "0"
+                    nodelist: w005
+                    prio_process: "0"
+                    procid: "0"
+                    pty_port: "39027"
+                    pty_win_col: "204"
+                    pty_win_row: "63"
+                    script_context: prolog_task
+                    srun_comm_host: 10.8.11.32
+                    srun_comm_port: "41803"
+                    step_id: "4294967290"
+                    step_launcher_port: "41803"
+                    step_nodelist: w005
+                    step_num_nodes: "1"
+                    step_num_tasks: "1"
+                    step_tasks_per_node: "1"
+                    stepid: "4294967290"
+                    submit_dir: /jet/home/tlee8/cs285_spring2026
+                    submit_host: br014.ib.bridges2.psc.edu
+                    task_pid: "77524"
+                    tasks_per_node: "12"
+                    topology_addr: w005
+                    topology_addr_pattern: node
+                    working_cluster: bridges2:br003:6810:9728:109
+                startedAt: "2026-04-11T00:24:35.191427Z"
+                writerId: ebb0vkxhjk00bsj9zuwwge1hxt0ykjk8
+        m: []
+        python_version: 3.12.7
+        t:
+            "1":
+                - 1
+            "2":
+                - 1
+            "3":
+                - 2
+                - 13
+                - 16
+            "4": 3.12.7
+            "5": 0.25.1
+            "12": 0.25.1
+            "13": linux-x86_64
+T_test:
+    value: 1063
+T_train:
+    value: 3274
+T_val:
+    value: 252
+base_config:
+    value: iql
+batch_size:
+    value: 256
+end_date:
+    value: "2026-03-31"
+episode_length:
+    value: 63
+eval_interval:
+    value: 5000
+gamma:
+    value: 0.99
+hidden_dim:
+    value: 256
+iql_beta:
+    value: 3
+iql_max_weight:
+    value: 100
+iql_tau:
+    value: 0.7
+lr:
+    value: 0.0003
+max_grad_norm:
+    value: 1
+n_assets:
+    value: 8
+n_eval_episodes:
+    value: 5
+n_layers:
+    value: 2
+n_macro_features:
+    value: 0
+n_offline_updates:
+    value: 50000
+n_sentiment_features:
+    value: 0
+n_step:
+    value: 1
+obs_dim:
+    value: 56
+offline_buffer_size:
+    value: 200000
+offline_data_steps:
+    value: 50000
+polyak_tau:
+    value: 0.005
+reward_type:
+    value: log_return
+run_group:
+    value: milestone_fixed
+seed:
+    value: 0
+start_date:
+    value: "2008-01-01"
+test_end:
+    value: "2026-03-30"
+test_start:
+    value: "2022-01-03"
+tickers:
+    value:
+        - SPY
+        - EEM
+        - TLT
+        - HYG
+        - DBC
+        - GLD
+        - UUP
+        - SHY
+train_end:
+    value: "2020-12-31"
+train_start:
+    value: "2008-01-02"
+transaction_cost:
+    value: 0.001
+use_alpaca_embeddings:
+    value: false
+use_macro:
+    value: false
+use_mutual_funds:
+    value: false
+use_sentiment:
+    value: false
+val_end:
+    value: "2021-12-31"
+val_start:
+    value: "2021-01-04"

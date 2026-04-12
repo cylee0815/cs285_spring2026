@@ -1,0 +1,24 @@
+2026-04-10 20:22:46,092 INFO    MainThread:78585 [wandb_setup.py:_flush():81] Current SDK version is 0.25.1
+2026-04-10 20:22:46,094 INFO    MainThread:78585 [wandb_setup.py:_flush():81] Configure stats pid to 78585
+2026-04-10 20:22:46,094 INFO    MainThread:78585 [wandb_setup.py:_flush():81] Loading settings from environment variables
+2026-04-10 20:22:46,094 INFO    MainThread:78585 [wandb_init.py:setup_run_log_directory():717] Logging user logs to /jet/home/tlee8/cs285_spring2026/final_project/wandb/run-20260410_202246-gpl720gs/logs/debug.log
+2026-04-10 20:22:46,094 INFO    MainThread:78585 [wandb_init.py:setup_run_log_directory():718] Logging internal logs to /jet/home/tlee8/cs285_spring2026/final_project/wandb/run-20260410_202246-gpl720gs/logs/debug-internal.log
+2026-04-10 20:22:46,094 INFO    MainThread:78585 [wandb_init.py:init():844] calling init triggers
+2026-04-10 20:22:46,094 INFO    MainThread:78585 [wandb_init.py:init():849] wandb.init called with sweep_config: {}
+config: {'run_group': 'debug', 'seed': 0, 'tickers': ['SPY', 'EEM', 'TLT', 'HYG', 'DBC', 'GLD', 'UUP', 'SHY'], 'use_mutual_funds': False, 'start_date': '2008-01-01', 'train_end': '2020-12-31', 'val_start': '2021-01-04', 'val_end': '2021-12-31', 'test_start': '2022-01-03', 'end_date': '2026-03-31', 'episode_length': 63, 'transaction_cost': 0.001, 'reward_type': 'log_return', 'use_macro': False, 'use_sentiment': False, 'use_alpaca_embeddings': False, 'n_eval_episodes': 20, 'risk_aversion': 1.0, 'save_results': False, 'n_assets': 8, 'n_macro_features': 0, 'n_sentiment_features': 0, 'obs_dim': 56, 'train_start': '2008-01-02', 'test_end': '2026-03-30', 'T_train': 3274, 'T_val': 252, 'T_test': 1063, '_wandb': {}}
+2026-04-10 20:22:46,094 INFO    MainThread:78585 [wandb_init.py:init():892] starting backend
+2026-04-10 20:22:46,758 INFO    MainThread:78585 [wandb_init.py:init():895] sending inform_init request
+2026-04-10 20:22:46,764 INFO    MainThread:78585 [wandb_init.py:init():903] backend started and connected
+2026-04-10 20:22:46,794 INFO    MainThread:78585 [wandb_init.py:init():973] updated telemetry
+2026-04-10 20:22:46,804 INFO    MainThread:78585 [wandb_init.py:init():997] communicating run to backend with 90.0 second timeout
+2026-04-10 20:22:47,264 INFO    MainThread:78585 [wandb_init.py:init():1042] starting run threads in backend
+2026-04-10 20:22:47,421 INFO    MainThread:78585 [wandb_run.py:_console_start():2524] atexit reg
+2026-04-10 20:22:47,422 INFO    MainThread:78585 [wandb_run.py:_redirect():2373] redirect: wrap_raw
+2026-04-10 20:22:47,422 INFO    MainThread:78585 [wandb_run.py:_redirect():2442] Wrapping output streams.
+2026-04-10 20:22:47,422 INFO    MainThread:78585 [wandb_run.py:_redirect():2465] Redirects installed.
+2026-04-10 20:22:47,428 INFO    MainThread:78585 [wandb_init.py:init():1082] run started, returning control to user process
+2026-04-10 20:22:47,631 INFO    MainThread:78585 [wandb_run.py:_finish():2291] finishing run tholee-university-of-california-berkeley/cs285-portfolio-rl/gpl720gs
+2026-04-10 20:22:47,632 INFO    MainThread:78585 [wandb_run.py:_atexit_cleanup():2490] got exitcode: 0
+2026-04-10 20:22:47,632 INFO    MainThread:78585 [wandb_run.py:_restore():2472] restore
+2026-04-10 20:22:47,633 INFO    MainThread:78585 [wandb_run.py:_restore():2478] restore done
+2026-04-10 20:22:48,234 INFO    MainThread:78585 [wandb_run.py:_footer_sync_info():3868] logging synced files

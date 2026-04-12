@@ -1,0 +1,4 @@
+Collecting 50000 offline transitions...
+Collected 50000 transitions in replay buffer.
+iql: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50000/50000 [03:45<00:00, 222.04it/s]
+Test results: {'eval/episode_return': 0.027642764257689124, 'eval/portfolio_value': 1.027748537494341, 'eval/annual_return': 0.11099414997736376, 'eval/avg_turnover': 0.0, 'eval/std_episode_return': 0.019928030951091514, 'eval/sharpe_ratio': 2.0551940693073654, 'eval/max_drawdown': 0.023431848568741975}

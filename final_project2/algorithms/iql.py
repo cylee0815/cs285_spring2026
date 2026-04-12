@@ -186,6 +186,19 @@ class IQL:
         }
 
     # ------------------------------------------------------------------
+    # Device management
+    # ------------------------------------------------------------------
+
+    def to(self, device: str) -> "IQL":
+        """Move all networks to *device* and update internal device string."""
+        self.device = device
+        self.q_network.to(device)
+        self.value_network.to(device)
+        self.value_target.to(device)
+        self.policy_network.to(device)
+        return self
+
+    # ------------------------------------------------------------------
     # Inference
     # ------------------------------------------------------------------
 
@@ -197,12 +210,14 @@ class IQL:
         ----------
         state:
             Shape ``(state_dim,)`` or ``(1, state_dim)``.
+            Automatically moved to the agent's device if needed.
 
         Returns
         -------
         action:
-            Shape ``(action_dim,)``.
+            Shape ``(action_dim,)`` on the agent's device.
         """
+        state = state.to(self.device)
         if state.dim() == 1:
             state = state.unsqueeze(0)
         weights = self.policy_network(state)

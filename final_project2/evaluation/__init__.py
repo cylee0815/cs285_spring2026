@@ -1,8 +1,9 @@
 """Walk-forward backtesting, metrics, and classical baselines.
 
-Populated in **Milestone 6**. Contains:
+* ``metrics.py`` — Sharpe, max drawdown, turnover, cumulative return, etc.
+* ``baselines.py`` — equal weight, momentum, risk parity, buy-and-hold.
+* ``backtest.py`` — walk-forward backtest runner for trained IQL agents.
 
-* ``backtest.py`` — walk-forward backtest runner shared by agent + baselines.
-* ``metrics.py`` — annual return, Sharpe, MDD, turnover, Calmar, win rate.
-* ``baselines.py`` — equal weight, mean variance, risk parity, momentum.
+Submodules are imported lazily to avoid pulling in ``torch`` when only
+metrics or baselines are needed.
 """
