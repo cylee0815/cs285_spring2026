@@ -237,6 +237,7 @@ def main() -> None:
     # Save curves and final metrics via RunLogger
     iql_metrics = all_results["IQL"]["metrics"]
     iql_returns = all_results["IQL"]["portfolio_returns"]
+    iql_weights = all_results["IQL"]["weights"]
     equity_curve = all_results["IQL"]["equity_curve"]
     cumulative_return = np.cumprod(1 + iql_returns) - 1
 
@@ -252,6 +253,10 @@ def main() -> None:
         wandb_enabled=args.wandb,
     )
     run_logger.log_curves(equity_curve, cumulative_return)
+    run_logger.log_backtest_arrays(
+        portfolio_returns=iql_returns,
+        weights=iql_weights,
+    )
     run_logger.log_final_metrics({
         "sharpe": iql_metrics["sharpe_ratio"],
         "max_drawdown": iql_metrics["max_drawdown"],

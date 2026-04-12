@@ -1,10 +1,10 @@
 # Default IQL training configuration.
 #
 # Usage:
-#   python scripts/train.py --config configs/iql_default.yaml
-#   python scripts/train.py --config configs/iql_default.yaml --expectile 0.8
+#   uv run python scripts/train.py --config configs/iql_default.yaml
+#   uv run python scripts/train.py --config configs/iql_default.yaml --expectile 0.8
 
-dataset: datasets/dirichlet_dataset.npz
+dataset: datasets/real_dirichlet.npz
 batch_size: 256
 gamma: 0.99
 expectile: 0.7
@@ -15,4 +15,15 @@ steps: 100000
 seed: 42
 device: auto
 log_interval: 1000
+val_interval: 5000
 transaction_cost: 0.001
+
+# Strict time-ordered train / val / test split boundaries (inclusive).
+# These must satisfy: train_end < val_start <= val_end < test_start <= test_end.
+split:
+  train_start: "2008-01-01"
+  train_end:   "2020-12-31"
+  val_start:   "2021-01-01"
+  val_end:     "2021-12-31"
+  test_start:  "2022-01-01"
+  test_end:    "2026-03-31"

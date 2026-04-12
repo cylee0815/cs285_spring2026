@@ -2,6 +2,11 @@
 
 Rolls out a behavior policy through a PortfolioEnv and records transitions
 as numpy arrays suitable for IQL training.
+
+Datasets may optionally carry a ``dates`` array — one timestamp per
+transition, corresponding to the date on which ``state`` was observed.
+When present, :mod:`data.splits` can partition the dataset into
+train/validation/test subsets by calendar date.
 """
 
 from __future__ import annotations
@@ -10,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import pandas as pd
 
 from env.portfolio_env import PortfolioEnv
 from policies.behavior import (
@@ -43,6 +49,7 @@ def build_dataset_from_env(
     env: PortfolioEnv,
     policy: EqualWeightPolicy | DirichletPolicy | MomentumPolicy | RiskParityPolicy,
     seed: int = 0,
+    dates: np.ndarray | pd.DatetimeIndex | None = None,
 ) -> Dataset:
     """Roll out a single episode and collect transitions.
 
@@ -54,16 +61,35 @@ def build_dataset_from_env(
         A behavior policy that produces simplex weights.
     seed:
         Seed passed to env.reset().
+    dates:
+        Optional per-row timestamps aligned with ``env._features``. When
+        provided, the output dict additionally contains a ``dates`` key
+        of shape ``(n_transitions,)`` giving the observation date of each
+        transition. Used downstream to split by calendar date.
 
     Returns
     -------
-    Dict with keys: states, actions, rewards, next_states, dones.
+    Dict with keys: states, actions, rewards, next_states, dones, and
+    optionally ``dates`` (int64 ns since epoch).
     """
     states_list: list[np.ndarray] = []
     actions_list: list[np.ndarray] = []
     rewards_list: list[float] = []
     next_states_list: list[np.ndarray] = []
     dones_list: list[bool] = []
+    dates_list: list[np.int64] = []
+
+    dates_ns: np.ndarray | None = None
+    if dates is not None:
+        dt = pd.DatetimeIndex(pd.to_datetime(np.asarray(dates)))
+        if len(dt) != env._n_steps:
+            raise ValueError(
+                f"len(dates)={len(dt)} must match env._n_steps={env._n_steps}"
+            )
+        # Pandas' default datetime resolution is now `us`; force `ns` so the
+        # int64 representation is unambiguous on disk and round-trips with
+        # ``pd.to_datetime(..., unit="ns")`` downstream.
+        dates_ns = dt.values.astype("datetime64[ns]").astype(np.int64)
 
     obs, _ = env.reset(seed=seed)
 
@@ -75,6 +101,8 @@ def build_dataset_from_env(
     t = 0
     while not terminated:
         state = obs.copy()
+        if dates_ns is not None:
+            dates_list.append(np.int64(dates_ns[t]))
 
         # Get action based on policy type
         if isinstance(policy, (MomentumPolicy, RiskParityPolicy)):
@@ -100,13 +128,16 @@ def build_dataset_from_env(
 
         t += 1
 
-    return {
+    out: Dataset = {
         "states": np.array(states_list, dtype=np.float32),
         "actions": np.array(actions_list, dtype=np.float64),
         "rewards": np.array(rewards_list, dtype=np.float64),
         "next_states": np.array(next_states_list, dtype=np.float32),
         "dones": np.array(dones_list, dtype=bool),
     }
+    if dates_ns is not None:
+        out["dates"] = np.array(dates_list, dtype=np.int64)
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -122,6 +153,8 @@ def save_dataset(
     """Save dataset arrays to a .npz file.
 
     Metadata values are stored as additional arrays (scalars wrapped in 0-d arrays).
+    Any of the optional keys (``dates``, ``forward_returns``) present in
+    ``dataset`` are persisted alongside the core transition arrays.
     """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -129,6 +162,9 @@ def save_dataset(
     save_dict: dict[str, np.ndarray] = {}
     for key in ["states", "actions", "rewards", "next_states", "dones"]:
         save_dict[key] = dataset[key]
+    for key in ["dates", "forward_returns"]:
+        if key in dataset:
+            save_dict[key] = dataset[key]
 
     if metadata:
         for k, v in metadata.items():
@@ -140,13 +176,17 @@ def save_dataset(
 def load_dataset(path: str | Path) -> Dataset:
     """Load a dataset from a .npz file.
 
-    Returns a dict with keys: states, actions, rewards, next_states, dones.
-    Metadata keys (prefixed with meta_) are excluded.
+    Returns a dict with keys: states, actions, rewards, next_states, dones,
+    and optionally ``dates`` / ``forward_returns`` if present in the file.
+    Metadata keys (prefixed with ``meta_``) are excluded.
     """
     data = np.load(str(path), allow_pickle=True)
     dataset: Dataset = {}
     for key in ["states", "actions", "rewards", "next_states", "dones"]:
         dataset[key] = data[key]
+    for key in ["dates", "forward_returns"]:
+        if key in data.files:
+            dataset[key] = data[key]
     return dataset
 
 

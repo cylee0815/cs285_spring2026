@@ -1,9 +1,12 @@
 # Experiment grid for ablation studies.
 #
 # Used by scripts/run_ablation.py to sweep over hyperparameters.
+# Each (expectile, beta, transaction_cost) combination trains an IQL
+# agent on the train split, selects the best checkpoint by validation
+# Sharpe, and reports final metrics on the held-out test split.
 
 base:
-  dataset: datasets/dirichlet_dataset.npz
+  dataset: datasets/real_dirichlet.npz
   batch_size: 256
   gamma: 0.99
   lr: 3.0e-4
@@ -12,6 +15,16 @@ base:
   seed: 42
   device: auto
   log_interval: 1000
+  val_interval: 5000
+
+# Strict time-ordered splits shared across every ablation run.
+split:
+  train_start: "2008-01-01"
+  train_end:   "2020-12-31"
+  val_start:   "2021-01-01"
+  val_end:     "2021-12-31"
+  test_start:  "2022-01-01"
+  test_end:    "2026-03-31"
 
 grid:
   expectile: [0.6, 0.7, 0.8]
