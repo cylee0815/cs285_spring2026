@@ -1,0 +1,7 @@
+{
+  "step": 1000,
+  "val_sharpe": 0.6217121879853909,
+  "val_annual_return": 0.03594560266394002,
+  "val_max_drawdown": 0.03400285635975058,
+  "val_cumulative_return": 0.034723552047293715
+}

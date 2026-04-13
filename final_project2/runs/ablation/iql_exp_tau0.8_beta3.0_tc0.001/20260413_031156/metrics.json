@@ -1,0 +1,13 @@
+{
+  "best_val_sharpe": 0.5885439756219706,
+  "best_val_step": 1000,
+  "test_sharpe": 0.35532595382193,
+  "test_annual_return": 0.02658185416371072,
+  "test_annual_volatility": 0.07480977361150518,
+  "test_max_drawdown": 0.13740277185066493,
+  "test_turnover": 0.17436293988181692,
+  "test_cumulative_return": 0.10521503139900723,
+  "ew_sharpe": 0.9531922064114413,
+  "mom_sharpe": 0.9524973630033655,
+  "rp_sharpe": 1.1614854523565827
+}

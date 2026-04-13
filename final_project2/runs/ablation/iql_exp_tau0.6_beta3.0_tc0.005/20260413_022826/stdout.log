@@ -1,0 +1,208 @@
+[34m[1mwandb[0m: Waiting for wandb.init()...
+[Am[2K[34m[1mwandb[0m: Waiting for wandb.init()...
+[Am[2K[34m[1mwandb[0m: Tracking run with wandb version 0.25.1
+[34m[1mwandb[0m: Run data is saved locally in [35m[1m/jet/home/tlee8/cs285_spring2026/final_project2/wandb/run-20260413_022826-kx86rduk[0m
+[34m[1mwandb[0m: Run [1m`wandb offline`[0m to turn off syncing.
+[34m[1mwandb[0m: Syncing run [33miql_0.6_3.0_0.005[0m
+[34m[1mwandb[0m:  View project at [34m[4mhttps://wandb.ai/tholee-university-of-california-berkeley/offline-rl-portfolio[0m
+[34m[1mwandb[0m:  View run at [34m[4mhttps://wandb.ai/tholee-university-of-california-berkeley/offline-rl-portfolio/runs/kx86rduk[0m
+[step     200]  v_loss=1.945e-06  q_loss=2.206e-05  policy_loss=2.0776  q_mean=+0.008  adv=+0.000  H=2.079
+[step     400]  v_loss=4.268e-06  q_loss=1.499e-05  policy_loss=2.0648  q_mean=+0.008  adv=-0.001  H=2.075
+[step     600]  v_loss=4.076e-06  q_loss=1.128e-05  policy_loss=2.0572  q_mean=+0.008  adv=-0.000  H=2.068
+[step     800]  v_loss=4.730e-06  q_loss=7.461e-06  policy_loss=2.0483  q_mean=+0.007  adv=-0.001  H=2.061
+[step    1000]  v_loss=5.196e-06  q_loss=3.699e-06  policy_loss=2.0367  q_mean=+0.007  adv=+0.001  H=2.053
+  [val @ step    1000] sharpe=-2.2177  ann_ret=-0.1281  mdd=0.1341  turnover=0.1619  cum_ret=-0.1213
+[step    1200]  v_loss=5.159e-06  q_loss=2.016e-06  policy_loss=2.0253  q_mean=+0.006  adv=-0.000  H=2.047
+[step    1400]  v_loss=5.217e-06  q_loss=2.309e-06  policy_loss=1.9922  q_mean=+0.005  adv=-0.000  H=2.031
+[step    1600]  v_loss=3.804e-06  q_loss=1.304e-06  policy_loss=1.9982  q_mean=+0.007  adv=-0.001  H=2.019
+[step    1800]  v_loss=4.476e-06  q_loss=1.433e-06  policy_loss=1.9691  q_mean=+0.004  adv=-0.000  H=2.002
+[step    2000]  v_loss=3.189e-06  q_loss=1.276e-06  policy_loss=1.9609  q_mean=+0.005  adv=-0.001  H=1.994
+  [val @ step    2000] sharpe=-5.5632  ann_ret=-0.3361  mdd=0.2933  turnover=0.3251  cum_ret=-0.2860
+[step    2200]  v_loss=3.962e-06  q_loss=2.181e-06  policy_loss=1.9508  q_mean=+0.005  adv=-0.000  H=1.986
+[step    2400]  v_loss=2.707e-06  q_loss=1.394e-06  policy_loss=1.9407  q_mean=+0.004  adv=-0.001  H=1.979
+[step    2600]  v_loss=3.037e-06  q_loss=1.426e-06  policy_loss=1.9351  q_mean=+0.002  adv=-0.001  H=1.975
+[step    2800]  v_loss=2.547e-06  q_loss=9.411e-07  policy_loss=1.9268  q_mean=+0.002  adv=-0.001  H=1.955
+[step    3000]  v_loss=1.749e-06  q_loss=1.035e-06  policy_loss=1.8991  q_mean=+0.001  adv=-0.001  H=1.942
+  [val @ step    3000] sharpe=-8.3454  ann_ret=-0.4945  mdd=0.3936  turnover=0.4357  cum_ret=-0.3903
+[step    3200]  v_loss=3.017e-06  q_loss=1.200e-06  policy_loss=1.9003  q_mean=+0.001  adv=-0.001  H=1.929
+[step    3400]  v_loss=1.198e-06  q_loss=5.489e-07  policy_loss=1.8834  q_mean=+0.001  adv=+0.000  H=1.935
+[step    3600]  v_loss=1.878e-06  q_loss=6.059e-07  policy_loss=1.8733  q_mean=+0.001  adv=-0.000  H=1.912
+[step    3800]  v_loss=4.133e-06  q_loss=2.637e-06  policy_loss=1.8789  q_mean=+0.001  adv=-0.001  H=1.918
+[step    4000]  v_loss=1.926e-06  q_loss=8.713e-07  policy_loss=1.8570  q_mean=-0.000  adv=-0.001  H=1.892
+  [val @ step    4000] sharpe=-10.5213  ann_ret=-0.6243  mdd=0.4652  turnover=0.5255  cum_ret=-0.4644
+[step    4200]  v_loss=2.877e-06  q_loss=1.111e-06  policy_loss=1.8709  q_mean=-0.001  adv=-0.001  H=1.909
+[step    4400]  v_loss=1.057e-06  q_loss=3.895e-07  policy_loss=1.8209  q_mean=-0.001  adv=-0.000  H=1.873
+[step    4600]  v_loss=1.900e-06  q_loss=9.212e-07  policy_loss=1.8413  q_mean=-0.002  adv=-0.001  H=1.872
+[step    4800]  v_loss=1.580e-06  q_loss=6.944e-07  policy_loss=1.8287  q_mean=-0.002  adv=+0.001  H=1.879
+[step    5000]  v_loss=1.159e-06  q_loss=5.807e-07  policy_loss=1.8280  q_mean=-0.003  adv=+0.000  H=1.869
+  [val @ step    5000] sharpe=-11.9025  ann_ret=-0.7129  mdd=0.5109  turnover=0.6028  cum_ret=-0.5098
+[step    5200]  v_loss=1.484e-06  q_loss=5.836e-07  policy_loss=1.8295  q_mean=+0.001  adv=+0.001  H=1.860
+[step    5400]  v_loss=1.489e-06  q_loss=1.133e-06  policy_loss=1.8136  q_mean=-0.002  adv=-0.002  H=1.857
+[step    5600]  v_loss=9.246e-07  q_loss=5.199e-07  policy_loss=1.8130  q_mean=-0.003  adv=-0.001  H=1.845
+[step    5800]  v_loss=1.124e-06  q_loss=3.802e-07  policy_loss=1.8181  q_mean=-0.005  adv=-0.000  H=1.854
+[step    6000]  v_loss=1.360e-06  q_loss=3.763e-07  policy_loss=1.8091  q_mean=-0.003  adv=-0.000  H=1.838
+  [val @ step    6000] sharpe=-13.8068  ann_ret=-0.8183  mdd=0.5593  turnover=0.6823  cum_ret=-0.5587
+[step    6200]  v_loss=1.507e-06  q_loss=6.509e-07  policy_loss=1.8016  q_mean=-0.004  adv=-0.001  H=1.833
+[step    6400]  v_loss=1.111e-06  q_loss=6.460e-07  policy_loss=1.8009  q_mean=-0.007  adv=-0.002  H=1.835
+[step    6600]  v_loss=1.678e-06  q_loss=1.503e-06  policy_loss=1.7863  q_mean=-0.004  adv=-0.001  H=1.814
+[step    6800]  v_loss=8.745e-07  q_loss=3.852e-07  policy_loss=1.8085  q_mean=-0.005  adv=+0.000  H=1.838
+[step    7000]  v_loss=7.365e-07  q_loss=3.040e-07  policy_loss=1.7981  q_mean=-0.005  adv=+0.000  H=1.817
+  [val @ step    7000] sharpe=-14.9553  ann_ret=-0.8973  mdd=0.5933  turnover=0.7505  cum_ret=-0.5923
+[step    7200]  v_loss=1.186e-06  q_loss=5.659e-07  policy_loss=1.7791  q_mean=-0.005  adv=-0.000  H=1.807
+[step    7400]  v_loss=1.119e-06  q_loss=7.471e-07  policy_loss=1.7835  q_mean=-0.006  adv=-0.000  H=1.806
+[step    7600]  v_loss=5.899e-07  q_loss=2.689e-07  policy_loss=1.7714  q_mean=-0.008  adv=+0.001  H=1.806
+[step    7800]  v_loss=9.056e-07  q_loss=6.341e-07  policy_loss=1.7759  q_mean=-0.007  adv=+0.001  H=1.807
+[step    8000]  v_loss=2.290e-06  q_loss=1.177e-06  policy_loss=1.7666  q_mean=-0.008  adv=-0.002  H=1.786
+  [val @ step    8000] sharpe=-15.4623  ann_ret=-0.9539  mdd=0.6157  turnover=0.8071  cum_ret=-0.6147
+[step    8200]  v_loss=8.655e-07  q_loss=5.880e-07  policy_loss=1.7677  q_mean=-0.011  adv=+0.000  H=1.798
+[step    8400]  v_loss=1.539e-06  q_loss=7.931e-07  policy_loss=1.7524  q_mean=-0.007  adv=-0.001  H=1.788
+[step    8600]  v_loss=1.176e-06  q_loss=3.971e-07  policy_loss=1.7800  q_mean=-0.008  adv=-0.001  H=1.798
+[step    8800]  v_loss=1.705e-06  q_loss=1.113e-06  policy_loss=1.7677  q_mean=-0.005  adv=+0.001  H=1.789
+[step    9000]  v_loss=6.744e-07  q_loss=3.570e-07  policy_loss=1.7705  q_mean=-0.012  adv=-0.001  H=1.788
+  [val @ step    9000] sharpe=-15.6843  ann_ret=-1.0015  mdd=0.6337  turnover=0.8528  cum_ret=-0.6327
+[step    9200]  v_loss=3.724e-07  q_loss=1.554e-07  policy_loss=1.7661  q_mean=-0.010  adv=-0.000  H=1.791
+[step    9400]  v_loss=7.975e-07  q_loss=4.284e-07  policy_loss=1.7609  q_mean=-0.009  adv=-0.001  H=1.782
+[step    9600]  v_loss=2.411e-06  q_loss=1.254e-06  policy_loss=1.7592  q_mean=-0.011  adv=+0.001  H=1.780
+[step    9800]  v_loss=1.357e-06  q_loss=9.406e-07  policy_loss=1.7586  q_mean=-0.013  adv=+0.001  H=1.774
+[step   10000]  v_loss=1.127e-06  q_loss=8.537e-07  policy_loss=1.7664  q_mean=-0.012  adv=+0.001  H=1.785
+  [val @ step   10000] sharpe=-15.9215  ann_ret=-1.0382  mdd=0.6472  turnover=0.8910  cum_ret=-0.6460
+[step   10200]  v_loss=4.888e-07  q_loss=2.701e-07  policy_loss=1.7404  q_mean=-0.011  adv=-0.000  H=1.764
+[step   10400]  v_loss=5.942e-07  q_loss=2.569e-07  policy_loss=1.7590  q_mean=-0.010  adv=+0.000  H=1.780
+[step   10600]  v_loss=1.755e-06  q_loss=1.061e-06  policy_loss=1.7451  q_mean=-0.011  adv=-0.001  H=1.764
+[step   10800]  v_loss=5.962e-07  q_loss=2.432e-07  policy_loss=1.7597  q_mean=-0.012  adv=-0.000  H=1.775
+[step   11000]  v_loss=3.668e-07  q_loss=1.495e-07  policy_loss=1.7454  q_mean=-0.015  adv=+0.000  H=1.755
+  [val @ step   11000] sharpe=-16.1567  ann_ret=-1.0802  mdd=0.6617  turnover=0.9233  cum_ret=-0.6606
+[step   11200]  v_loss=1.068e-06  q_loss=7.499e-07  policy_loss=1.7382  q_mean=-0.015  adv=+0.001  H=1.754
+[step   11400]  v_loss=1.227e-06  q_loss=5.283e-07  policy_loss=1.7477  q_mean=-0.013  adv=-0.001  H=1.761
+[step   11600]  v_loss=6.296e-07  q_loss=3.527e-07  policy_loss=1.7385  q_mean=-0.015  adv=-0.000  H=1.755
+[step   11800]  v_loss=6.350e-07  q_loss=4.014e-07  policy_loss=1.7369  q_mean=-0.015  adv=+0.000  H=1.755
+[step   12000]  v_loss=1.927e-06  q_loss=1.230e-06  policy_loss=1.7415  q_mean=-0.016  adv=-0.002  H=1.756
+  [val @ step   12000] sharpe=-16.4250  ann_ret=-1.1175  mdd=0.6739  turnover=0.9518  cum_ret=-0.6730
+[step   12200]  v_loss=8.739e-07  q_loss=5.563e-07  policy_loss=1.7406  q_mean=-0.014  adv=+0.001  H=1.751
+[step   12400]  v_loss=3.361e-07  q_loss=2.115e-07  policy_loss=1.7313  q_mean=-0.016  adv=-0.000  H=1.744
+[step   12600]  v_loss=8.186e-07  q_loss=4.740e-07  policy_loss=1.7357  q_mean=-0.013  adv=-0.000  H=1.757
+[step   12800]  v_loss=5.352e-07  q_loss=1.764e-07  policy_loss=1.7250  q_mean=-0.017  adv=+0.000  H=1.735
+[step   13000]  v_loss=1.068e-06  q_loss=6.874e-07  policy_loss=1.7192  q_mean=-0.016  adv=+0.000  H=1.734
+  [val @ step   13000] sharpe=-16.5902  ann_ret=-1.1589  mdd=0.6872  turnover=0.9815  cum_ret=-0.6863
+[step   13200]  v_loss=9.457e-07  q_loss=5.964e-07  policy_loss=1.7507  q_mean=-0.015  adv=+0.002  H=1.764
+[step   13400]  v_loss=3.087e-07  q_loss=1.721e-07  policy_loss=1.7278  q_mean=-0.018  adv=-0.000  H=1.737
+[step   13600]  v_loss=2.589e-07  q_loss=1.457e-07  policy_loss=1.7289  q_mean=-0.017  adv=-0.001  H=1.737
+[step   13800]  v_loss=1.866e-06  q_loss=1.848e-06  policy_loss=1.7311  q_mean=-0.021  adv=-0.002  H=1.744
+[step   14000]  v_loss=1.350e-06  q_loss=9.391e-07  policy_loss=1.7380  q_mean=-0.020  adv=-0.001  H=1.751
+  [val @ step   14000] sharpe=-16.8848  ann_ret=-1.1886  mdd=0.6964  turnover=0.9997  cum_ret=-0.6955
+[step   14200]  v_loss=1.996e-07  q_loss=8.753e-08  policy_loss=1.7254  q_mean=-0.020  adv=-0.001  H=1.734
+[step   14400]  v_loss=2.686e-07  q_loss=1.126e-07  policy_loss=1.7258  q_mean=-0.017  adv=+0.000  H=1.738
+[step   14600]  v_loss=2.232e-06  q_loss=1.119e-06  policy_loss=1.7328  q_mean=-0.020  adv=-0.002  H=1.743
+[step   14800]  v_loss=9.680e-07  q_loss=6.504e-07  policy_loss=1.7217  q_mean=-0.016  adv=-0.001  H=1.734
+[step   15000]  v_loss=2.036e-06  q_loss=1.548e-06  policy_loss=1.7087  q_mean=-0.018  adv=-0.001  H=1.715
+  [val @ step   15000] sharpe=-16.9614  ann_ret=-1.2107  mdd=0.7030  turnover=1.0178  cum_ret=-0.7022
+[step   15200]  v_loss=2.665e-07  q_loss=1.528e-07  policy_loss=1.7465  q_mean=-0.022  adv=-0.000  H=1.751
+[step   15400]  v_loss=3.411e-07  q_loss=1.707e-07  policy_loss=1.7309  q_mean=-0.021  adv=-0.001  H=1.742
+[step   15600]  v_loss=5.011e-07  q_loss=3.168e-07  policy_loss=1.7235  q_mean=-0.022  adv=-0.000  H=1.731
+[step   15800]  v_loss=1.692e-06  q_loss=1.125e-06  policy_loss=1.7321  q_mean=-0.021  adv=-0.001  H=1.739
+[step   16000]  v_loss=5.062e-07  q_loss=3.352e-07  policy_loss=1.7261  q_mean=-0.020  adv=+0.000  H=1.732
+  [val @ step   16000] sharpe=-17.2788  ann_ret=-1.2381  mdd=0.7109  turnover=1.0356  cum_ret=-0.7103
+[step   16200]  v_loss=8.671e-07  q_loss=5.599e-07  policy_loss=1.7116  q_mean=-0.021  adv=+0.000  H=1.718
+[step   16400]  v_loss=1.439e-06  q_loss=8.138e-07  policy_loss=1.7288  q_mean=-0.024  adv=-0.001  H=1.735
+[step   16600]  v_loss=2.781e-07  q_loss=1.798e-07  policy_loss=1.7295  q_mean=-0.023  adv=-0.001  H=1.734
+[step   16800]  v_loss=1.103e-07  q_loss=8.058e-08  policy_loss=1.7258  q_mean=-0.024  adv=-0.000  H=1.735
+[step   17000]  v_loss=3.362e-06  q_loss=1.342e-06  policy_loss=1.7368  q_mean=-0.024  adv=-0.002  H=1.744
+  [val @ step   17000] sharpe=-17.2978  ann_ret=-1.2503  mdd=0.7144  turnover=1.0492  cum_ret=-0.7138
+[step   17200]  v_loss=1.293e-06  q_loss=7.813e-07  policy_loss=1.7257  q_mean=-0.024  adv=+0.000  H=1.734
+[step   17400]  v_loss=4.132e-07  q_loss=1.950e-07  policy_loss=1.7327  q_mean=-0.023  adv=+0.000  H=1.738
+[step   17600]  v_loss=4.112e-07  q_loss=2.236e-07  policy_loss=1.7280  q_mean=-0.022  adv=+0.000  H=1.734
+[step   17800]  v_loss=3.427e-07  q_loss=3.196e-07  policy_loss=1.7213  q_mean=-0.022  adv=+0.001  H=1.727
+[step   18000]  v_loss=5.926e-07  q_loss=3.498e-07  policy_loss=1.7378  q_mean=-0.021  adv=+0.000  H=1.746
+  [val @ step   18000] sharpe=-17.3928  ann_ret=-1.2700  mdd=0.7199  turnover=1.0628  cum_ret=-0.7194
+[step   18200]  v_loss=6.076e-07  q_loss=4.756e-07  policy_loss=1.7179  q_mean=-0.023  adv=+0.000  H=1.721
+[step   18400]  v_loss=5.805e-07  q_loss=3.322e-07  policy_loss=1.7287  q_mean=-0.025  adv=-0.001  H=1.735
+[step   18600]  v_loss=4.003e-07  q_loss=2.612e-07  policy_loss=1.7070  q_mean=-0.026  adv=-0.000  H=1.715
+[step   18800]  v_loss=5.659e-07  q_loss=3.232e-07  policy_loss=1.7269  q_mean=-0.028  adv=-0.001  H=1.734
+[step   19000]  v_loss=3.097e-06  q_loss=1.644e-06  policy_loss=1.7392  q_mean=-0.028  adv=-0.001  H=1.746
+  [val @ step   19000] sharpe=-17.4794  ann_ret=-1.2828  mdd=0.7236  turnover=1.0732  cum_ret=-0.7230
+[step   19200]  v_loss=5.556e-07  q_loss=2.751e-07  policy_loss=1.7335  q_mean=-0.028  adv=-0.001  H=1.739
+[step   19400]  v_loss=1.922e-07  q_loss=1.291e-07  policy_loss=1.7307  q_mean=-0.027  adv=-0.000  H=1.736
+[step   19600]  v_loss=2.063e-07  q_loss=1.163e-07  policy_loss=1.7314  q_mean=-0.025  adv=-0.000  H=1.735
+[step   19800]  v_loss=8.562e-07  q_loss=6.297e-07  policy_loss=1.7296  q_mean=-0.025  adv=+0.000  H=1.733
+[step   20000]  v_loss=1.771e-07  q_loss=1.208e-07  policy_loss=1.7251  q_mean=-0.027  adv=-0.000  H=1.729
+  [val @ step   20000] sharpe=-17.5472  ann_ret=-1.2958  mdd=0.7271  turnover=1.0833  cum_ret=-0.7266
+[INFO] Training complete. Results saved at: /jet/home/tlee8/cs285_spring2026/final_project2/runs/ablation/iql_exp_tau0.6_beta3.0_tc0.005/20260413_022826
+[34m[1mwandb[0m: updating run metadata (0.8s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-valequity_curve_table-SJO9Og (0.7s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalequity_curve_table-gUQARw (0.2s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalcumulative_return_curve_table-ZeM6dA (0.1s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-testequity_curve_table-Wffl2A (0.0s)
+[Am[2K[Am[2K[Am[2K[Am[2K[Am[2K[34m[1mwandb[0m: updating run metadata (0.8s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-valequity_curve_table-SJO9Og (0.7s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalequity_curve_table-gUQARw (0.2s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalcumulative_return_curve_table-ZeM6dA (0.1s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-testequity_curve_table-Wffl2A (0.0s)
+[Am[2K[Am[2K[Am[2K[Am[2K[Am[2K[34m[1mwandb[0m: updating run metadata (0.8s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-valequity_curve_table-SJO9Og (0.7s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalequity_curve_table-gUQARw (0.2s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalcumulative_return_curve_table-ZeM6dA (0.1s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-testequity_curve_table-Wffl2A (0.0s)
+[Am[2K[Am[2K[Am[2K[Am[2K[Am[2K[34m[1mwandb[0m: updating run metadata (0.8s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-valequity_curve_table-SJO9Og (0.7s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalequity_curve_table-gUQARw (0.2s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalcumulative_return_curve_table-ZeM6dA (0.1s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-testequity_curve_table-Wffl2A (0.0s)
+[Am[2K[Am[2K[Am[2K[Am[2K[Am[2K[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalequity_curve_table-gUQARw (0.7s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalcumulative_return_curve_table-ZeM6dA (0.6s)
+[34m[1mwandb[0m:   eval/cumulative_return_curve_table.table.json 29.9KB/29.9KB (0.1s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-testequity_curve_table-Wffl2A (0.5s)
+[Am[2K[Am[2K[Am[2K[Am[2K[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalequity_curve_table-gUQARw (0.7s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalcumulative_return_curve_table-ZeM6dA (0.6s)
+[34m[1mwandb[0m:   eval/cumulative_return_curve_table.table.json 29.9KB/29.9KB (0.1s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-testequity_curve_table-Wffl2A (0.5s)
+[Am[2K[Am[2K[Am[2K[Am[2K[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalequity_curve_table-gUQARw (0.7s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalcumulative_return_curve_table-ZeM6dA (0.6s)
+[34m[1mwandb[0m:   eval/cumulative_return_curve_table.table.json 29.9KB/29.9KB (0.1s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-testequity_curve_table-Wffl2A (0.5s)
+[Am[2K[Am[2K[Am[2K[Am[2K[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalequity_curve_table-gUQARw (0.7s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalcumulative_return_curve_table-ZeM6dA (0.6s)
+[34m[1mwandb[0m:   eval/cumulative_return_curve_table.table.json 29.9KB/29.9KB (0.1s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-testequity_curve_table-Wffl2A (0.5s)
+[Am[2K[Am[2K[Am[2K[Am[2K[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalequity_curve_table-gUQARw (0.7s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalcumulative_return_curve_table-ZeM6dA (0.6s)
+[34m[1mwandb[0m:   eval/cumulative_return_curve_table.table.json 29.9KB/29.9KB (0.1s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-testequity_curve_table-Wffl2A (0.5s)
+[Am[2K[Am[2K[Am[2K[Am[2K[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalequity_curve_table-gUQARw (1.2s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalcumulative_return_curve_table-ZeM6dA (1.1s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-testequity_curve_table-Wffl2A (1.0s)
+[Am[2K[Am[2K[Am[2K[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalequity_curve_table-gUQARw (1.2s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalcumulative_return_curve_table-ZeM6dA (1.1s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-testequity_curve_table-Wffl2A (1.0s)
+[Am[2K[Am[2K[Am[2K[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalequity_curve_table-gUQARw (1.2s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalcumulative_return_curve_table-ZeM6dA (1.1s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-testequity_curve_table-Wffl2A (1.0s)
+[Am[2K[Am[2K[Am[2K[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalequity_curve_table-gUQARw (1.2s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalcumulative_return_curve_table-ZeM6dA (1.1s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-testequity_curve_table-Wffl2A (1.0s)
+[Am[2K[Am[2K[Am[2K[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalequity_curve_table-gUQARw (1.2s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-evalcumulative_return_curve_table-ZeM6dA (1.1s)
+[34m[1mwandb[0m: uploading artifact run-kx86rduk-testequity_curve_table-Wffl2A (1.0s)
+[Am[2K[Am[2K[Am[2K[34m[1mwandb[0m: Finishing up...
+[Am[2K[34m[1mwandb[0m: Finishing up...
+[Am[2K[34m[1mwandb[0m: Finishing up...
+[Am[2K[34m[1mwandb[0m: Finishing up...
+[Am[2K[34m[1mwandb[0m: Finishing up...
+[Am[2K[34m[1mwandb[0m: uploading history steps 19999-20000, summary (0.3s)
+[Am[2K[34m[1mwandb[0m: 
+[34m[1mwandb[0m: Run summary:
+[34m[1mwandb[0m:          eval/ann_return -1.29576
+[34m[1mwandb[0m:                 eval/mdd 0.72706
+[34m[1mwandb[0m:              eval/sharpe -17.54722
+[34m[1mwandb[0m:            eval/turnover 1.0833
+[34m[1mwandb[0m:    final/best_val_sharpe -2.21775
+[34m[1mwandb[0m:      final/best_val_step 1000
+[34m[1mwandb[0m:          final/ew_sharpe 0.95319
+[34m[1mwandb[0m:         final/mom_sharpe 0.95075
+[34m[1mwandb[0m:          final/rp_sharpe 0.90268
+[34m[1mwandb[0m: final/test_annual_return -0.15028
+[34m[1mwandb[0m:                      +26 ...
+[34m[1mwandb[0m: 
+[34m[1mwandb[0m:  View run [33miql_0.6_3.0_0.005[0m at: [34m[4mhttps://wandb.ai/tholee-university-of-california-berkeley/offline-rl-portfolio/runs/kx86rduk[0m
+[34m[1mwandb[0m:  View project at: [34m[4mhttps://wandb.ai/tholee-university-of-california-berkeley/offline-rl-portfolio[0m
+[34m[1mwandb[0m: Synced 4 W&B file(s), 23 media file(s), 46 artifact file(s) and 0 other file(s)
+[34m[1mwandb[0m: Find logs at: [35m[1m./wandb/run-20260413_022826-kx86rduk/logs[0m

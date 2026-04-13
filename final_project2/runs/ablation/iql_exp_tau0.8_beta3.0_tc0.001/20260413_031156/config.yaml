@@ -1,0 +1,24 @@
+experiment_id: iql_exp_tau0.8_beta3.0_tc0.001
+expectile: 0.8
+beta: 3.0
+transaction_cost: 0.001
+batch_size: 256
+gamma: 0.99
+lr: 0.0003
+polyak: 0.005
+steps: 20000
+seed: 42
+device: auto
+log_interval: 200
+val_interval: 1000
+dataset: datasets/real_dirichlet.npz
+split:
+  train_start: '2008-01-01'
+  train_end: '2020-12-31'
+  val_start: '2021-01-01'
+  val_end: '2021-12-31'
+  test_start: '2022-01-01'
+  test_end: '2026-03-31'
+wandb_name: iql_0.8_3.0_0.001
+run_dir: /jet/home/tlee8/cs285_spring2026/final_project2/runs/ablation/iql_exp_tau0.8_beta3.0_tc0.001/20260413_031156
+timestamp: '20260413_031156'
