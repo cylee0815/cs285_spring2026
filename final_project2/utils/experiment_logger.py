@@ -26,11 +26,39 @@ from __future__ import annotations
 import collections
 import csv
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import yaml
+
+
+class _Tee:
+    """Duplicate writes to multiple streams (e.g. stdout + a log file)."""
+
+    def __init__(self, *streams):
+        self._streams = streams
+
+    def write(self, s):
+        for st in self._streams:
+            try:
+                st.write(s)
+            except Exception:
+                pass
+
+    def flush(self):
+        for st in self._streams:
+            try:
+                st.flush()
+            except Exception:
+                pass
+
+    def isatty(self):
+        for st in self._streams:
+            if hasattr(st, "isatty") and st.isatty():
+                return True
+        return False
 
 
 # Canonical set of per-step training metrics we log.
@@ -78,12 +106,25 @@ class RunLogger:
         config: dict[str, Any] | None = None,
         wandb_enabled: bool = False,
         wandb_project: str = "offline-rl-portfolio",
+        capture_stdout: bool = False,
     ) -> None:
         self.run_dir = Path(run_dir)
         self.run_dir.mkdir(parents=True, exist_ok=True)
         self.config = config or {}
         self._wandb_run = None
         self._train_step = 0  # monotonic step counter for W&B
+
+        # Optional stdout/stderr tee to <run_dir>/stdout.log. Preserve
+        # originals so close() can restore them even if wandb isn't used.
+        self._stdout_fp = None
+        self._orig_stdout = None
+        self._orig_stderr = None
+        if capture_stdout:
+            self._stdout_fp = open(self.run_dir / "stdout.log", "w", buffering=1)
+            self._orig_stdout = sys.stdout
+            self._orig_stderr = sys.stderr
+            sys.stdout = _Tee(self._orig_stdout, self._stdout_fp)
+            sys.stderr = _Tee(self._orig_stderr, self._stdout_fp)
 
         # Moving average buffers (window=100) for losses.
         self._ma_window = 100
@@ -277,7 +318,19 @@ class RunLogger:
 
         if self._wandb_run is not None:
             import wandb
-            wandb.log({f"val/{k}": v for k, v in metrics.items()}, step=step)
+            wb_payload: dict[str, Any] = {f"val/{k}": v for k, v in metrics.items()}
+            # Also mirror with the canonical short eval/* keys requested by
+            # the project's logging spec so dashboards can query either form.
+            _eval_alias = {
+                "sharpe_ratio": "eval/sharpe",
+                "annual_return": "eval/ann_return",
+                "max_drawdown": "eval/mdd",
+                "turnover": "eval/turnover",
+            }
+            for src, dst in _eval_alias.items():
+                if src in metrics and metrics[src] is not None:
+                    wb_payload[dst] = float(metrics[src])
+            wandb.log(wb_payload, step=step)
 
     def log_validation_curves(
         self,
@@ -441,8 +494,8 @@ class RunLogger:
                         f"  H={metrics.get('policy_entropy', float('nan')):.3f}"
                     )
                 print(
-                    f"[step {step:>7d}]  v_loss={v:.4f}  "
-                    f"q_loss={q:.4f}  policy_loss={p:.4f}{extra}"
+                    f"[step {step:>7d}]  v_loss={v:.3e}  "
+                    f"q_loss={q:.3e}  policy_loss={p:.4f}{extra}"
                 )
         return _log_fn
 
@@ -456,6 +509,18 @@ class RunLogger:
         if self._wandb_run is not None:
             self._wandb_run.finish()
             self._wandb_run = None
+        # Restore original stdout/stderr if we redirected them.
+        if self._stdout_fp is not None:
+            if self._orig_stdout is not None:
+                sys.stdout = self._orig_stdout
+            if self._orig_stderr is not None:
+                sys.stderr = self._orig_stderr
+            try:
+                self._stdout_fp.flush()
+                self._stdout_fp.close()
+            except Exception:
+                pass
+            self._stdout_fp = None
 
     def __enter__(self) -> RunLogger:
         return self

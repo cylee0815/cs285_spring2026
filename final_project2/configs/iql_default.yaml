@@ -11,11 +11,11 @@ expectile: 0.7
 beta: 3.0
 lr: 3.0e-4
 polyak: 0.005
-steps: 100000
+steps: 20000
 seed: 42
 device: auto
-log_interval: 1000
-val_interval: 5000
+log_interval: 200
+val_interval: 1000
 transaction_cost: 0.001
 
 # Strict time-ordered train / val / test split boundaries (inclusive).

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import datetime as _dt
 import itertools
 import json
 import sys
@@ -133,7 +134,13 @@ def run_single_experiment(
     print(f"  splits → train={split_idx.train.size}, "
           f"val={split_idx.val.size}, test={split_idx.test.size}")
 
-    exp_dir = output_dir / experiment_id
+    timestamp = _dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+    exp_dir = output_dir / experiment_id / timestamp
+    exp_dir.mkdir(parents=True, exist_ok=True)
+    abs_exp_dir = exp_dir.resolve()
+    print(f"[INFO] Saving logs to: {abs_exp_dir}")
+
+    wandb_name = f"iql_{expectile}_{beta}_{transaction_cost}"
     exp_config = {
         "experiment_id": experiment_id,
         "expectile": expectile,
@@ -142,12 +149,16 @@ def run_single_experiment(
         **{k: v for k, v in base_cfg.items() if k not in ("dataset",)},
         "dataset": str(dataset_path),
         "split": split_cfg.__dict__,
+        "wandb_name": wandb_name,
+        "run_dir": str(abs_exp_dir),
+        "timestamp": timestamp,
     }
     run_logger = RunLogger(
         run_dir=exp_dir,
-        run_name=experiment_id,
+        run_name=wandb_name,
         config=exp_config,
         wandb_enabled=wandb_enabled,
+        capture_stdout=True,
     )
 
     buffer = ReplayBuffer(dataset_path, device=device, indices=split_idx.train)
@@ -226,12 +237,12 @@ def run_single_experiment(
                     "val_cumulative_return": cum_ret,
                 }, f, indent=2)
 
-    log_interval = base_cfg.get("log_interval", 1000)
-    val_interval = base_cfg.get("val_interval", 5000)
+    log_interval = base_cfg.get("log_interval", 200)
+    val_interval = base_cfg.get("val_interval", 1000)
     train_iql(
         agent=agent,
         buffer=buffer,
-        total_steps=base_cfg.get("steps", 100_000),
+        total_steps=base_cfg.get("steps", 20_000),
         batch_size=base_cfg.get("batch_size", 256),
         log_interval=log_interval,
         log_fn=run_logger.make_log_fn(log_interval),
@@ -329,6 +340,7 @@ def run_single_experiment(
     np.save(exp_dir / "mom_equity_curve.npy", mom_results["equity_curve"])
     np.save(exp_dir / "rp_equity_curve.npy", rp_results["equity_curve"])
 
+    print(f"[INFO] Training complete. Results saved at: {abs_exp_dir}")
     run_logger.close()
 
     print(f"  best val Sharpe={best_state['sharpe']:+.4f} @ step {best_state['step']}")
@@ -351,8 +363,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Run ablation experiments.")
     parser.add_argument("--config", type=str, default="configs/experiments.yaml",
                         help="Path to experiment grid config.")
-    parser.add_argument("--output_dir", type=str, default="results/ablation",
-                        help="Root directory for ablation results.")
+    parser.add_argument("--output_dir", type=str, default="runs/ablation",
+                        help="Root directory for ablation run logs "
+                             "(each run lives at <output_dir>/<exp_id>/<timestamp>/).")
     parser.add_argument("--device", type=str, default="auto",
                         choices=["auto", "cpu", "cuda", "mps"])
     parser.add_argument("--dry-run", action="store_true",

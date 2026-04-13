@@ -23,6 +23,7 @@ Usage
 from __future__ import annotations
 
 import argparse
+import datetime as _dt
 import sys
 from pathlib import Path
 from typing import Any
@@ -173,22 +174,27 @@ def main() -> None:
     parser.add_argument("--transaction_cost", type=float, default=None,
                         help="Transaction-cost lambda used during back-tests.")
     parser.add_argument(
-        "--checkpoint_dir", type=str, default="checkpoints",
-        help="Directory to save model checkpoints (best_model.pt + final.pt).",
+        "--checkpoint_dir", type=str, default=None,
+        help=("Directory to save model checkpoints (best_model.pt + final.pt). "
+              "Defaults to <runs_dir>/<run_name>/<timestamp>/checkpoints/."),
     )
     parser.add_argument(
         "--results_dir", type=str, default="results",
-        help="Root directory for per-run artifacts (config, losses, val/test curves).",
+        help="Root directory for canonical per-experiment artifact mirrors.",
+    )
+    parser.add_argument(
+        "--runs_dir", type=str, default="runs",
+        help="Root directory for per-run timestamped local logs (runs/<name>/<ts>/).",
     )
     parser.add_argument("--run_name", type=str, default="iql_train",
-                        help="Sub-directory under results_dir for this run.")
+                        help="Sub-directory under runs_dir for this run.")
     parser.add_argument("--wandb", action="store_true",
                         help="Enable Weights & Biases logging.")
     args = parser.parse_args()
 
     defaults = {
         "dataset": "datasets/real_dirichlet.npz",
-        "steps": 100_000,
+        "steps": 20_000,
         "batch_size": 256,
         "lr": 3e-4,
         "gamma": 0.99,
@@ -197,8 +203,8 @@ def main() -> None:
         "polyak": 0.005,
         "seed": 42,
         "device": "auto",
-        "log_interval": 1000,
-        "val_interval": 5000,
+        "log_interval": 200,
+        "val_interval": 1000,
         "transaction_cost": 0.001,
     }
     yaml_cfg: dict[str, Any] = {}
@@ -250,21 +256,33 @@ def main() -> None:
     )
 
     # --- Run directory + logger ------------------------------------------
-    run_dir = Path(args.results_dir) / args.run_name
+    # Each run lives at runs/<run_name>/<timestamp>/ so repeat invocations
+    # do not overwrite prior logs. Canonical mirror dirs (results/validation,
+    # results/test) remain at their stable locations for downstream tooling.
+    timestamp = _dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_dir = Path(args.runs_dir) / args.run_name / timestamp
     run_dir.mkdir(parents=True, exist_ok=True)
+    abs_run_dir = run_dir.resolve()
+    print(f"[INFO] Saving logs to: {abs_run_dir}")
+
+    wandb_name = f"iql_{cfg.expectile}_{cfg.beta}_{cfg.transaction_cost}"
     logged_cfg = {
         **vars(cfg),
         "split": split_cfg.__dict__,
         "run_name": args.run_name,
+        "wandb_name": wandb_name,
+        "run_dir": str(abs_run_dir),
+        "timestamp": timestamp,
     }
     run_logger = RunLogger(
         run_dir=run_dir,
-        run_name=args.run_name,
+        run_name=wandb_name,
         config=logged_cfg,
         wandb_enabled=args.wandb,
+        capture_stdout=True,
     )
 
-    ckpt_dir = Path(args.checkpoint_dir)
+    ckpt_dir = Path(args.checkpoint_dir) if args.checkpoint_dir else run_dir / "checkpoints"
     ckpt_dir.mkdir(parents=True, exist_ok=True)
     best_ckpt_path = ckpt_dir / "best_model.pt"
     final_ckpt_path = ckpt_dir / "iql.pt"
@@ -444,6 +462,7 @@ def main() -> None:
         "test_turnover": float(test_metrics["turnover"]),
         "test_cumulative_return": float(test_metrics["cumulative_return"]),
     })
+    print(f"[INFO] Training complete. Results saved at: {abs_run_dir}")
     run_logger.close()
 
     print("Training + evaluation complete.")

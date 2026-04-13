@@ -61,7 +61,7 @@ def compute_diagnostics(
 def train_iql(
     agent: IQL,
     buffer: ReplayBuffer,
-    total_steps: int = 100_000,
+    total_steps: int = 20_000,
     batch_size: int = 256,
     log_interval: int = 1000,
     log_fn: Callable[[int, dict[str, float]], None] | None = None,
@@ -118,7 +118,7 @@ def train_iql(
             v = metrics["v_loss"]
             q = metrics["q_loss"]
             p = metrics["policy_loss"]
-            print(f"[step {step:>7d}]  v_loss={v:.4f}  q_loss={q:.4f}  policy_loss={p:.4f}")
+            print(f"[step {step:>7d}]  v_loss={v:.3e}  q_loss={q:.3e}  policy_loss={p:.4f}")
 
         if do_validate and step % validation_interval == 0:
             validation_fn(step)  # type: ignore[misc]

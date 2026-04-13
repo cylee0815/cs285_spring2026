@@ -96,15 +96,15 @@ iql:
 # Training loop.
 # ---------------------------------------------------------------------------
 train:
-  steps: 500000
+  steps: 20000
   batch_size: 256
   lr_actor: 3.0e-4
   lr_critic: 3.0e-4
   lr_value: 3.0e-4
   grad_clip: 1.0
-  eval_interval: 10000        # steps between validation backtests
-  log_interval: 1000
-  save_interval: 50000
+  eval_interval: 1000         # steps between validation backtests
+  log_interval: 200
+  save_interval: 10000
   device: auto                # "auto" | "cpu" | "cuda" | "mps"
   seed: 0
   deterministic_torch: true
