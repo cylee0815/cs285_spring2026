@@ -409,19 +409,25 @@ def main() -> None:
         device=device,
     )
     test_metrics = test_res["metrics"]
+    test_sharpe = float(test_metrics["sharpe_ratio"])
+    test_mdd = float(test_metrics["max_drawdown"])
+    test_ann_ret = float(test_metrics["annual_return"])
+    test_cum_ret = float(test_metrics["cumulative_return"])
+    global_step = best_state["step"] if best_state["step"] >= 0 else 0
     print("=" * 60)
-    print(f"{'TEST METRICS':<30} value")
-    print("-" * 60)
-    for k in sorted(test_metrics.keys()):
-        print(f"  {k:<30} {test_metrics[k]:+.4f}")
+    print(f"[TEST RESULTS @ step {global_step}]")
+    print(f"Sharpe: {test_sharpe:.4f}")
+    print(f"Annual Return: {test_ann_ret:.4f}")
+    print(f"Max Drawdown: {test_mdd:.4f}")
+    print(f"Cumulative Return: {test_cum_ret:.4f}")
     print("=" * 60)
 
     test_metric_dict = {
-        "annual_return": float(test_metrics["annual_return"]),
-        "sharpe_ratio": float(test_metrics["sharpe_ratio"]),
-        "max_drawdown": float(test_metrics["max_drawdown"]),
+        "annual_return": test_ann_ret,
+        "sharpe_ratio": test_sharpe,
+        "max_drawdown": test_mdd,
         "turnover": float(test_metrics["turnover"]),
-        "cumulative_return": float(test_metrics["cumulative_return"]),
+        "cumulative_return": test_cum_ret,
     }
     test_weights = np.asarray(test_res["weights"])
     T_test = test_weights.shape[0]

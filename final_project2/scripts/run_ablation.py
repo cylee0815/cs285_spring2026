@@ -300,6 +300,19 @@ def run_single_experiment(
     equity_curve = iql_results["equity_curve"]
     cumulative_return = np.cumprod(1 + portfolio_returns) - 1
 
+    test_sharpe = float(iql_metrics["sharpe_ratio"])
+    test_mdd = float(iql_metrics["max_drawdown"])
+    test_ann_ret = float(iql_metrics["annual_return"])
+    test_cum_ret = float(iql_metrics["cumulative_return"])
+    global_step = best_state["step"] if best_state["step"] >= 0 else 0
+    print("=" * 60)
+    print(f"[TEST RESULTS @ step {global_step}]")
+    print(f"Sharpe: {test_sharpe:.4f}")
+    print(f"Annual Return: {test_ann_ret:.4f}")
+    print(f"Max Drawdown: {test_mdd:.4f}")
+    print(f"Cumulative Return: {test_cum_ret:.4f}")
+    print("=" * 60)
+
     test_weights = np.asarray(iql_results["weights"])
     test_dates = dates_ns[split_idx.test][:test_weights.shape[0]].astype(np.int64)
 
@@ -344,9 +357,10 @@ def run_single_experiment(
     run_logger.close()
 
     print(f"  best val Sharpe={best_state['sharpe']:+.4f} @ step {best_state['step']}")
-    print(f"  TEST Sharpe={iql_metrics['sharpe_ratio']:+.4f}, "
-          f"MDD={iql_metrics['max_drawdown']:.4f}, "
-          f"AnnRet={iql_metrics['annual_return']:+.4f}")
+    print(f"  TEST Sharpe={test_sharpe:+.4f}, "
+          f"MDD={test_mdd:.4f}, "
+          f"AnnRet={test_ann_ret:+.4f}, "
+          f"CumRet={test_cum_ret:+.4f}")
 
     return {
         "experiment_id": experiment_id,

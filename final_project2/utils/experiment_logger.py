@@ -453,18 +453,32 @@ class RunLogger:
 
         if self._wandb_run is not None:
             import wandb
-            for k, v in metrics.items():
-                wandb.run.summary[f"test/{k}"] = v
+            # Explicit wandb.log of the canonical test scalars so they appear
+            # as logged metrics (not just run summary) alongside validation.
+            # Uses self._train_step — the monotonic global step last seen by
+            # log_step / log_validation_metrics — so the test row aligns with
+            # the final validation step in the WandB time-series axis.
+            wb_log: dict[str, Any] = {
+                "test/sharpe": float(metrics["sharpe_ratio"]),
+                "test/max_drawdown": float(metrics["max_drawdown"]),
+                "test/annual_return": float(metrics["annual_return"]),
+                "test/cumulative_return": float(metrics["cumulative_return"]),
+            }
+            if "turnover" in metrics:
+                wb_log["test/turnover"] = float(metrics["turnover"])
             # Also attach the test equity curve as a line plot artifact.
             eq_table = wandb.Table(
                 data=[[i, float(v)] for i, v in enumerate(equity_curve)],
                 columns=["t", "equity"],
             )
-            wandb.log({
-                "test/equity_curve": wandb.plot.line(
-                    eq_table, "t", "equity", title="Test Equity Curve"
-                ),
-            })
+            wb_log["test/equity_curve"] = wandb.plot.line(
+                eq_table, "t", "equity", title="Test Equity Curve"
+            )
+            wandb.log(wb_log, step=self._train_step)
+            # Mirror to run.summary as well so the run-list view shows the
+            # final test scalars without querying the history API.
+            for k, v in metrics.items():
+                wandb.run.summary[f"test/{k}"] = v
 
     # ------------------------------------------------------------------
     # Final summary + lifecycle
