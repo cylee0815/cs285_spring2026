@@ -27,6 +27,8 @@ dependencies = [
     "rich>=13.7",
     "tqdm>=4.66",
     "matplotlib>=3.8",
+    "ml-collections>=1.1.0",
+    "ta>=0.11.0",
 ]
 
 [dependency-groups]
