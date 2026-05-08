@@ -64,7 +64,7 @@ class TestDeterministicReset:
 
 class TestRewardCorrectness:
     def test_simple_reward_no_cost(self):
-        """r_t = w_t . R_{t+1} with zero transaction cost."""
+        """r_t = log(1 + w_t . R_{t+1}) with zero transaction cost."""
         returns = np.array([
             [0.02, -0.01, 0.03],
             [0.00, 0.00, 0.00],
@@ -76,11 +76,12 @@ class TestRewardCorrectness:
         action = np.array([0.5, 0.3, 0.2], dtype=np.float32)
         _obs, reward, _term, _trunc, _info = env.step(action)
         # portfolio return = 0.5*0.02 + 0.3*(-0.01) + 0.2*0.03 = 0.013
-        expected = 0.5 * 0.02 + 0.3 * (-0.01) + 0.2 * 0.03
+        port_ret = 0.5 * 0.02 + 0.3 * (-0.01) + 0.2 * 0.03
+        expected = np.log1p(port_ret)
         np.testing.assert_allclose(reward, expected, atol=1e-7)
 
     def test_reward_with_transaction_cost(self):
-        """r_t = w_t . R_{t+1} - lambda * ||w_t - w_{t-1}||_1."""
+        """r_t = log(1 + w_t . R_{t+1} - lambda * ||w_t - w_{t-1}||_1)."""
         returns = np.array([
             [0.02, -0.01, 0.03],
             [0.00, 0.00, 0.00],
@@ -95,7 +96,7 @@ class TestRewardCorrectness:
 
         port_ret = 0.5 * 0.02 + 0.3 * (-0.01) + 0.2 * 0.03
         turnover = (abs(0.5 - 1/3) + abs(0.3 - 1/3) + abs(0.2 - 1/3))
-        expected = port_ret - lam * turnover
+        expected = np.log1p(port_ret - lam * turnover)
         np.testing.assert_allclose(reward, expected, atol=1e-7)
 
 
@@ -116,13 +117,13 @@ class TestTurnover:
         _, r1, *_ = env.step(w1)
         turnover1 = abs(0.8 - 0.5) + abs(0.2 - 0.5)
         port_ret1 = 0.8 * 0.01 + 0.2 * 0.01
-        np.testing.assert_allclose(r1, port_ret1 - lam * turnover1, atol=1e-7)
+        np.testing.assert_allclose(r1, np.log1p(port_ret1 - lam * turnover1), atol=1e-7)
 
         w2 = np.array([0.3, 0.7], dtype=np.float32)
         _, r2, *_ = env.step(w2)
         turnover2 = abs(0.3 - 0.8) + abs(0.7 - 0.2)
         port_ret2 = 0.3 * 0.01 + 0.7 * 0.01
-        np.testing.assert_allclose(r2, port_ret2 - lam * turnover2, atol=1e-7)
+        np.testing.assert_allclose(r2, np.log1p(port_ret2 - lam * turnover2), atol=1e-7)
 
 
 # ---------------------------------------------------------------------------
@@ -256,7 +257,7 @@ class TestGoldenTrajectory:
         _, r0, term0, *_ = env.step(w0)
         port0 = 0.6 * 0.02 + 0.4 * (-0.01)
         tc0 = lam * (abs(0.6 - 0.5) + abs(0.4 - 0.5))
-        np.testing.assert_allclose(r0, port0 - tc0, atol=1e-7)
+        np.testing.assert_allclose(r0, np.log1p(port0 - tc0), atol=1e-7)
         assert not term0
 
         # Step 1: action=[0.3, 0.7], returns=[0.01, 0.03]
@@ -264,7 +265,7 @@ class TestGoldenTrajectory:
         _, r1, term1, *_ = env.step(w1)
         port1 = 0.3 * 0.01 + 0.7 * 0.03
         tc1 = lam * (abs(0.3 - 0.6) + abs(0.7 - 0.4))
-        np.testing.assert_allclose(r1, port1 - tc1, atol=1e-7)
+        np.testing.assert_allclose(r1, np.log1p(port1 - tc1), atol=1e-7)
         assert not term1
 
         # Step 2: action=[0.5, 0.5], returns=[-0.02, 0.01]
@@ -272,7 +273,7 @@ class TestGoldenTrajectory:
         _, r2, term2, *_ = env.step(w2)
         port2 = 0.5 * (-0.02) + 0.5 * 0.01
         tc2 = lam * (abs(0.5 - 0.3) + abs(0.5 - 0.7))
-        np.testing.assert_allclose(r2, port2 - tc2, atol=1e-7)
+        np.testing.assert_allclose(r2, np.log1p(port2 - tc2), atol=1e-7)
         assert term2  # 4 rows → 3 steps → done after step 2
 
 

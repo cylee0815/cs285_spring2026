@@ -1,13 +1,13 @@
 """Gym-style portfolio allocation environment for offline RL.
 
 The agent observes market features at each timestep and outputs portfolio
-weights on the simplex. Reward is the dot product of weights and forward
-returns, minus an L1 turnover penalty.
+weights on the simplex. Reward is the log of one plus the post-cost
+portfolio return, matching the spec in CLAUDE.md.
 
 MDP:
     state:   feature vector x_t (from FeatureBundle.features)
     action:  portfolio weights w_t in R^n_assets, projected to simplex
-    reward:  w_t . R_{t+1} - lambda * ||w_t - w_{t-1}||_1
+    reward:  log(1 + w_t . R_{t+1} - lambda * ||w_t - w_{t-1}||_1)
     done:    when the dataset is exhausted or episode_length reached
 """
 
@@ -144,17 +144,17 @@ class PortfolioEnv:
         # Index into the dataset arrays.
         idx = min(self._start + self._t, self._n_steps - 1)
 
-        # Reward: portfolio return minus turnover cost
+        # Post-cost simple return, then logged for the reward signal.
         port_return = float(np.dot(weights, self._forward_returns[idx]))
         turnover = float(np.sum(np.abs(weights - self.prev_weights)))
-        reward = port_return - self._lambda * turnover
-
-        # Log return (for info dict — some eval code reads this).
-        port_log = float(np.log1p(max(port_return - self._lambda * turnover, -0.999999)))
+        simple_return = port_return - self._lambda * turnover
+        # Clamp to avoid log(0)/NaN; -1 is the mathematical floor (total loss).
+        clamped = max(simple_return, -0.9999)
+        reward = float(np.log1p(clamped))
 
         # Update state
         self.prev_weights = weights.copy()
-        self._portfolio_value *= (1.0 + port_return - self._lambda * turnover)
+        self._portfolio_value *= (1.0 + simple_return)
         self._t += 1
 
         # Termination conditions:
@@ -172,8 +172,13 @@ class PortfolioEnv:
 
         info = {
             "portfolio_value": self._portfolio_value,
-            "portfolio_return": port_return - self._lambda * turnover,
-            "portfolio_log_return": port_log,
+            # Pre-log post-cost return; both keys hold the same value.
+            # ``portfolio_simple_return`` is the explicit name; ``portfolio_return``
+            # is kept as a legacy alias used by older scripts.
+            "portfolio_return": simple_return,
+            "portfolio_simple_return": simple_return,
+            # Log return == reward; kept in info for older eval code.
+            "portfolio_log_return": reward,
             "turnover": turnover,
             "transaction_cost": self._lambda * turnover,
             "executed_weights": weights.copy(),
