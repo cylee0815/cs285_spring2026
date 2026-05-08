@@ -43,6 +43,7 @@ class PortfolioEnv:
         forward_returns: np.ndarray,
         transaction_cost_lambda: float = 0.0,
         episode_length: int | None = None,
+        include_prev_weights: bool = False,
     ) -> None:
         if features.shape[0] != forward_returns.shape[0]:
             raise ValueError(
@@ -60,6 +61,7 @@ class PortfolioEnv:
         self._lambda = float(transaction_cost_lambda)
         self._n_assets = forward_returns.shape[1]
         self._n_steps = features.shape[0]
+        self._include_prev_weights = bool(include_prev_weights)
 
         # Episode length: default to full dataset sweep.
         self.episode_length: int = (
@@ -67,7 +69,7 @@ class PortfolioEnv:
         )
 
         # Gymnasium-compatible spaces (required by offline-RL pipeline).
-        obs_dim = features.shape[1]
+        obs_dim = features.shape[1] + (self._n_assets if self._include_prev_weights else 0)
         self.observation_space = spaces.Box(
             low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32,
         )
@@ -168,7 +170,11 @@ class PortfolioEnv:
         if terminated or truncated:
             self._done = True
 
-        obs = self._get_obs() if not self._done else np.zeros_like(self._features[0])
+        obs = (
+            self._get_obs()
+            if not self._done
+            else np.zeros(self.observation_space.shape, dtype=np.float32)
+        )
 
         info = {
             "portfolio_value": self._portfolio_value,
@@ -192,7 +198,10 @@ class PortfolioEnv:
 
     def _get_obs(self) -> np.ndarray:
         idx = min(self._start + self._t, self._n_steps - 1)
-        return self._features[idx].copy()
+        feat = self._features[idx]
+        if self._include_prev_weights:
+            return np.concatenate([feat, self.prev_weights.astype(np.float32)])
+        return feat.copy()
 
 
 # ---------------------------------------------------------------------
