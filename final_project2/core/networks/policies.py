@@ -11,7 +11,7 @@ All share the same interface for PPO training.
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.distributions import Normal, Independent
+from torch.distributions import Normal, Independent, Dirichlet
 import numpy as np
 from typing import Optional, Tuple
 
@@ -398,6 +398,159 @@ class TransformerPolicy(nn.Module):
         return log_prob, entropy, value
 
 
+class DirichletMLPPolicy(nn.Module):
+    """Feedforward actor-critic with a Dirichlet head on the portfolio simplex.
+
+    The actor outputs alpha_i = softplus(f(s)_i) + 1 so alpha_i > 1 (unimodal),
+    samples w ~ Dir(alpha) in the open simplex, and uses PyTorch's closed-form
+    Dirichlet log-prob / entropy. Fixes the projection mismatch where a raw
+    Gaussian policy is judged by an env that clips+normalizes to the simplex.
+    """
+
+    def __init__(
+        self,
+        obs_dim: int,
+        action_dim: int,
+        hidden_dim: int = 256,
+        n_layers: int = 2,
+    ):
+        super().__init__()
+        layers = []
+        in_dim = obs_dim
+        for _ in range(n_layers):
+            layers += [layer_init(nn.Linear(in_dim, hidden_dim)), nn.Tanh()]
+            in_dim = hidden_dim
+        self.shared = nn.Sequential(*layers)
+        self.actor_alpha = layer_init(nn.Linear(hidden_dim, action_dim), std=0.01)
+        self.critic = layer_init(nn.Linear(hidden_dim, 1), std=1.0)
+
+    def _dist(self, features: torch.Tensor) -> Dirichlet:
+        alpha = F.softplus(self.actor_alpha(features)) + 1.0
+        return Dirichlet(alpha)
+
+    def get_action_and_value(
+        self,
+        obs: torch.Tensor,
+        hidden=None,
+        action: Optional[torch.Tensor] = None,
+    ):
+        features = self.shared(obs)
+        dist = self._dist(features)
+        if action is None:
+            action = dist.rsample()
+            action = action.clamp(1e-6, 1.0)
+            action = action / action.sum(dim=-1, keepdim=True)
+        log_prob = dist.log_prob(action)
+        entropy = dist.entropy()
+        value = self.critic(features).squeeze(-1)
+        return action, log_prob, entropy, value, None
+
+    def get_value(self, obs: torch.Tensor, hidden=None):
+        return self.critic(self.shared(obs)).squeeze(-1)
+
+    def evaluate_actions(
+        self, obs: torch.Tensor, actions: torch.Tensor, hidden=None,
+    ):
+        features = self.shared(obs)
+        dist = self._dist(features)
+        # Guard against numerically-zero entries that would give -inf log-prob.
+        a = actions.clamp(1e-6, 1.0)
+        a = a / a.sum(dim=-1, keepdim=True)
+        log_prob = dist.log_prob(a)
+        entropy = dist.entropy()
+        value = self.critic(features).squeeze(-1)
+        return log_prob, entropy, value
+
+
+class DirichletLSTMPolicy(nn.Module):
+    """LSTM actor-critic with a Dirichlet head on the portfolio simplex.
+
+    Hidden-state handling mirrors LSTMPolicy: during rollouts we carry
+    (h, c) step-by-step and reset at episode boundaries; during PPO updates
+    random minibatches use a zero hidden state (the standard PPO-recurrent
+    compromise, adequate for short 63-day episodes).
+    """
+
+    def __init__(
+        self,
+        obs_dim: int,
+        action_dim: int,
+        hidden_dim: int = 256,
+        lstm_layers: int = 1,
+    ):
+        super().__init__()
+        self.hidden_dim = hidden_dim
+        self.lstm_layers = lstm_layers
+
+        self.input_proj = nn.Sequential(
+            layer_init(nn.Linear(obs_dim, hidden_dim)), nn.Tanh()
+        )
+        self.lstm = nn.LSTM(hidden_dim, hidden_dim, num_layers=lstm_layers, batch_first=True)
+        self.actor_alpha = layer_init(nn.Linear(hidden_dim, action_dim), std=0.01)
+        self.critic = layer_init(nn.Linear(hidden_dim, 1), std=1.0)
+
+    def init_hidden(self, batch_size: int, device: torch.device):
+        return (
+            torch.zeros(self.lstm_layers, batch_size, self.hidden_dim, device=device),
+            torch.zeros(self.lstm_layers, batch_size, self.hidden_dim, device=device),
+        )
+
+    def _forward(self, obs: torch.Tensor, hidden):
+        if obs.dim() == 1:
+            obs = obs.unsqueeze(0)
+        if obs.dim() == 2:
+            obs = obs.unsqueeze(1)  # (batch, 1, obs_dim)
+            squeeze = True
+        else:
+            squeeze = False
+        if hidden is None:
+            hidden = self.init_hidden(obs.shape[0], obs.device)
+        x = self.input_proj(obs)
+        out, new_hidden = self.lstm(x, hidden)
+        if squeeze:
+            out = out.squeeze(1)
+        return out, new_hidden
+
+    def _dist(self, features: torch.Tensor) -> Dirichlet:
+        alpha = F.softplus(self.actor_alpha(features)) + 1.0
+        return Dirichlet(alpha)
+
+    def get_action_and_value(
+        self,
+        obs: torch.Tensor,
+        hidden=None,
+        action: Optional[torch.Tensor] = None,
+    ):
+        features, new_hidden = self._forward(obs, hidden)
+        dist = self._dist(features)
+        if action is None:
+            action = dist.rsample()
+            action = action.clamp(1e-6, 1.0)
+            action = action / action.sum(dim=-1, keepdim=True)
+        log_prob = dist.log_prob(action)
+        entropy = dist.entropy()
+        value = self.critic(features).squeeze(-1)
+        return action, log_prob, entropy, value, new_hidden
+
+    def get_value(self, obs: torch.Tensor, hidden=None):
+        features, _ = self._forward(obs, hidden)
+        return self.critic(features).squeeze(-1)
+
+    def evaluate_actions(
+        self, obs: torch.Tensor, actions: torch.Tensor, hidden=None,
+    ):
+        features, _ = self._forward(obs, hidden)
+        dist = self._dist(features)
+        a = actions.clamp(1e-6, 1.0)
+        if a.dim() != features.dim():
+            a = a.view(features.shape[0], -1)
+        a = a / a.sum(dim=-1, keepdim=True)
+        log_prob = dist.log_prob(a)
+        entropy = dist.entropy()
+        value = self.critic(features).squeeze(-1)
+        return log_prob, entropy, value
+
+
 def make_policy(arch: str, obs_dim: int, action_dim: int, config) -> nn.Module:
     """Factory function to create a policy network by architecture name."""
     if arch == "mlp":
@@ -423,7 +576,22 @@ def make_policy(arch: str, obs_dim: int, action_dim: int, config) -> nn.Module:
             n_heads=getattr(config, "n_heads", 4),
             n_layers=getattr(config, "n_layers", 2),
         )
+    elif arch == "dirichlet":
+        return DirichletMLPPolicy(
+            obs_dim=obs_dim,
+            action_dim=action_dim,
+            hidden_dim=config.hidden_dim,
+            n_layers=getattr(config, "n_layers", 2),
+        )
+    elif arch == "dirichlet_lstm":
+        return DirichletLSTMPolicy(
+            obs_dim=obs_dim,
+            action_dim=action_dim,
+            hidden_dim=config.hidden_dim,
+            lstm_layers=getattr(config, "lstm_layers", 1),
+        )
     else:
         raise ValueError(
-            f"Unknown architecture: {arch}. Choose from 'mlp', 'lstm', 'transformer'."
+            f"Unknown architecture: {arch}. Choose from 'mlp', 'lstm', "
+            f"'transformer', 'dirichlet', 'dirichlet_lstm'."
         )
