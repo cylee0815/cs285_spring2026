@@ -15,7 +15,13 @@ import numpy as np
 from typing import Dict, Any, Optional
 import gymnasium as gym
 
-from core.networks.policies import make_policy, LSTMPolicy, TransformerPolicy
+from core.networks.policies import (
+    make_policy,
+    LSTMPolicy,
+    TransformerPolicy,
+    DirichletMLPPolicy,
+    DirichletLSTMPolicy,
+)
 
 
 class RolloutBuffer:
@@ -127,8 +133,14 @@ class PPOAgent:
         self._episode_length = 0
         self._completed_episodes = []
 
-        self.is_lstm = isinstance(self.policy, LSTMPolicy)
+        self.is_lstm = isinstance(self.policy, (LSTMPolicy, DirichletLSTMPolicy))
         self.is_transformer = isinstance(self.policy, TransformerPolicy)
+        self.is_dirichlet = isinstance(
+            self.policy, (DirichletMLPPolicy, DirichletLSTMPolicy)
+        )
+        # Optional reward scaling — daily portfolio returns are ~1e-2 which
+        # is hard on the value head's std=1 init. Defaults to 1.0 (no-op).
+        self.reward_scale = float(getattr(config, "reward_scale", 1.0))
 
     def _prepare_obs_for_policy(self, obs: torch.Tensor) -> torch.Tensor:
         """Add batch dimension if needed for LSTM/Transformer policies."""
@@ -141,6 +153,11 @@ class PPOAgent:
         """Collect n_steps transitions from the environment."""
         self.buffer.reset()
         self.policy.eval()
+
+        # Track portfolio-specific quantities over this rollout for logging.
+        self._rollout_turnovers: list[float] = []
+        self._rollout_max_weights: list[float] = []
+        self._rollout_hhi: list[float] = []  # Herfindahl concentration
 
         for _ in range(self.config.n_steps):
             policy_obs = self._prepare_obs_for_policy(self._obs)
@@ -164,12 +181,23 @@ class PPOAgent:
             next_obs, reward, terminated, truncated, info = self.env.step(action_np)
             done = terminated or truncated
 
+            # Record portfolio diagnostics from the env's executed weights.
+            exec_w = info.get("executed_weights")
+            if exec_w is not None:
+                self._rollout_turnovers.append(float(info.get("turnover", 0.0)))
+                self._rollout_max_weights.append(float(np.max(exec_w)))
+                self._rollout_hhi.append(float(np.sum(np.square(exec_w))))
+
             self.buffer.add(
                 obs=self._obs,
                 action=action_stored,
                 log_prob=log_prob_scalar,
                 value=value_scalar,
-                reward=torch.tensor(reward, device=self.device, dtype=torch.float32),
+                reward=torch.tensor(
+                    reward * self.reward_scale,
+                    device=self.device,
+                    dtype=torch.float32,
+                ),
                 done=torch.tensor(float(done), device=self.device, dtype=torch.float32),
             )
 
@@ -304,6 +332,21 @@ class PPOAgent:
         # Aggregate metrics
         result = {k: float(np.mean(v)) for k, v in metrics.items()}
 
+        # Portfolio diagnostics collected during collect_rollouts().
+        if getattr(self, "_rollout_turnovers", None):
+            result["rollout/turnover"] = float(np.mean(self._rollout_turnovers))
+            result["rollout/max_weight"] = float(np.mean(self._rollout_max_weights))
+            result["rollout/hhi"] = float(np.mean(self._rollout_hhi))
+            # Simplex entropy of executed weights: -Σ w log w. For Dirichlet
+            # this is a Monte-Carlo read of how concentrated actions are;
+            # for the Gaussian-proj policy it is on the already-projected w.
+            a = actions.detach().cpu().numpy()
+            a = np.clip(a, 1e-8, 1.0)
+            a = a / a.sum(axis=-1, keepdims=True)
+            result["rollout/weight_entropy"] = float(
+                np.mean(-np.sum(a * np.log(a), axis=-1))
+            )
+
         # Episode stats
         if self._completed_episodes:
             result["episode_return"] = float(
@@ -319,40 +362,89 @@ class PPOAgent:
         return result
 
     @torch.no_grad()
-    def evaluate(self, eval_env: gym.Env, n_episodes: int = 5) -> Dict[str, float]:
-        """Run evaluation episodes and return performance metrics."""
+    def evaluate(
+        self,
+        eval_env: gym.Env,
+        n_episodes: int = 5,
+        deterministic: bool = False,
+        randomize: bool = True,
+    ) -> Dict[str, float]:
+        """Run evaluation episodes and return performance metrics.
+
+        ``deterministic=True`` uses the Dirichlet mean (α / Σα) for
+        Dirichlet policies — the noise-free evaluation appropriate for
+        backtesting. For the Gaussian policy it falls back to sampling
+        (no deterministic mean handler wired through the existing API).
+
+        ``randomize=False`` forces a chronological sweep from index 0,
+        which is the right mode for a single-pass test-window backtest.
+        """
         self.policy.eval()
 
-        episode_returns = []
-        portfolio_values = []
-        turnovers = []
+        episode_returns: list[float] = []
+        portfolio_values: list[float] = []
+        turnovers: list[float] = []
+        sharpes: list[float] = []
+        max_drawdowns: list[float] = []
+
+        reset_options = {"randomize": randomize}
 
         for _ in range(n_episodes):
-            obs, _ = eval_env.reset()
+            obs, _ = eval_env.reset(options=reset_options)
             obs = torch.tensor(obs, device=self.device, dtype=torch.float32)
             hidden = None
             done = False
             ep_return = 0.0
             ep_turnover = 0.0
-            info = {}
+            step_returns: list[float] = []
+            pv_traj: list[float] = [1.0]
+            info: dict = {}
 
             while not done:
                 policy_obs = self._prepare_obs_for_policy(obs)
-                action, _, _, _, new_hidden = self.policy.get_action_and_value(
-                    policy_obs,
-                    hidden=hidden,
-                )
+                if self.is_dirichlet and deterministic:
+                    # Dirichlet mean — closed form, no sampling.
+                    features = (
+                        self.policy.shared(policy_obs)
+                        if not self.is_lstm
+                        else self.policy._forward(policy_obs, hidden)[0]
+                    )
+                    if self.is_lstm:
+                        _, new_hidden = self.policy._forward(policy_obs, hidden)
+                    else:
+                        new_hidden = None
+                    dist = self.policy._dist(features)
+                    action = dist.mean
+                else:
+                    action, _, _, _, new_hidden = self.policy.get_action_and_value(
+                        policy_obs, hidden=hidden,
+                    )
                 action_np = action.squeeze(0).cpu().numpy()
                 obs_np, reward, terminated, truncated, info = eval_env.step(action_np)
                 done = terminated or truncated
                 obs = torch.tensor(obs_np, device=self.device, dtype=torch.float32)
                 hidden = _detach_hidden(new_hidden) if not done else None
                 ep_return += float(reward)
-                ep_turnover += info.get("turnover", 0.0)
+                ep_turnover += float(info.get("turnover", 0.0))
+                # Use the simple portfolio return (already net of tc) for
+                # Sharpe — consistent with evaluation.metrics.compute_sharpe.
+                step_returns.append(float(info.get("portfolio_return", reward)))
+                pv_traj.append(float(info.get("portfolio_value", pv_traj[-1])))
 
             episode_returns.append(ep_return)
             portfolio_values.append(info.get("portfolio_value", 1.0))
             turnovers.append(ep_turnover)
+
+            arr = np.asarray(step_returns, dtype=np.float64)
+            if arr.size > 1 and arr.std() > 1e-12:
+                sharpes.append(float(arr.mean() / arr.std() * np.sqrt(252)))
+            else:
+                sharpes.append(0.0)
+
+            pv = np.asarray(pv_traj, dtype=np.float64)
+            running_max = np.maximum.accumulate(pv)
+            dd = (running_max - pv) / np.maximum(running_max, 1e-12)
+            max_drawdowns.append(float(dd.max()))
 
         annual_returns = [
             (pv - 1.0) * (252 / eval_env.episode_length)
@@ -365,4 +457,6 @@ class PPOAgent:
             "eval/annual_return": float(np.mean(annual_returns)),
             "eval/avg_turnover": float(np.mean(turnovers)),
             "eval/std_episode_return": float(np.std(episode_returns)),
+            "eval/sharpe_ratio": float(np.mean(sharpes)),
+            "eval/max_drawdown": float(np.mean(max_drawdowns)),
         }
