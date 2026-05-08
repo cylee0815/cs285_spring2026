@@ -19,10 +19,13 @@ The actor must implement ``actor.dist(obs) -> torch.distributions.Dirichlet``
 from __future__ import annotations
 
 import math
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any
 
+import numpy as np
 import torch
+import torch.optim as optim
 from torch.distributions import kl_divergence
 
 from online_rl.agents.grpo_advantages import group_relative_advantage
@@ -184,3 +187,159 @@ def grpo_loss(
         "ratio_hard_clipped": ratio_hard_clipped,
     }
     return loss, metrics
+
+
+class GRPOTrainer:
+    """Continuous-GRPO trainer.
+
+    Lifecycle:
+      - ``__init__``: snapshot ``ref_actor`` (frozen deepcopy of ``actor``)
+        for the KL anchor. Build the optimizer over ``actor`` parameters.
+      - ``collect(num_states)``: walk the env forward. At each non-terminal
+        state, sample G actions under the *current* ``actor`` (no_grad),
+        record their log-probs, peek G rewards via
+        ``env.peek_reward_batch``, then advance the env with one
+        uniformly-randomly chosen action from the group.
+      - ``update(batch)``: run ``cfg.epochs_per_batch`` passes of
+        minibatched ``grpo_loss`` + Adam steps. The buffered log-probs
+        from ``collect`` serve as π_old in the importance ratio — there is
+        no separate ``old_actor`` network; the ratio's denominator is a
+        tensor in the buffer.
+
+    The trainer stores its own ``np.random.default_rng(seed)`` for the
+    "which action advances the env" choice in ``collect``. Choices are
+    deterministic given the seed and the call order.
+    """
+
+    def __init__(
+        self,
+        actor: torch.nn.Module,
+        env: Any,
+        cfg: GRPOConfig | Any,
+        device: torch.device | str = "cpu",
+        seed: int = 0,
+    ) -> None:
+        self.actor = actor.to(device)
+        self.env = env
+        self.cfg = cfg
+        self.device = torch.device(device)
+
+        # Frozen KL anchor — never updated, never re-snapshotted.
+        self.ref_actor = deepcopy(self.actor).to(self.device)
+        for p in self.ref_actor.parameters():
+            p.requires_grad_(False)
+        self.ref_actor.eval()
+
+        self.optimizer = optim.Adam(self.actor.parameters(), lr=float(cfg.lr))
+
+        self._rng = np.random.default_rng(seed)
+        self._obs: np.ndarray | None = None
+
+    # -----------------------------------------------------------------
+    # Rollout collection
+    # -----------------------------------------------------------------
+
+    def collect(self, num_states: int) -> dict[str, torch.Tensor]:
+        """Collect ``num_states`` non-terminal transitions, G samples each.
+
+        Returns a dict with CPU tensors:
+          - ``states``      [N, d]
+          - ``actions``     [N, G, n_assets]
+          - ``old_logprobs`` [N, G]
+          - ``rewards``     [N, G]
+
+        Resets the env on termination/truncation and continues until the
+        target ``num_states`` is reached. Resets do not count toward the
+        target.
+        """
+        if self._obs is None:
+            obs, _ = self.env.reset()
+            self._obs = obs
+
+        G = int(self.cfg.group_size)
+        states_buf: list[torch.Tensor] = []
+        actions_buf: list[torch.Tensor] = []
+        logp_buf: list[torch.Tensor] = []
+        rewards_buf: list[torch.Tensor] = []
+
+        self.actor.eval()
+        while len(states_buf) < num_states:
+            obs_t = torch.tensor(
+                self._obs, dtype=torch.float32, device=self.device,
+            ).unsqueeze(0)                                       # [1, d]
+
+            with torch.no_grad():
+                dist = self.actor.dist(obs_t)                    # batch_shape=(1,)
+                samples = dist.sample((G,))                      # [G, 1, N]
+                logp = dist.log_prob(samples).squeeze(1)         # [G]
+                samples_GN = samples.squeeze(1)                  # [G, N]
+
+            # Per-candidate rewards from the env, no state mutation.
+            actions_np = samples_GN.cpu().numpy()
+            rewards_np = self.env.peek_reward_batch(actions_np)  # [G] float64
+
+            states_buf.append(obs_t.squeeze(0).cpu())
+            actions_buf.append(samples_GN.cpu())
+            logp_buf.append(logp.cpu())
+            rewards_buf.append(torch.tensor(rewards_np, dtype=torch.float32))
+
+            # Advance the env with one uniform-random action from the group.
+            chosen_idx = int(self._rng.integers(0, G))
+            env_action = actions_np[chosen_idx]
+            next_obs, _, terminated, truncated, _ = self.env.step(env_action)
+            if terminated or truncated:
+                next_obs, _ = self.env.reset()
+            self._obs = next_obs
+
+        return {
+            "states": torch.stack(states_buf, dim=0),
+            "actions": torch.stack(actions_buf, dim=0),
+            "old_logprobs": torch.stack(logp_buf, dim=0),
+            "rewards": torch.stack(rewards_buf, dim=0),
+        }
+
+    # -----------------------------------------------------------------
+    # Update
+    # -----------------------------------------------------------------
+
+    def update(self, batch: dict[str, torch.Tensor]) -> dict[str, float]:
+        """Run ``epochs_per_batch`` passes of minibatched gradient updates.
+
+        Aggregates per-step diagnostics by mean. Returns a flat
+        ``dict[str, float]`` for logging.
+        """
+        states = batch["states"].to(self.device)
+        actions = batch["actions"].to(self.device)
+        old_logprobs = batch["old_logprobs"].to(self.device)
+        rewards = batch["rewards"].to(self.device)
+
+        N = states.shape[0]
+        mb = max(1, int(self.cfg.minibatch_size))
+
+        self.actor.train()
+        metrics_acc: list[dict] = []
+
+        for _ in range(int(self.cfg.epochs_per_batch)):
+            perm = torch.randperm(N, device=self.device)
+            for start in range(0, N, mb):
+                idx = perm[start:start + mb]
+                loss, metrics = grpo_loss(
+                    self.actor,
+                    self.ref_actor,
+                    states[idx],
+                    actions[idx],
+                    old_logprobs[idx],
+                    rewards[idx],
+                    self.cfg,
+                )
+                self.optimizer.zero_grad(set_to_none=True)
+                loss.backward()
+                grad_norm = torch.nn.utils.clip_grad_norm_(
+                    self.actor.parameters(), float(self.cfg.grad_clip),
+                )
+                self.optimizer.step()
+                metrics["grad_norm"] = float(grad_norm)
+                metrics_acc.append(metrics)
+
+        keys = metrics_acc[0].keys()
+        return {k: float(np.mean([m[k] for m in metrics_acc])) for k in keys}
