@@ -192,6 +192,63 @@ class PortfolioEnv:
 
         return obs, reward, terminated, truncated, info
 
+    def peek_reward_batch(self, actions: np.ndarray) -> np.ndarray:
+        """Score G candidate actions at the CURRENT state without advancing the env.
+
+        Each candidate is evaluated as if it were the action taken at the
+        current step: turnover is measured from ``self.prev_weights``, and
+        the same ``R_{t+1}`` (the env's current-pointer forward-return row)
+        is used for every candidate. This is sound because state evolution
+        is exogenous to the action — see ``tests/test_exogeneity.py``.
+
+        Reward formula matches ``step()`` bit-for-bit:
+        ``log1p(clamp(w^T R - lambda * ||w - w_prev||_1, -0.9999))``.
+
+        Parameters
+        ----------
+        actions:
+            ``[G, n_assets]`` array of candidate actions. Each row is
+            projected onto the simplex independently.
+
+        Returns
+        -------
+        rewards:
+            ``[G]`` float64 array of per-candidate rewards.
+
+        Notes
+        -----
+        Does NOT mutate any env state (``_t``, ``prev_weights``, ``_done``,
+        ``_portfolio_value``, ``_start`` are all left untouched). Safe to
+        call any number of times between ``step()`` calls.
+        """
+        if self._done:
+            raise RuntimeError("Episode is done. Call reset() before peeking.")
+        actions = np.asarray(actions)
+        if actions.ndim != 2 or actions.shape[1] != self._n_assets:
+            raise ValueError(
+                f"Expected actions of shape (G, {self._n_assets}), got {actions.shape}"
+            )
+
+        # Per-row simplex projection — keeps bit-equivalence with step()'s
+        # call to _project_to_simplex, including its zero-action fallback.
+        weights_batch = np.stack(
+            [_project_to_simplex(a, self._n_assets) for a in actions], axis=0,
+        )
+
+        # Same R_{t+1} for all candidates — read from the same pointer that
+        # step() would use; no action-dependent indexing.
+        idx = min(self._start + self._t, self._n_steps - 1)
+        R = self._forward_returns[idx]
+
+        port_returns = weights_batch @ R
+        turnovers = np.sum(
+            np.abs(weights_batch - self.prev_weights[None, :]), axis=1,
+        )
+        simple_returns = port_returns - self._lambda * turnovers
+        clamped = np.maximum(simple_returns, -0.9999)
+        rewards = np.log1p(clamped)
+        return rewards.astype(np.float64)
+
     # -----------------------------------------------------------------
     # Internals
     # -----------------------------------------------------------------
