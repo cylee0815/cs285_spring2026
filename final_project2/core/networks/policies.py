@@ -428,6 +428,17 @@ class DirichletMLPPolicy(nn.Module):
         alpha = F.softplus(self.actor_alpha(features)) + 1.0
         return Dirichlet(alpha)
 
+    def dist(self, obs: torch.Tensor) -> Dirichlet:
+        """Return the Dirichlet action distribution at ``obs``.
+
+        For sampling-heavy callers (e.g. GRPO, which samples G actions per
+        state and computes log-probs / KLs against the same batched
+        distribution) this is cheaper than calling ``evaluate_actions``
+        because the shared MLP runs once on ``[B, d]`` rather than once
+        per (state, sample) pair.
+        """
+        return self._dist(self.shared(obs))
+
     def get_action_and_value(
         self,
         obs: torch.Tensor,
