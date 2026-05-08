@@ -13,13 +13,20 @@ Usage:
 import argparse
 import importlib
 import random
+import sys
+from pathlib import Path
+
 import numpy as np
 import torch
 import wandb
 from tqdm import trange
 
-from offline_rl.envs.data_utils import make_train_test_envs, make_train_test_envs_finrl, DEFAULT_TICKERS
-from offline_rl.agents.ppo import PPOAgent
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
+from core.envs.data_utils import make_train_test_envs, make_train_test_envs_finrl, DEFAULT_TICKERS
+from online_rl.agents.ppo import PPOAgent
 from offline_rl.configs import CONFIG_MAP
 
 

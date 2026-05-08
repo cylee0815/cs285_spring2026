@@ -14,6 +14,9 @@ import copy
 import importlib
 import os
 import random
+import sys
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -21,11 +24,15 @@ import torch
 import wandb
 from tqdm import trange
 
-from offline_rl.envs.data_utils import (
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
+from core.envs.data_utils import (
     make_train_val_test_envs, DEFAULT_TICKERS, MUTUAL_FUND_TICKERS,
 )
-from offline_rl.envs.portfolio_obs_wrapper import PortfolioObsWrapper
-from offline_rl.agents.replay_buffer import ReplayBuffer, NStepReplayBuffer
+from core.envs.portfolio_obs_wrapper import PortfolioObsWrapper
+from core.buffers.replay_buffer import ReplayBuffer, NStepReplayBuffer
 from offline_rl.configs import CONFIG_MAP
 
 

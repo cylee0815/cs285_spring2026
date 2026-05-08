@@ -17,7 +17,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from env.portfolio_env import PortfolioEnv
+from core.envs.portfolio_env import PortfolioEnv
 from policies.behavior import (
     DirichletPolicy,
     EqualWeightPolicy,

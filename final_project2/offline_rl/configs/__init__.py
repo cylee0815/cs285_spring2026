@@ -1,20 +1,22 @@
+"""Cross-package config registry. Despite living under offline_rl/ for historical reasons, this registry spans offline_rl, online_rl, and hybrid_rl."""
+
 CONFIG_MAP = {
     # Online PPO variants (architecture comparison)
-    "ppo": "offline_rl.configs.ppo_config",
-    "ppo_lstm": "offline_rl.configs.ppo_lstm_config",
-    "ppo_transformer": "offline_rl.configs.ppo_transformer_config",
+    "ppo": "online_rl.configs.ppo_config",
+    "ppo_lstm": "online_rl.configs.ppo_lstm_config",
+    "ppo_transformer": "online_rl.configs.ppo_transformer_config",
     # Novel domain-specific algorithms
-    "sac_dirichlet": "offline_rl.configs.sac_dirichlet_config",    # Online SAC-Dirichlet baseline
+    "sac_dirichlet": "online_rl.configs.sac_dirichlet_config",     # Online SAC-Dirichlet baseline
     "cql_geodesic": "offline_rl.configs.cql_geodesic_config",      # Offline Geodesic-CQL
-    "o2o": "offline_rl.configs.o2o_config",                         # Full O2O pipeline
-    "bayesian_o2o": "offline_rl.configs.bayesian_o2o_config",       # Bayesian regime O2O pipeline
+    "o2o": "hybrid_rl.configs.o2o_config",                          # Full O2O pipeline
+    "bayesian_o2o": "hybrid_rl.configs.bayesian_o2o_config",        # Bayesian regime O2O pipeline
     # SB3 baselines (run via run_sb3.py)
-    "a2c": "offline_rl.configs.a2c_config",
-    "ppo_sb3": "offline_rl.configs.ppo_sb3_config",
-    "sac_sb3": "offline_rl.configs.sac_sb3_config",
-    "td3": "offline_rl.configs.td3_config",
-    "ddpg": "offline_rl.configs.ddpg_config",
-    "tqc": "offline_rl.configs.tqc_config",
+    "a2c": "online_rl.configs.a2c_config",
+    "ppo_sb3": "online_rl.configs.ppo_sb3_config",
+    "sac_sb3": "online_rl.configs.sac_sb3_config",
+    "td3": "online_rl.configs.td3_config",
+    "ddpg": "online_rl.configs.ddpg_config",
+    "tqc": "online_rl.configs.tqc_config",
     # Offline RL baselines (run via run_offline.py)
     "bc": "offline_rl.configs.bc_config",
     "fisher_bc": "offline_rl.configs.fisher_bc_config",

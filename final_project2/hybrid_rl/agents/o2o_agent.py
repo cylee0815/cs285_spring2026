@@ -23,9 +23,9 @@ from typing import Dict, Optional, List
 import gymnasium as gym
 import copy
 
-from offline_rl.agents.replay_buffer import ReplayBuffer
+from core.buffers.replay_buffer import ReplayBuffer
 from offline_rl.agents.cql_geodesic import GeodesicCQL
-from offline_rl.agents.sac_dirichlet import SACDirichlet
+from online_rl.agents.sac_dirichlet import SACDirichlet
 
 
 def regime_kl_divergence(h_offline: torch.Tensor, h_online: torch.Tensor, eps: float = 1e-8) -> float:

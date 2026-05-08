@@ -10,7 +10,7 @@ import numpy as np
 import torch
 
 from algorithms.iql import IQL
-from env.portfolio_env import PortfolioEnv
+from core.envs.portfolio_env import PortfolioEnv
 from evaluation.metrics import compute_all_metrics
 
 __all__ = ["run_backtest", "run_backtest_from_arrays"]

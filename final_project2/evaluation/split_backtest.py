@@ -10,7 +10,7 @@ from __future__ import annotations
 import numpy as np
 
 from algorithms.iql import IQL
-from env.portfolio_env import PortfolioEnv
+from core.envs.portfolio_env import PortfolioEnv
 from evaluation.backtest import run_backtest
 
 __all__ = ["backtest_on_indices"]

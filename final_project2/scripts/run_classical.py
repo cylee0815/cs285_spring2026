@@ -10,12 +10,19 @@ Usage:
 import argparse
 import os
 import random
+import sys
+from pathlib import Path
+
 import numpy as np
 import torch
 import wandb
 from scipy.optimize import minimize
 
-from offline_rl.envs.data_utils import make_train_val_test_envs, DEFAULT_TICKERS
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
+from core.envs.data_utils import make_train_val_test_envs, DEFAULT_TICKERS
 
 
 class EqualWeightStrategy:

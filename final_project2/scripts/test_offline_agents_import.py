@@ -25,7 +25,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 import torch  # noqa: E402
 
-from offline_rl.agents.replay_buffer import NStepReplayBuffer  # noqa: E402
+from core.buffers.replay_buffer import NStepReplayBuffer  # noqa: E402
 
 
 # Must match run_offline.py's AGENT_MAP exactly.

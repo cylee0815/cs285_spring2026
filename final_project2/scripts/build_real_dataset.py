@@ -47,7 +47,7 @@ if str(_PROJECT_ROOT) not in sys.path:
 
 from data.build_dataset import build_dataset_from_env, save_dataset
 from data.download_data import download_prices
-from env.portfolio_env import PortfolioEnv
+from core.envs.portfolio_env import PortfolioEnv
 from features.feature_engineering import FeatureBundle, build_features
 from policies.behavior import (
     DirichletPolicy,

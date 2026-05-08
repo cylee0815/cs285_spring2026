@@ -9,7 +9,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from env.portfolio_env import PortfolioEnv
+from core.envs.portfolio_env import PortfolioEnv
 
 
 # ---------------------------------------------------------------------------

@@ -15,12 +15,12 @@ import copy
 from typing import Dict, Optional
 import gymnasium as gym
 
-from offline_rl.networks.dirichlet_policy import DirichletActor, DoubleCritic
-from offline_rl.networks.regime_encoder import RegimeEncoder, RegimeConditionedActor, RegimeConditionedCritic
-from offline_rl.networks.bayesian_regime_encoder import (
+from core.networks.dirichlet_policy import DirichletActor, DoubleCritic
+from core.networks.regime_encoder import RegimeEncoder, RegimeConditionedActor, RegimeConditionedCritic
+from core.networks.bayesian_regime_encoder import (
     BayesianRegimeEncoder, BayesianRegimeConditionedActor, BayesianRegimeConditionedCritic,
 )
-from offline_rl.agents.replay_buffer import ReplayBuffer
+from core.buffers.replay_buffer import ReplayBuffer
 
 
 class SACDirichlet:

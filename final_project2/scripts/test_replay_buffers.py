@@ -22,7 +22,7 @@ if str(PROJECT_ROOT) not in sys.path:
 import numpy as np  # noqa: E402
 import torch  # noqa: E402
 
-from offline_rl.agents.replay_buffer import ReplayBuffer, NStepReplayBuffer  # noqa: E402
+from core.buffers.replay_buffer import ReplayBuffer, NStepReplayBuffer  # noqa: E402
 
 OBS_DIM = 6
 ACTION_DIM = 8

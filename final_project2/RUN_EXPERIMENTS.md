@@ -5,15 +5,15 @@
 Verify the full pipeline runs end-to-end in under a minute:
 
 ```bash
-python offline_rl/scripts/run_offline.py --base_config=bc --smoke_test
-python offline_rl/scripts/run_offline.py --base_config=iql --smoke_test
-python offline_rl/scripts/run_offline.py --base_config=cql_vanilla --smoke_test
+python scripts/run_offline.py --base_config=bc --smoke_test
+python scripts/run_offline.py --base_config=iql --smoke_test
+python scripts/run_offline.py --base_config=cql_vanilla --smoke_test
 ```
 
 ## 2. Single real run
 
 ```bash
-python offline_rl/scripts/run_offline.py --base_config=iql --n_step=3 --seed=0 --run_group=offline_matrix
+python scripts/run_offline.py --base_config=iql --n_step=3 --seed=0 --run_group=offline_matrix
 ```
 
 ## 3. Generate full experiment matrix

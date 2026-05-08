@@ -12,7 +12,7 @@ import numpy as np
 from typing import Dict, Optional
 
 from offline_rl.agents.mbpo import MBPOAgent
-from offline_rl.agents.replay_buffer import ReplayBuffer
+from core.buffers.replay_buffer import ReplayBuffer
 
 
 class MOPOAgent(MBPOAgent):

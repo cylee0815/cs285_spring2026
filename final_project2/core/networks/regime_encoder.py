@@ -79,7 +79,7 @@ class RegimeConditionedActor(nn.Module):
     """Wraps DirichletActor to accept regime context as additional input."""
     def __init__(self, obs_dim: int, action_dim: int, regime_dim: int, hidden_dim: int = 256, n_layers: int = 2):
         super().__init__()
-        from offline_rl.networks.dirichlet_policy import DirichletActor
+        from core.networks.dirichlet_policy import DirichletActor
         self.actor = DirichletActor(obs_dim + regime_dim, action_dim, hidden_dim, n_layers)
         self.regime_dim = regime_dim
 
@@ -92,7 +92,7 @@ class RegimeConditionedCritic(nn.Module):
     """Wraps DoubleCritic to accept regime context as additional input."""
     def __init__(self, obs_dim: int, action_dim: int, regime_dim: int, hidden_dim: int = 256, n_layers: int = 2):
         super().__init__()
-        from offline_rl.networks.dirichlet_policy import DoubleCritic
+        from core.networks.dirichlet_policy import DoubleCritic
         self.critic = DoubleCritic(obs_dim + regime_dim, action_dim, hidden_dim, n_layers)
         self.regime_dim = regime_dim
 

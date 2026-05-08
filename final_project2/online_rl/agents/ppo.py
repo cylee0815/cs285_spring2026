@@ -15,7 +15,7 @@ import numpy as np
 from typing import Dict, Any, Optional
 import gymnasium as gym
 
-from offline_rl.networks.policies import make_policy, LSTMPolicy, TransformerPolicy
+from core.networks.policies import make_policy, LSTMPolicy, TransformerPolicy
 
 
 class RolloutBuffer:

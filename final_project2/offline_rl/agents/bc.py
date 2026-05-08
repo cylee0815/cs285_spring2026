@@ -9,8 +9,8 @@ import torch.optim as optim
 import numpy as np
 from typing import Dict, Optional
 
-from offline_rl.networks.dirichlet_policy import DirichletActor
-from offline_rl.agents.replay_buffer import ReplayBuffer
+from core.networks.dirichlet_policy import DirichletActor
+from core.buffers.replay_buffer import ReplayBuffer
 
 
 class BCAgent:

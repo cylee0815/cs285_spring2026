@@ -180,7 +180,7 @@ def make_train_test_envs_finrl(
     Convenience wrapper: create FinRL-backed train/test environments.
     Delegates to offline_rl.envs.finrl_wrapper.make_finrl_envs.
     """
-    from offline_rl.envs.finrl_wrapper import make_finrl_envs
+    from core.envs.finrl_wrapper import make_finrl_envs
     return make_finrl_envs(
         tickers=tickers,
         start=start,
@@ -233,7 +233,7 @@ def make_train_test_envs(
         test_env: PortfolioEnv for evaluation
         metadata: dict with tickers, dates, obs_dim, etc.
     """
-    from env.portfolio_env import PortfolioEnv
+    from core.envs.portfolio_env import PortfolioEnv
 
     prices = download_price_data(tickers, start=start, end=end)
     tickers = list(prices.columns)
@@ -255,13 +255,13 @@ def make_train_test_envs(
 
     macro_arr = None
     if use_macro:
-        from offline_rl.envs.macro_features import download_fred_macro, align_macro_to_prices
+        from core.envs.macro_features import download_fred_macro, align_macro_to_prices
         macro_df = download_fred_macro(start, end, api_key=fred_api_key)
         macro_arr = align_macro_to_prices(macro_df, prices.index)
 
     sentiment_arr = None
     if use_sentiment:
-        from offline_rl.envs.sentiment_features import load_sentiment
+        from core.envs.sentiment_features import load_sentiment
         sentiment_arr = load_sentiment(prices.index, start, end, tickers=tickers)
 
     flat_features = _build_flat_features(features, macro_arr, sentiment_arr)
@@ -338,7 +338,7 @@ def make_train_val_test_envs(
         train_env, val_env, test_env: PortfolioEnv instances
         metadata: dict with dates, tickers, split sizes, obs_dim
     """
-    from env.portfolio_env import PortfolioEnv
+    from core.envs.portfolio_env import PortfolioEnv
 
     if tickers is None:
         tickers = MUTUAL_FUND_TICKERS if use_mutual_funds else DEFAULT_TICKERS
@@ -352,14 +352,14 @@ def make_train_val_test_envs(
     # ── Optional macro features (FRED) ────────────────────────────────────────
     macro_arr = None
     if use_macro:
-        from offline_rl.envs.macro_features import download_fred_macro, align_macro_to_prices
+        from core.envs.macro_features import download_fred_macro, align_macro_to_prices
         macro_df = download_fred_macro(train_start, test_end, api_key=fred_api_key)
         macro_arr = align_macro_to_prices(macro_df, prices.index)  # (T, 8)
 
     # ── Optional sentiment features (SF Fed DNSI + Alpaca) ────────────────────
     sentiment_arr = None
     if use_sentiment:
-        from offline_rl.envs.sentiment_features import load_sentiment
+        from core.envs.sentiment_features import load_sentiment
         sentiment_arr = load_sentiment(
             prices.index, train_start, test_end,
             tickers=tickers,

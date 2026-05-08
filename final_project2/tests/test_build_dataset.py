@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from env.portfolio_env import PortfolioEnv
+from core.envs.portfolio_env import PortfolioEnv
 
 
 # ---------------------------------------------------------------------------

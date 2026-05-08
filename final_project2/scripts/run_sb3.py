@@ -28,14 +28,20 @@ import argparse
 import importlib
 import os
 import random
+import sys
+from pathlib import Path
 
 import numpy as np
 import torch
 import wandb
 from wandb.integration.sb3 import WandbCallback
 
-from offline_rl.envs.data_utils import make_train_test_envs, make_train_test_envs_finrl, DEFAULT_TICKERS
-from offline_rl.agents.sb3_agent import make_sb3_model, PortfolioEvalCallback, BOUNDED_ALGOS
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
+from core.envs.data_utils import make_train_test_envs, make_train_test_envs_finrl, DEFAULT_TICKERS
+from online_rl.agents.sb3_agent import make_sb3_model, PortfolioEvalCallback, BOUNDED_ALGOS
 from offline_rl.configs import CONFIG_MAP
 
 SB3_ALGOS = {"a2c", "ppo_sb3", "sac_sb3", "td3", "ddpg", "tqc"}
@@ -152,7 +158,7 @@ def main():
     print(f"obs_dim={metadata['obs_dim']}")
 
     # SB3 2.x requires finite action space bounds for all continuous-action algos
-    from offline_rl.envs.action_bounded_wrapper import ActionBoundedWrapper
+    from core.envs.action_bounded_wrapper import ActionBoundedWrapper
     train_env = ActionBoundedWrapper(train_env)
     test_env  = ActionBoundedWrapper(test_env)
     print(f"ActionBoundedWrapper applied (action space: {train_env.action_space})")

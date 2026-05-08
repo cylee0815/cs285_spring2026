@@ -24,19 +24,26 @@ import argparse
 import importlib
 import os
 import random
+import sys
+from pathlib import Path
+
 import numpy as np
 import torch
 import wandb
 from tqdm import trange
 
-from offline_rl.envs.data_utils import (
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
+from core.envs.data_utils import (
     make_train_test_envs, make_train_val_test_envs, make_train_test_envs_finrl,
     DEFAULT_TICKERS, MUTUAL_FUND_TICKERS,
 )
 from offline_rl.agents.cql_geodesic import GeodesicCQL
-from offline_rl.agents.sac_dirichlet import SACDirichlet
-from offline_rl.agents.o2o_agent import O2OAgent
-from offline_rl.agents.replay_buffer import ReplayBuffer, NStepReplayBuffer
+from online_rl.agents.sac_dirichlet import SACDirichlet
+from hybrid_rl.agents.o2o_agent import O2OAgent
+from core.buffers.replay_buffer import ReplayBuffer, NStepReplayBuffer
 
 
 def parse_args():
@@ -201,11 +208,11 @@ def main():
 
     # Load config
     if args.bayesian and args.phase in ["offline", "o2o"]:
-        from offline_rl.configs.bayesian_o2o_config import get_config
+        from hybrid_rl.configs.bayesian_o2o_config import get_config
     elif args.phase in ["offline", "o2o"]:
-        from offline_rl.configs.o2o_config import get_config
+        from hybrid_rl.configs.o2o_config import get_config
     else:
-        from offline_rl.configs.sac_dirichlet_config import get_config
+        from online_rl.configs.sac_dirichlet_config import get_config
     config = get_config()
 
     # Apply CLI overrides
@@ -299,7 +306,7 @@ def main():
             metrics = agent.update()
             if step % args.eval_interval == 0:
                 # Evaluate on val split (2021) during offline training
-                from offline_rl.agents.o2o_agent import O2OAgent
+                from hybrid_rl.agents.o2o_agent import O2OAgent
                 tmp = O2OAgent.__new__(O2OAgent)
                 tmp.eval_env = val_env
                 tmp.cql_agent = agent

@@ -31,7 +31,7 @@ import numpy as np
 import torch
 
 from algorithms.iql import IQL
-from env.portfolio_env import PortfolioEnv
+from core.envs.portfolio_env import PortfolioEnv
 from evaluation.backtest import run_backtest
 from evaluation.baselines import (
     equal_weight_backtest,

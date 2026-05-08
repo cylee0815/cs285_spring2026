@@ -15,8 +15,8 @@ import numpy as np
 import copy
 from typing import Dict, Optional
 
-from offline_rl.networks.dirichlet_policy import DirichletActor, DoubleCritic
-from offline_rl.agents.replay_buffer import ReplayBuffer
+from core.networks.dirichlet_policy import DirichletActor, DoubleCritic
+from core.buffers.replay_buffer import ReplayBuffer
 
 
 class AWACAgent:

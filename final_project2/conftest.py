@@ -9,7 +9,7 @@ code itself lives on ``sys.path`` directly from the project root.
 Placing ``conftest.py`` at the project root has two effects:
 
 1. pytest automatically inserts the directory containing this file onto
-   ``sys.path``, so tests can do ``from env.portfolio_env import PortfolioEnv``
+   ``sys.path``, so tests can do ``from core.envs.portfolio_env import PortfolioEnv``
    without any editable-install dance.
 2. It marks the project root as the pytest ``rootdir`` for consistent test
    discovery regardless of the cwd from which tests are invoked.

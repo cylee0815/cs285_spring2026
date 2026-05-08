@@ -31,6 +31,8 @@ import argparse
 import importlib
 import os
 import random
+import sys
+from pathlib import Path
 from typing import Dict, List
 
 import numpy as np
@@ -39,9 +41,13 @@ import torch
 import wandb
 from wandb.integration.sb3 import WandbCallback
 
-from offline_rl.envs.data_utils import DEFAULT_TICKERS, MUTUAL_FUND_TICKERS
-from offline_rl.envs.finrl_wrapper import download_finrl_data, make_finrl_envs, FINRL_AVAILABLE
-from offline_rl.agents.sb3_agent import PortfolioEvalCallback, BOUNDED_ALGOS
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
+from core.envs.data_utils import DEFAULT_TICKERS, MUTUAL_FUND_TICKERS
+from core.envs.finrl_wrapper import download_finrl_data, make_finrl_envs, FINRL_AVAILABLE
+from online_rl.agents.sb3_agent import PortfolioEvalCallback, BOUNDED_ALGOS
 
 
 # ── FinRL DRLAgent import (avoids FinRL's broken __init__.py) ────────────────
@@ -275,8 +281,8 @@ def main():
     from finrl.meta.env_portfolio_optimization.env_portfolio_optimization import (
         PortfolioOptimizationEnv,
     )
-    from offline_rl.envs.finrl_wrapper import FinRLPortfolioWrapper
-    from offline_rl.envs.action_bounded_wrapper import ActionBoundedWrapper
+    from core.envs.finrl_wrapper import FinRLPortfolioWrapper
+    from core.envs.action_bounded_wrapper import ActionBoundedWrapper
 
     # Determine feature columns (what actually exists after download)
     base_features = ["close", "high", "low", "macd", "rsi_30", "cci_30", "dx_30",

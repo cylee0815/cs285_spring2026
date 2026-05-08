@@ -15,8 +15,8 @@ import numpy as np
 import copy
 from typing import Dict, Optional, List
 
-from offline_rl.networks.dirichlet_policy import DirichletActor, mlp, layer_init
-from offline_rl.agents.replay_buffer import ReplayBuffer
+from core.networks.dirichlet_policy import DirichletActor, mlp, layer_init
+from core.buffers.replay_buffer import ReplayBuffer
 
 
 class EDACAgent:

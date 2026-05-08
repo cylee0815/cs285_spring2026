@@ -13,7 +13,7 @@ import torch.nn as nn
 import numpy as np
 from typing import Tuple
 
-from offline_rl.networks.dirichlet_policy import mlp
+from core.networks.dirichlet_policy import mlp
 
 
 class VAE(nn.Module):
