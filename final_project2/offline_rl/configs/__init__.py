@@ -7,6 +7,7 @@ CONFIG_MAP = {
     "ppo_transformer": "online_rl.configs.ppo_transformer_config",
     # Novel domain-specific algorithms
     "sac_dirichlet": "online_rl.configs.sac_dirichlet_config",     # Online SAC-Dirichlet baseline
+    "grpo": "online_rl.configs.grpo_config",                       # Continuous GRPO (critic-free)
     "cql_geodesic": "offline_rl.configs.cql_geodesic_config",      # Offline Geodesic-CQL
     "o2o": "hybrid_rl.configs.o2o_config",                          # Full O2O pipeline
     "bayesian_o2o": "hybrid_rl.configs.bayesian_o2o_config",        # Bayesian regime O2O pipeline
