@@ -178,7 +178,7 @@ def make_train_test_envs_finrl(
 ):
     """
     Convenience wrapper: create FinRL-backed train/test environments.
-    Delegates to offline_rl.envs.finrl_wrapper.make_finrl_envs.
+    Delegates to core.envs.finrl_wrapper.make_finrl_envs.
     """
     from core.envs.finrl_wrapper import make_finrl_envs
     return make_finrl_envs(

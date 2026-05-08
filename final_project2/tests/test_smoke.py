@@ -44,7 +44,7 @@ DEFAULT_CONFIG = PROJECT_ROOT / "experiments" / "configs" / "default.yaml"
     "module_name",
     [
         "data",
-        "env",
+        "core.envs",
         "features",
         "models",
         "algorithms",
