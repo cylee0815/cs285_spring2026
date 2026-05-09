@@ -1,0 +1,81 @@
+% Related work — three buckets. ~0.5-1 page NeurIPS-style.
+
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Offline RL for portfolio allocation.} Reinforcement learning
+for asset allocation has been explored in two waves: a value-based wave
+focused on discrete buy/sell/hold actions
+\citep{moody2001learning,deng2017deep}, and a more recent
+continuous-allocation wave that frames the problem as a constrained
+contextual bandit with a simplex action space and trains either via DDPG
+\citep{jiang2017deep} or its descendants. The offline turn imports
+modern offline-RL methods --- BC \citep{pomerleau1991efficient},
+BCQ \citep{fujimoto2019off}, CQL \citep{kumar2020conservative},
+TD3+BC \citep{fujimoto2021minimalist}, IQL \citep{kostrikov2022offline},
+AWAC \citep{nair2020awac}, EDAC \citep{an2021uncertainty}, decision
+transformers \citep{chen2021decision} --- onto historical-data
+trajectories rolled by a behavior policy mixture. Our milestone showed
+that this stack collapses smoothly under realistic transaction-cost
+friction (Sec.~\ref{sec:intro}); we follow up by re-establishing the
+collapse across a broader algorithm grid (Sec.~\ref{sec:experiments:phase2a})
+and asking whether a critic-free, friction-aware on-policy method side-steps
+the pathology rather than mitigating it.
+
+\paragraph{GRPO and the discrete-action assumption.} Group Relative
+Policy Optimization \citep{shao2024deepseekmath} replaces PPO's learned
+value baseline with a within-group statistic computed across $G$
+sampled completions of the same prompt. The inference-time appeal is
+strong --- there is no critic to maintain --- but the original
+formulation depends on the language-modeling environment in two ways
+that do not transfer to typical RL: actions are discrete tokens with a
+finite alphabet, and ``state transitions'' are deterministic
+sequence-extension. Subsequent work has applied GRPO almost exclusively
+to LLM post-training pipelines (\citealp{liu2024deepseek,yu2024rlhf}, and
+follow-ons), and the few continuous-action GRPO threads we are aware of
+\citep[e.g.][]{li2024grpoexp} require auxiliary critics or per-task
+calibration of the group-relative scale. Our continuous-GRPO formulation
+does not. The cost we pay is the exogeneity precondition --- our setting
+satisfies it (Eq.~\ref{eq:exogeneity}) and most other RL settings do
+not. We treat that asymmetry as a design constraint, not a generality
+claim, and provide unit tests that make the constraint legible to anyone
+porting the method (\texttt{tests/test\_exogeneity.py}).
+
+\paragraph{Continuous-action policy gradients under exogenous
+transitions.} The exogeneity argument we use to retire the value baseline
+is closely related to the contextual-bandit analyses that motivate
+direct policy-gradient estimators in causal-inference settings
+\citep{dudik2014doubly,joachims2018deep}: when state transitions do not
+respond to the agent's action, the bootstrapped continuation cancels in
+within-state action comparisons. The financial-portfolio variant is
+implicit in early Q-learning portfolio papers \citep{moody2001learning},
+which deliberately embedded the price process outside the agent's action
+chain, but the connection to modern policy-gradient theory has not, to
+our knowledge, been formalized as a critic-removal mechanism. The closest
+prior work is the family of \emph{counterfactual} policy gradients
+\citep{foerster2018counterfactual} for cooperative multi-agent RL: those
+methods cancel the joint baseline by sampling alternative actions for one
+agent under the same teammates' actions. Our group sampling at the
+same state is the single-agent analogue; the cancellation reason ---
+exogeneity rather than fixed-teammate marginalization --- is different,
+but the algebraic shape is the same.
+
+\paragraph{O2O conservatism scheduling.} Offline-to-online fine-tuning
+has been studied extensively in robotics
+\citep{nair2020awac,zheng2023adaptive,zhao2022adaptive}, where the
+online phase is sample-poor and the offline prior must be defended. The
+typical solution is a fixed schedule on the conservatism coefficient
+(linear or cosine decay over a known online budget). Our adaptive
+schedule (Sec.~\ref{sec:method:o2o}) closes the loop by gating
+pessimism on a per-step regime-KL signal, which has a natural
+interpretation in financial settings where regime change is the dominant
+non-stationarity. The Geodesic-CQL component
+\citep[Fisher-Rao penalty;][]{ma2022geodesic} contributes the offline
+phase; we do not modify it, and the geodesic vs vanilla CQL ablation
+(prompt-level Phase 2D.7.1) is left to a follow-up.
+
+% TODO: cite-key polish — every \citep above is a placeholder; before
+% submission they need to be matched against a real .bib. Since the
+% citations are method-attribution rather than evidence-quoting (no
+% number is taken from a cited paper here), no claim depends on the
+% specific paper being correctly resolved.

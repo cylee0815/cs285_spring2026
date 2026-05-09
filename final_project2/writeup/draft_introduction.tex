@@ -1,0 +1,91 @@
+% Introduction — frames around the milestone's friction-collapse finding to
+% motivate Continuous GRPO. ~1 page NeurIPS-style.
+
+\section{Introduction}
+\label{sec:intro}
+
+We study reinforcement learning for portfolio allocation across a basket of
+eight broad-market ETFs (SPY, EEM, TLT, HYG, DBC, GLD, UUP, SHY) at daily
+frequency. The agent picks weights on the simplex; the env rewards the
+post-cost log return $r_t = \log(1 + w_t^{\top} R_{t+1} - \lambda \|w_t -
+w_{t-1}\|_1)$. Three calendar splits separate training, validation, and
+testing: 2008--2020 / 2021 / 2022Q1--2026Q1, the last picked because the
+stock-bond correlation breaks in 2022 and standard 60/40-style baselines
+that work for the prior decade lose their hedging property
+(\texttt{data/splits.py:DEFAULT\_SPLIT}).
+
+\paragraph{The friction collapse.} Our milestone established a sharp
+empirical pathology in this setting: the offline RL solution that matches
+classical baselines under zero friction collapses smoothly as $\lambda$
+grows. Across 27 IQL runs sweeping $(\tau \in \{0.6, 0.7, 0.8\}, \beta
+\in \{1, 3, 10\}, \lambda \in \{0, 0.001, 0.005\})$, the seed-pooled mean
+test Sharpe was $0.94$ at $\lambda{=}0$, $0.36$ at $\lambda{=}0.001$, and
+$\bm{-1.98}$ at $\lambda{=}0.005$ (47\% mean drawdown). The classical
+baselines on the same test window were $0.95$ (equal weight), $0.95$
+(momentum), and $1.23$ (risk parity)
+(\texttt{figures/ablation\_summary.csv}; baselines from
+\texttt{runs/ablation/iql\_exp\_tau0.7\_beta3.0\_tc0/.../metrics.json}).
+At even modest realistic friction the offline-RL agent does not reach the
+trivial 1/N baseline; at higher friction it actively destroys capital.
+
+This is not a hyperparameter problem. The 27-run sweep shows
+$\sigma_{\text{test\_sharpe}} \le 0.02$ within each friction band ---
+$(\tau, \beta)$ moves the second decimal place of the answer; $\lambda$
+moves the sign. The validation Sharpe consistently peaks at training
+step 1{,}000 and decays through step 100{,}000, even as the offline
+training loss continues to decrease. Early stopping masks the symptom; it
+does not address the cause. We read this as a distribution-shift
+signature: friction-induced turnover penalties are a per-step phenomenon,
+but offline-RL Q-targets bootstrap from a value network that was never
+trained against the friction-aware return distribution.
+
+\paragraph{What we propose.} Two contributions, in priority order.
+
+(1) \emph{Continuous GRPO}, an adaptation of the group-relative policy
+optimization framework \citep{shao2024deepseekmath} from discrete
+language-model action spaces to a continuous portfolio simplex. The key
+move is environmental, not algorithmic: in our setting the next state is
+provably independent of the action (Eq.~\ref{eq:exogeneity};
+\texttt{tests/test\_exogeneity.py}), so the bootstrapped value baseline
+in standard advantage estimation cancels under within-group centering. We
+sample $G$ candidate weight vectors at each visited state, score them
+through a per-state \texttt{peek\_reward\_batch} primitive added to the
+env (Sec.~\ref{sec:method:grpo}), and use the within-group $z$-scored
+rewards as advantages. The result is a critic-free policy gradient whose
+sample efficiency is competitive with PPO and which trains directly on
+the friction-aware reward signal without the offline-RL Q-target
+distribution-shift pathology.
+
+(2) \emph{Adaptive-O2O conservatism scheduling}, a per-step modulation of
+the CQL penalty during offline-to-online fine-tuning that gates pessimism
+on a regime-encoder KL between offline and online observation
+distributions: $\beta_t = \alpha_{\mathrm{CQL}} \cdot \sigma(\eta \cdot
+\mathrm{KL}(h_{\text{off}} \| h_{\text{on}}))$
+(Sec.~\ref{sec:method:o2o}). Under distribution match the schedule
+relaxes pessimism and lets the online updates exploit the offline
+prior; under distribution shift it saturates and prevents optimistic
+extrapolation onto out-of-distribution Q-estimates. We discovered during
+Phase 2 prep that the existing repository's CLI plumbing of this schedule
+was broken and silently bypassed the conservatism term entirely
+(\texttt{writeup/draft\_implementation\_notes.md} \S 4). Every result we
+report on the adaptive-vs-naive comparison post-dates that fix; the
+milestone narrative around adaptive O2O could not have been produced by
+the pre-fix code. We do not retroactively rewrite the milestone but flag
+this in the limitations.
+
+\paragraph{Experimental contributions.} We run all comparisons at
+$\lambda \in \{0, 0.001, 0.005\}$ with three seeds. The headline
+experiment (Sec.~\ref{sec:experiments:phase2c}) is a four-way comparison
+at $\lambda = 0.001$: frozen offline (no fine-tune), online-only
+SAC-Dirichlet (no offline pretrain), naive fine-tune, and adaptive O2O.
+A GRPO group-size ablation (Sec.~\ref{sec:experiments:phase2d}) sweeps
+$G \in \{4, 8, 16\}$. We pre-register the Phase 2A offline-baseline
+landscape (BC, TD3+BC, CQL, AWAC, BCQ, IQL) at $\lambda = 0.001$ as the
+context against which the four-way result is read.
+
+\paragraph{What we are honest about.} The 8-ETF universe is small,
+realistic-friction reward signal is weak (daily Sharpe noise on the order
+of the mean), and the chronological-split protocol gives us exactly one
+test window. We treat result-space variance the experiment offers ---
+seed-induced and method-induced --- as the trustworthy signal, and call
+out the rest as observational, in the discussion (Sec.~\ref{sec:limitations}).
