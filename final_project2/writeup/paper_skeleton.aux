@@ -1,22 +1,10 @@
 \relax 
 \providecommand\hyper@newdestlabel[2]{}
-\providecommand\HyperFirstAtBeginDocument{\AtBeginDocument}
-\HyperFirstAtBeginDocument{\ifx\hyper@anchor\@undefined
-\global\let\oldcontentsline\contentsline
-\gdef\contentsline#1#2#3#4{\oldcontentsline{#1}{#2}{#3}}
-\global\let\oldnewlabel\newlabel
-\gdef\newlabel#1#2{\newlabelxx{#1}#2}
-\gdef\newlabelxx#1#2#3#4#5#6{\oldnewlabel{#1}{{#2}{#3}}}
-\AtEndDocument{\ifx\hyper@anchor\@undefined
-\let\contentsline\oldcontentsline
-\let\newlabel\oldnewlabel
-\fi}
-\fi}
-\global\let\hyper@last\relax 
-\gdef\HyperFirstAtBeginDocument#1{#1}
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
 \citation{shao2024deepseekmath}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{2}{section.1}\protected@file@percent }
+\newlabel{sec:intro}{{1}{2}{Introduction}{section.1}{}}
 \citation{jiang2017deep,liu2020finrl,moody2001learning,deng2017deep}
 \citation{pomerleau1991efficient}
 \citation{fujimoto2019off}
@@ -25,162 +13,165 @@
 \citation{kostrikov2022offline}
 \citation{nair2020awac}
 \citation{chen2021decision,an2021uncertainty}
-\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{2}{section.1}}
-\newlabel{sec:intro}{{1}{2}{Introduction}{section.1}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{2}{section.2}}
-\newlabel{sec:related}{{2}{2}{Related Work}{section.2}{}}
-\@writefile{toc}{\contentsline {paragraph}{Offline RL for portfolio allocation.}{2}{section*.2}}
 \citation{shao2024deepseekmath}
-\citation{yu2024rlhf}
-\citation{dudik2014doubly,joachims2018deep,foerster2018counterfactual}
+\citation{dong2024rlhf}
+\citation{dudik2014doubly,joachims2018deep}
+\citation{foerster2018counterfactual}
 \citation{moody2001learning}
-\citation{nair2020awac,zheng2023adaptive,zhao2022adaptive}
-\citation{ma2022geodesic}
-\citation{shao2024deepseekmath}
-\@writefile{toc}{\contentsline {paragraph}{GRPO and the discrete-action assumption.}{3}{section*.3}}
-\@writefile{toc}{\contentsline {paragraph}{Critic removal under exogenous transitions.}{3}{section*.4}}
-\@writefile{toc}{\contentsline {paragraph}{O2O conservatism scheduling.}{3}{section*.5}}
-\@writefile{toc}{\contentsline {section}{\numberline {3}Method}{3}{section.3}}
+\citation{nair2020awac,zheng2023adaptive}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{3}{section.2}\protected@file@percent }
+\newlabel{sec:related}{{2}{3}{Related Work}{section.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Offline RL for portfolio allocation.}{3}{section*.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{GRPO and the discrete-action assumption.}{3}{section*.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Critic removal under exogenous transitions.}{3}{section*.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{O2O conservatism scheduling.}{3}{section*.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Method}{3}{section.3}\protected@file@percent }
 \newlabel{sec:method}{{3}{3}{Method}{section.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Problem setup}{3}{subsection.3.1}}
-\newlabel{eq:reward}{{1}{3}{Problem setup}{equation.3.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Continuous GRPO}{3}{subsection.3.2}}
-\newlabel{sec:method:grpo}{{3.2}{3}{Continuous GRPO}{subsection.3.2}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.1}Policy parameterization: Dirichlet head on the simplex}{4}{subsubsection.3.2.1}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.2}Group sampling under exogenous state transitions}{4}{subsubsection.3.2.2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Problem setup}{3}{subsection.3.1}\protected@file@percent }
+\citation{shao2024deepseekmath}
+\newlabel{eq:reward}{{1}{4}{Problem setup}{equation.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Continuous GRPO}{4}{subsection.3.2}\protected@file@percent }
+\newlabel{sec:method:grpo}{{3.2}{4}{Continuous GRPO}{subsection.3.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.1}Policy parameterization: Dirichlet head on the simplex}{4}{subsubsection.3.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.2}Group sampling under exogenous state transitions}{4}{subsubsection.3.2.2}\protected@file@percent }
 \newlabel{sec:method:grpo:exogeneity}{{3.2.2}{4}{Group sampling under exogenous state transitions}{subsubsection.3.2.2}{}}
-\newlabel{eq:exogeneity}{{3}{4}{Group sampling under exogenous state transitions}{equation.3.3}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.3}Group-relative advantage}{4}{subsubsection.3.2.3}}
-\newlabel{eq:grpo-adv}{{4}{4}{Group-relative advantage}{equation.3.4}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.4}Loss}{4}{subsubsection.3.2.4}}
-\newlabel{eq:grpo-loss}{{5}{4}{Loss}{equation.3.5}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.5}Why this is sound only here}{5}{subsubsection.3.2.5}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Adaptive-O2O scheduler}{5}{subsection.3.3}}
+\newlabel{eq:exogeneity}{{3}{4}{Group sampling under exogenous state transitions}{equation.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.3}Group-relative advantage}{5}{subsubsection.3.2.3}\protected@file@percent }
+\newlabel{eq:grpo-adv}{{4}{5}{Group-relative advantage}{equation.4}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.4}Loss}{5}{subsubsection.3.2.4}\protected@file@percent }
+\newlabel{eq:grpo-loss}{{5}{5}{Loss}{equation.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.5}Why this is sound only here}{5}{subsubsection.3.2.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Adaptive-O2O scheduler}{5}{subsection.3.3}\protected@file@percent }
 \newlabel{sec:method:o2o}{{3.3}{5}{Adaptive-O2O scheduler}{subsection.3.3}{}}
-\@writefile{toc}{\contentsline {paragraph}{Regime encoder and KL.}{5}{section*.6}}
-\@writefile{toc}{\contentsline {paragraph}{Conservatism weight.}{5}{section*.7}}
-\newlabel{eq:cql-schedule}{{7}{5}{Conservatism weight}{equation.3.7}{}}
-\@writefile{toc}{\contentsline {paragraph}{The bug fix that made the comparison meaningful.}{5}{section*.8}}
-\@writefile{toc}{\contentsline {paragraph}{Initialization and env handoff.}{5}{section*.9}}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Experiments}{5}{section.4}}
-\newlabel{sec:experiments}{{4}{5}{Experiments}{section.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Setup}{5}{subsection.4.1}}
-\newlabel{sec:experiments:setup}{{4.1}{5}{Setup}{subsection.4.1}{}}
-\@writefile{toc}{\contentsline {paragraph}{Environment.}{5}{section*.10}}
-\@writefile{toc}{\contentsline {paragraph}{Splits.}{6}{section*.11}}
-\@writefile{toc}{\contentsline {paragraph}{Friction grid.}{6}{section*.12}}
-\@writefile{toc}{\contentsline {paragraph}{Seeds and reporting.}{6}{section*.13}}
-\@writefile{toc}{\contentsline {paragraph}{Compute.}{6}{section*.14}}
-\@writefile{toc}{\contentsline {paragraph}{Behavior-policy buffer.}{6}{section*.15}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Phase 2A -- offline-baseline landscape}{6}{subsection.4.2}}
-\newlabel{sec:experiments:phase2a}{{4.2}{6}{Phase 2A -- offline-baseline landscape}{subsection.4.2}{}}
-\@writefile{toc}{\contentsline {paragraph}{Question.}{6}{section*.16}}
-\@writefile{toc}{\contentsline {paragraph}{Grid.}{6}{section*.17}}
-\@writefile{toc}{\contentsline {paragraph}{Predictions before running.}{6}{section*.18}}
-\@writefile{toc}{\contentsline {paragraph}{Results.}{6}{section*.19}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Phase 2B -- online-only baselines}{6}{subsection.4.3}}
-\newlabel{sec:experiments:phase2b}{{4.3}{6}{Phase 2B -- online-only baselines}{subsection.4.3}{}}
-\@writefile{toc}{\contentsline {paragraph}{Question.}{6}{section*.20}}
-\@writefile{toc}{\contentsline {paragraph}{Grid.}{6}{section*.21}}
-\@writefile{toc}{\contentsline {paragraph}{Results (n=3 seeds).}{7}{section*.22}}
-\@writefile{toc}{\contentsline {paragraph}{Mechanism by method.}{7}{section*.23}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Phase 2C -- four-way O2O comparison (the central experiment)}{7}{subsection.4.4}}
-\newlabel{sec:experiments:phase2c}{{4.4}{7}{Phase 2C -- four-way O2O comparison (the central experiment)}{subsection.4.4}{}}
-\@writefile{toc}{\contentsline {paragraph}{Question.}{7}{section*.24}}
-\@writefile{toc}{\contentsline {paragraph}{Conditions.}{7}{section*.25}}
-\@writefile{toc}{\contentsline {paragraph}{Predictions before running.}{7}{section*.26}}
-\@writefile{toc}{\contentsline {paragraph}{GRPO offline warm-start (omitted condition).}{7}{section*.27}}
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Phase 2C naive O2O. Three seeds, $\lambda {=}0.001$. Turnover is functionally zero (max $6.5\tmspace  -\thinmuskip {.1667em}\times \tmspace  -\thinmuskip {.1667em}10^{-6}$); Sharpe varies wildly because each seed locks into a different static allocation from the CQL pretrain.\relax }}{8}{table.caption.29}}
+\@writefile{toc}{\contentsline {paragraph}{Regime encoder and KL.}{5}{section*.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Conservatism weight.}{6}{section*.7}\protected@file@percent }
+\newlabel{eq:cql-schedule}{{7}{6}{Conservatism weight}{equation.7}{}}
+\@writefile{toc}{\contentsline {paragraph}{Online-loop entrypoint.}{6}{section*.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Initialization and env handoff.}{6}{section*.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Experiments}{6}{section.4}\protected@file@percent }
+\newlabel{sec:experiments}{{4}{6}{Experiments}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Setup}{6}{subsection.4.1}\protected@file@percent }
+\newlabel{sec:experiments:setup}{{4.1}{6}{Setup}{subsection.4.1}{}}
+\@writefile{toc}{\contentsline {paragraph}{Environment.}{6}{section*.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Splits.}{6}{section*.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Friction grid.}{6}{section*.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Seeds and reporting.}{6}{section*.13}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Compute.}{6}{section*.14}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Behavior-policy buffer.}{6}{section*.15}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Phase 2A -- offline-baseline landscape}{7}{subsection.4.2}\protected@file@percent }
+\newlabel{sec:experiments:phase2a}{{4.2}{7}{Phase 2A -- offline-baseline landscape}{subsection.4.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Question.}{7}{section*.16}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Grid.}{7}{section*.17}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Predictions before running.}{7}{section*.18}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Results.}{7}{section*.19}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Phase 2B -- online-only baselines}{7}{subsection.4.3}\protected@file@percent }
+\newlabel{sec:experiments:phase2b}{{4.3}{7}{Phase 2B -- online-only baselines}{subsection.4.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{Question.}{7}{section*.20}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Grid.}{7}{section*.21}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Results (n=3 seeds).}{7}{section*.22}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Mechanism by method.}{7}{section*.23}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Phase 2C -- four-way O2O comparison (the central experiment)}{8}{subsection.4.4}\protected@file@percent }
+\newlabel{sec:experiments:phase2c}{{4.4}{8}{Phase 2C -- four-way O2O comparison (the central experiment)}{subsection.4.4}{}}
+\@writefile{toc}{\contentsline {paragraph}{Question.}{8}{section*.24}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Conditions.}{8}{section*.25}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Predictions before running.}{8}{section*.26}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{GRPO offline warm-start (omitted condition).}{8}{section*.27}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Static-allocation reference distribution.}{8}{section*.28}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Naive O2O: static collapse, seed-dependent allocation (final, n=3).}{8}{section*.30}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Empirical CDF of test-window Sharpe ratios for $N{=}10{,}000$ random Dirichlet$(1)$ static allocations on the 1{,}061-day test window, evaluated under Eq.~\ref {eq:reward} at $\lambda {=}0.001$. Vertical guides mark the named classical anchors (equal-weight at the 59.56th percentile, rolling risk-parity at the 81.41st, GLD-100 at the 88.27th, training-window min-variance at the 94.65th) and the adaptive O2O mean at the 99.49th. Shaded bands give the seed-to-seed range of naive O2O (effectively the full simplex distribution) and adaptive O2O (clustered in the top $\sim 1.25\%$).}}{9}{figure.caption.29}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{tab:naive-o2o}{{1}{8}{Phase 2C naive O2O. Three seeds, $\lambda {=}0.001$. Turnover is functionally zero (max $6.5\!\times \!10^{-6}$); Sharpe varies wildly because each seed locks into a different static allocation from the CQL pretrain.\relax }{table.caption.29}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Phase 2C adaptive O2O. Three seeds, $\lambda {=}0.001$. Sharpe is tightly clustered above $+1.6$, in contrast to naive O2O's $[-0.24, +2.18]$ range (Table\nobreakspace  {}\ref  {tab:naive-o2o}); turnover remains functionally static.\relax }}{8}{table.caption.31}}
-\newlabel{tab:adaptive-o2o}{{2}{8}{Phase 2C adaptive O2O. Three seeds, $\lambda {=}0.001$. Sharpe is tightly clustered above $+1.6$, in contrast to naive O2O's $[-0.24, +2.18]$ range (Table~\ref {tab:naive-o2o}); turnover remains functionally static.\relax }{table.caption.31}{}}
-\@writefile{toc}{\contentsline {paragraph}{Naive O2O: static collapse, seed-dependent allocation (final, n=3).}{8}{section*.28}}
-\@writefile{toc}{\contentsline {paragraph}{Adaptive O2O: seed-stable selection of the static basin (final, n=3).}{8}{section*.30}}
-\@writefile{toc}{\contentsline {paragraph}{Adaptive O2O ranks against classical baselines.}{8}{section*.32}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Average daily turnover by method, log scale. Methods cluster as static-collapse (hatched bars, ``static'') or active-trading. Every RL method that actively trades on this universe at $\lambda {=}0.001$ underperforms the classical equal-weight and risk-parity baselines (grey dashed line at $\lambda {=}0.001$ marks the per-step turnover cost). The leak-driven TD3+BC and BCQ rows are appendix-only (\S  \ref  {app:leak:differential}).\relax }}{9}{figure.caption.34}}
-\newlabel{fig:turnover-by-method}{{1}{9}{Average daily turnover by method, log scale. Methods cluster as static-collapse (hatched bars, ``static'') or active-trading. Every RL method that actively trades on this universe at $\lambda {=}0.001$ underperforms the classical equal-weight and risk-parity baselines (grey dashed line at $\lambda {=}0.001$ marks the per-step turnover cost). The leak-driven TD3+BC and BCQ rows are appendix-only (\S \ref {app:leak:differential}).\relax }{figure.caption.34}{}}
-\@writefile{toc}{\contentsline {paragraph}{Turnover decomposition.}{9}{section*.33}}
-\@writefile{toc}{\contentsline {paragraph}{The adaptive-vs-naive comparison is meaningful only post-fix.}{9}{section*.35}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Phase 2D -- GRPO group-size ablation}{9}{subsection.4.5}}
-\newlabel{sec:experiments:phase2d}{{4.5}{9}{Phase 2D -- GRPO group-size ablation}{subsection.4.5}{}}
-\@writefile{toc}{\contentsline {paragraph}{Question.}{9}{section*.36}}
-\@writefile{toc}{\contentsline {paragraph}{Grid.}{9}{section*.37}}
-\@writefile{toc}{\contentsline {paragraph}{Results.}{9}{section*.38}}
-\@writefile{toc}{\contentsline {paragraph}{Compute.}{9}{section*.41}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Phase\nobreakspace  {}2D GRPO group-size ablation: 9 datapoints (3 seeds $\times $ 3 $G$) with seed-color coding. Black diamonds give mean $\pm $ 1\tmspace  +\thinmuskip {.1667em}std across seeds. Dashed gray line is the equal-weight Sharpe reference ($0.953$). Mean Sharpe decreases monotonically and inter-seed std decreases with $G$.\relax }}{10}{figure.caption.39}}
-\newlabel{fig:grpo-group-size}{{2}{10}{Phase~2D GRPO group-size ablation: 9 datapoints (3 seeds $\times $ 3 $G$) with seed-color coding. Black diamonds give mean $\pm $ 1\,std across seeds. Dashed gray line is the equal-weight Sharpe reference ($0.953$). Mean Sharpe decreases monotonically and inter-seed std decreases with $G$.\relax }{figure.caption.39}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Phase\nobreakspace  {}2D test Sharpe by $(G, \text  {seed})$, $\lambda {=}0.001$. Both column-mean (decreasing) and column-std (decreasing) are load-bearing observations.\relax }}{10}{table.caption.40}}
-\newlabel{tab:phase2d}{{3}{10}{Phase~2D test Sharpe by $(G, \text {seed})$, $\lambda {=}0.001$. Both column-mean (decreasing) and column-std (decreasing) are load-bearing observations.\relax }{table.caption.40}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Discussion and Limitations}{10}{section.5}}
-\newlabel{sec:limitations}{{5}{10}{Discussion and Limitations}{section.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Discussion}{10}{subsection.5.1}}
-\newlabel{sec:discussion}{{5.1}{10}{Discussion}{subsection.5.1}{}}
-\@writefile{toc}{\contentsline {paragraph}{Adaptive O2O wins via basin selection, not adaptive trading.}{10}{section*.42}}
-\@writefile{toc}{\contentsline {paragraph}{Implications for O2O scheduling research.}{11}{section*.43}}
-\@writefile{toc}{\contentsline {paragraph}{Continuous GRPO: sound formulation, dominated equilibrium on this universe.}{11}{section*.44}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Limitations}{11}{subsection.5.2}}
-\newlabel{sec:limit}{{5.2}{11}{Limitations}{subsection.5.2}{}}
-\@writefile{toc}{\contentsline {paragraph}{Single test window.}{11}{section*.45}}
-\@writefile{toc}{\contentsline {paragraph}{Behavior-mixture sensitivity.}{11}{section*.46}}
-\@writefile{toc}{\contentsline {paragraph}{Transaction-cost model.}{11}{section*.47}}
-\@writefile{toc}{\contentsline {paragraph}{Seed reproducibility.}{11}{section*.48}}
-\@writefile{toc}{\contentsline {paragraph}{Continuous-GRPO scope.}{12}{section*.49}}
-\@writefile{toc}{\contentsline {paragraph}{Adaptive-O2O bug fix.}{12}{section*.50}}
-\@writefile{toc}{\contentsline {paragraph}{Post-paper follow-up: theoretical extensions on critic removal under exogeneity.}{12}{section*.51}}
-\@writefile{toc}{\contentsline {section}{\numberline {A}Implementation notes: pre-existing bugs found and fixed}{12}{appendix.A}}
-\newlabel{app:implementation}{{A}{12}{Implementation notes: pre-existing bugs found and fixed}{appendix.A}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.1}Bug 1: \texttt  {MomentumPolicy} collapsed to equal weight}{12}{subsection.A.1}}
-\newlabel{app:impl:momentum}{{A.1}{12}{Bug 1: \texttt {MomentumPolicy} collapsed to equal weight}{subsection.A.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.2}Bug 2: \texttt  {run\_o2o.py} shadowed \texttt  {O2OAgent} import inside \texttt  {main()}}{13}{subsection.A.2}}
-\newlabel{app:impl:shadow-import}{{A.2}{13}{Bug 2: \texttt {run\_o2o.py} shadowed \texttt {O2OAgent} import inside \texttt {main()}}{subsection.A.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.3}Bug 3: \texttt  {transfer\_to\_online} left the SAC env in a terminal state}{13}{subsection.A.3}}
-\newlabel{app:impl:terminal-env}{{A.3}{13}{Bug 3: \texttt {transfer\_to\_online} left the SAC env in a terminal state}{subsection.A.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.4}Bug 4: \texttt  {run\_o2o.py} o2o-phase ignored \texttt  {cql\_weight} --- the centerpiece bug}{14}{subsection.A.4}}
-\newlabel{app:impl:cql-weight}{{A.4}{14}{Bug 4: \texttt {run\_o2o.py} o2o-phase ignored \texttt {cql\_weight} --- the centerpiece bug}{subsection.A.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.5}GRPO loss implementation scaffolding}{14}{subsection.A.5}}
-\newlabel{app:impl:grpo-loss}{{A.5}{14}{GRPO loss implementation scaffolding}{subsection.A.5}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Phase 2A test metrics on the leaky pipeline. Behavior-anchored algorithms (BC, AWAC, CQL, IQL) collapse to the equal-weight basin (Sharpe $\approx 0.94$, turnover $\le 0.005$) under friction; pure $Q$-maximizing algorithms with weak anchoring (TD3+BC, BCQ) escape the basin and produce implausibly high Sharpe by exploiting the in-observation reward signal. Equal-weight reference: Sharpe $0.953$. Mean $\pm $ std across 3 seeds.\relax }}{15}{table.caption.53}}
-\newlabel{tab:leak-differential}{{4}{15}{Phase 2A test metrics on the leaky pipeline. Behavior-anchored algorithms (BC, AWAC, CQL, IQL) collapse to the equal-weight basin (Sharpe $\approx 0.94$, turnover $\le 0.005$) under friction; pure $Q$-maximizing algorithms with weak anchoring (TD3+BC, BCQ) escape the basin and produce implausibly high Sharpe by exploiting the in-observation reward signal. Equal-weight reference: Sharpe $0.953$. Mean $\pm $ std across 3 seeds.\relax }{table.caption.53}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.6}Cross-bug dependencies and CI implications}{15}{subsection.A.6}}
-\newlabel{app:impl:ci}{{A.6}{15}{Cross-bug dependencies and CI implications}{subsection.A.6}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {B}Leak detection and the limits of behavior anchoring}{15}{appendix.B}}
-\newlabel{app:leak}{{B}{15}{Leak detection and the limits of behavior anchoring}{appendix.B}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {B.1}The leak}{15}{subsection.B.1}}
-\newlabel{app:leak:bug}{{B.1}{15}{The leak}{subsection.B.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {B.2}Differential exploitation on the leaky pipeline}{15}{subsection.B.2}}
-\newlabel{app:leak:differential}{{B.2}{15}{Differential exploitation on the leaky pipeline}{subsection.B.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Phase 2A causal sanity check, n=3 seeds per row. The four behavior-anchored algorithms cluster tightly at Sharpe $\approx 0.94$ on the causal pipeline, mirroring the leaky-pipeline behavior. Every cell lands inside the pre-registered $[0.85,\tmspace  +\thinmuskip {.1667em}1.05]$ leak-invariance band. Equal-weight reference: Sharpe $0.953$.\relax }}{16}{table.caption.54}}
-\newlabel{tab:causal-confirmation}{{5}{16}{Phase 2A causal sanity check, n=3 seeds per row. The four behavior-anchored algorithms cluster tightly at Sharpe $\approx 0.94$ on the causal pipeline, mirroring the leaky-pipeline behavior. Every cell lands inside the pre-registered $[0.85,\,1.05]$ leak-invariance band. Equal-weight reference: Sharpe $0.953$.\relax }{table.caption.54}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces 56-d vs 216-d IQL on $\lambda {=}0.001$ test window. The 56-d configuration sits in the equal-weight basin; the 216-d configuration escapes the basin and engages in active trading at net Sharpe cost.\relax }}{16}{table.caption.55}}
-\newlabel{tab:scope-condition}{{6}{16}{56-d vs 216-d IQL on $\lambda {=}0.001$ test window. The 56-d configuration sits in the equal-weight basin; the 216-d configuration escapes the basin and engages in active trading at net Sharpe cost.\relax }{table.caption.55}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {B.3}Causal-pipeline confirmation}{16}{subsection.B.3}}
-\newlabel{app:leak:causal}{{B.3}{16}{Causal-pipeline confirmation}{subsection.B.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {B.4}Scope condition: leak-invariance is feature-space-specific}{16}{subsection.B.4}}
-\newlabel{app:leak:scope}{{B.4}{16}{Scope condition: leak-invariance is feature-space-specific}{subsection.B.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {B.5}The one-line fix}{17}{subsection.B.5}}
-\newlabel{app:leak:fix}{{B.5}{17}{The one-line fix}{subsection.B.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {B.6}Methodological observation: differential as diagnostic}{17}{subsection.B.6}}
-\newlabel{app:leak:diagnostic}{{B.6}{17}{Methodological observation: differential as diagnostic}{subsection.B.6}{}}
+\newlabel{fig:static-sharpe-cdf}{{1}{9}{Empirical CDF of test-window Sharpe ratios for $N{=}10{,}000$ random Dirichlet$(1)$ static allocations on the 1{,}061-day test window, evaluated under Eq.~\ref {eq:reward} at $\lambda {=}0.001$. Vertical guides mark the named classical anchors (equal-weight at the 59.56th percentile, rolling risk-parity at the 81.41st, GLD-100 at the 88.27th, training-window min-variance at the 94.65th) and the adaptive O2O mean at the 99.49th. Shaded bands give the seed-to-seed range of naive O2O (effectively the full simplex distribution) and adaptive O2O (clustered in the top $\sim 1.25\%$)}{figure.caption.29}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Phase 2C naive O2O. Three seeds, $\lambda {=}0.001$. Turnover is functionally zero (max $6.5\!\times \!10^{-6}$); Sharpe varies wildly because each seed locks into a different static allocation from the CQL pretrain. The \%ile column is the empirical percentile rank of each seed's test Sharpe against the $N{=}10{,}000$ random Dirichlet$(1)$ static-allocation reference distribution (Fig.~\ref {fig:static-sharpe-cdf}); the per-seed range covers essentially the full simplex.}}{9}{table.caption.31}\protected@file@percent }
+\newlabel{tab:naive-o2o}{{1}{9}{Phase 2C naive O2O. Three seeds, $\lambda {=}0.001$. Turnover is functionally zero (max $6.5\!\times \!10^{-6}$); Sharpe varies wildly because each seed locks into a different static allocation from the CQL pretrain. The \%ile column is the empirical percentile rank of each seed's test Sharpe against the $N{=}10{,}000$ random Dirichlet$(1)$ static-allocation reference distribution (Fig.~\ref {fig:static-sharpe-cdf}); the per-seed range covers essentially the full simplex}{table.caption.31}{}}
+\@writefile{toc}{\contentsline {paragraph}{Adaptive O2O: seed-stable selection of the static basin (final, n=3).}{9}{section*.32}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Phase 2C adaptive O2O. Three seeds, $\lambda {=}0.001$. Sharpe is tightly clustered above $+1.6$, in contrast to naive O2O's $[-0.24, +2.18]$ range (Table~\ref {tab:naive-o2o}); turnover remains functionally static. The \%ile column is the empirical percentile rank of each seed's test Sharpe against the $N{=}10{,}000$ random Dirichlet$(1)$ static-allocation reference distribution (Fig.~\ref {fig:static-sharpe-cdf}); all three seeds land in the $[98.74, 99.93]$ band, and the seed-mean Sharpe sits at the $99.49$th percentile.}}{10}{table.caption.33}\protected@file@percent }
+\newlabel{tab:adaptive-o2o}{{2}{10}{Phase 2C adaptive O2O. Three seeds, $\lambda {=}0.001$. Sharpe is tightly clustered above $+1.6$, in contrast to naive O2O's $[-0.24, +2.18]$ range (Table~\ref {tab:naive-o2o}); turnover remains functionally static. The \%ile column is the empirical percentile rank of each seed's test Sharpe against the $N{=}10{,}000$ random Dirichlet$(1)$ static-allocation reference distribution (Fig.~\ref {fig:static-sharpe-cdf}); all three seeds land in the $[98.74, 99.93]$ band, and the seed-mean Sharpe sits at the $99.49$th percentile}{table.caption.33}{}}
+\@writefile{toc}{\contentsline {paragraph}{Adaptive O2O ranks against classical baselines.}{10}{section*.34}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Turnover decomposition.}{10}{section*.35}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{The adaptive-vs-naive comparison is meaningful only post-fix.}{10}{section*.37}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Phase 2D -- GRPO group-size ablation}{10}{subsection.4.5}\protected@file@percent }
+\newlabel{sec:experiments:phase2d}{{4.5}{10}{Phase 2D -- GRPO group-size ablation}{subsection.4.5}{}}
+\@writefile{toc}{\contentsline {paragraph}{Question.}{10}{section*.38}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Average daily turnover by method, log scale. Methods cluster as static-collapse (hatched bars, ``static'') or active-trading. Every RL method that actively trades on this universe at $\lambda {=}0.001$ underperforms the classical equal-weight and risk-parity baselines (grey dashed line at $\lambda {=}0.001$ marks the per-step turnover cost). The leak-driven TD3+BC and BCQ rows are appendix-only (\S  \ref {app:leak:differential}).}}{11}{figure.caption.36}\protected@file@percent }
+\newlabel{fig:turnover-by-method}{{2}{11}{Average daily turnover by method, log scale. Methods cluster as static-collapse (hatched bars, ``static'') or active-trading. Every RL method that actively trades on this universe at $\lambda {=}0.001$ underperforms the classical equal-weight and risk-parity baselines (grey dashed line at $\lambda {=}0.001$ marks the per-step turnover cost). The leak-driven TD3+BC and BCQ rows are appendix-only (\S \ref {app:leak:differential})}{figure.caption.36}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Phase~2D test Sharpe by $(G, \text  {seed})$, $\lambda {=}0.001$. Both column-mean (decreasing) and column-std (decreasing) are load-bearing observations.}}{11}{table.caption.42}\protected@file@percent }
+\newlabel{tab:phase2d}{{3}{11}{Phase~2D test Sharpe by $(G, \text {seed})$, $\lambda {=}0.001$. Both column-mean (decreasing) and column-std (decreasing) are load-bearing observations}{table.caption.42}{}}
+\@writefile{toc}{\contentsline {paragraph}{Grid.}{11}{section*.39}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Results.}{11}{section*.40}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Compute.}{11}{section*.43}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Phase~2D GRPO group-size ablation: 9 datapoints (3 seeds $\times $ 3 $G$) with seed-color coding. Black diamonds give mean $\pm $ 1\,std across seeds. Dashed gray line is the equal-weight Sharpe reference ($0.953$). Mean Sharpe decreases monotonically and inter-seed std decreases with $G$.}}{12}{figure.caption.41}\protected@file@percent }
+\newlabel{fig:grpo-group-size}{{3}{12}{Phase~2D GRPO group-size ablation: 9 datapoints (3 seeds $\times $ 3 $G$) with seed-color coding. Black diamonds give mean $\pm $ 1\,std across seeds. Dashed gray line is the equal-weight Sharpe reference ($0.953$). Mean Sharpe decreases monotonically and inter-seed std decreases with $G$}{figure.caption.41}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Phase 2 method scoreboard at $\lambda {=}0.001$ on the 1{,}061-day causal test window. Percentile columns are against the $N{=}10{,}000$ random Dirichlet$(1)$ static-allocation reference (Fig.~\ref {fig:static-sharpe-cdf}). Adaptive O2O is the only RL configuration with all three seeds above the 94.65th percentile (the closed-form min-variance threshold).}}{12}{table.caption.45}\protected@file@percent }
+\newlabel{tab:scoreboard}{{4}{12}{Phase 2 method scoreboard at $\lambda {=}0.001$ on the 1{,}061-day causal test window. Percentile columns are against the $N{=}10{,}000$ random Dirichlet$(1)$ static-allocation reference (Fig.~\ref {fig:static-sharpe-cdf}). Adaptive O2O is the only RL configuration with all three seeds above the 94.65th percentile (the closed-form min-variance threshold)}{table.caption.45}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Discussion and Limitations}{12}{section.5}\protected@file@percent }
+\newlabel{sec:limitations}{{5}{12}{Discussion and Limitations}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Discussion}{12}{subsection.5.1}\protected@file@percent }
+\newlabel{sec:discussion}{{5.1}{12}{Discussion}{subsection.5.1}{}}
+\@writefile{toc}{\contentsline {paragraph}{Adaptive O2O wins via basin selection, not adaptive trading.}{12}{section*.46}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Implications for O2O scheduling research.}{13}{section*.47}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Continuous GRPO: sound formulation, dominated equilibrium on this universe.}{13}{section*.48}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Limitations}{13}{subsection.5.2}\protected@file@percent }
+\newlabel{sec:limit}{{5.2}{13}{Limitations}{subsection.5.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Single test window.}{13}{section*.49}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Behavior-mixture sensitivity.}{14}{section*.50}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Transaction-cost model.}{14}{section*.51}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Seed reproducibility.}{14}{section*.52}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Continuous-GRPO scope.}{14}{section*.53}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Adaptive-O2O bug fix.}{14}{section*.54}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{$\beta _t$-trajectory verification.}{14}{section*.55}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Post-paper follow-up: theoretical extensions on critic removal under exogeneity.}{14}{section*.56}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {A}Implementation notes: pre-existing bugs found and fixed}{15}{appendix.A}\protected@file@percent }
+\newlabel{app:implementation}{{A}{15}{Implementation notes: pre-existing bugs found and fixed}{appendix.A}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1}Bug 1: \texttt  {MomentumPolicy} collapsed to equal weight}{15}{subsection.A.1}\protected@file@percent }
+\newlabel{app:impl:momentum}{{A.1}{15}{Bug 1: \texttt {MomentumPolicy} collapsed to equal weight}{subsection.A.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2}Bug 2: \texttt  {run\_o2o.py} shadowed \texttt  {O2OAgent} import inside \texttt  {main()}}{15}{subsection.A.2}\protected@file@percent }
+\newlabel{app:impl:shadow-import}{{A.2}{15}{Bug 2: \texttt {run\_o2o.py} shadowed \texttt {O2OAgent} import inside \texttt {main()}}{subsection.A.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.3}Bug 3: \texttt  {transfer\_to\_online} left the SAC env in a terminal state}{16}{subsection.A.3}\protected@file@percent }
+\newlabel{app:impl:terminal-env}{{A.3}{16}{Bug 3: \texttt {transfer\_to\_online} left the SAC env in a terminal state}{subsection.A.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.4}Bug 4: \texttt  {run\_o2o.py} o2o-phase ignored \texttt  {cql\_weight} --- the centerpiece bug}{16}{subsection.A.4}\protected@file@percent }
+\newlabel{app:impl:cql-weight}{{A.4}{16}{Bug 4: \texttt {run\_o2o.py} o2o-phase ignored \texttt {cql\_weight} --- the centerpiece bug}{subsection.A.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.5}GRPO loss implementation scaffolding}{17}{subsection.A.5}\protected@file@percent }
+\newlabel{app:impl:grpo-loss}{{A.5}{17}{GRPO loss implementation scaffolding}{subsection.A.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.6}Cross-bug dependencies and CI implications}{17}{subsection.A.6}\protected@file@percent }
+\newlabel{app:impl:ci}{{A.6}{17}{Cross-bug dependencies and CI implications}{subsection.A.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {B}Leak detection and the limits of behavior anchoring}{17}{appendix.B}\protected@file@percent }
+\newlabel{app:leak}{{B}{17}{Leak detection and the limits of behavior anchoring}{appendix.B}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.1}The leak}{17}{subsection.B.1}\protected@file@percent }
+\newlabel{app:leak:bug}{{B.1}{17}{The leak}{subsection.B.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Phase 2A test metrics on the leaky pipeline. Behavior-anchored algorithms (BC, AWAC, CQL, IQL) collapse to the equal-weight basin (Sharpe $\approx 0.94$, turnover $\le 0.005$) under friction; pure $Q$-maximizing algorithms with weak anchoring (TD3+BC, BCQ) escape the basin and produce implausibly high Sharpe by exploiting the in-observation reward signal. Equal-weight reference: Sharpe $0.953$. Mean $\pm $ std across 3 seeds.}}{18}{table.caption.58}\protected@file@percent }
+\newlabel{tab:leak-differential}{{5}{18}{Phase 2A test metrics on the leaky pipeline. Behavior-anchored algorithms (BC, AWAC, CQL, IQL) collapse to the equal-weight basin (Sharpe $\approx 0.94$, turnover $\le 0.005$) under friction; pure $Q$-maximizing algorithms with weak anchoring (TD3+BC, BCQ) escape the basin and produce implausibly high Sharpe by exploiting the in-observation reward signal. Equal-weight reference: Sharpe $0.953$. Mean $\pm $ std across 3 seeds}{table.caption.58}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Phase 2A causal sanity check, n=3 seeds per row. The four behavior-anchored algorithms cluster tightly at Sharpe $\approx 0.94$ on the causal pipeline, mirroring the leaky-pipeline behavior. Every cell lands inside the pre-registered $[0.85,\,1.05]$ leak-invariance band. Equal-weight reference: Sharpe $0.953$.}}{18}{table.caption.59}\protected@file@percent }
+\newlabel{tab:causal-confirmation}{{6}{18}{Phase 2A causal sanity check, n=3 seeds per row. The four behavior-anchored algorithms cluster tightly at Sharpe $\approx 0.94$ on the causal pipeline, mirroring the leaky-pipeline behavior. Every cell lands inside the pre-registered $[0.85,\,1.05]$ leak-invariance band. Equal-weight reference: Sharpe $0.953$}{table.caption.59}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.2}Differential exploitation on the leaky pipeline}{18}{subsection.B.2}\protected@file@percent }
+\newlabel{app:leak:differential}{{B.2}{18}{Differential exploitation on the leaky pipeline}{subsection.B.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.3}Causal-pipeline confirmation}{18}{subsection.B.3}\protected@file@percent }
+\newlabel{app:leak:causal}{{B.3}{18}{Causal-pipeline confirmation}{subsection.B.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces 56-d vs 216-d IQL on $\lambda {=}0.001$ test window. The 56-d configuration sits in the equal-weight basin; the 216-d configuration escapes the basin and engages in active trading at net Sharpe cost.}}{19}{table.caption.60}\protected@file@percent }
+\newlabel{tab:scope-condition}{{7}{19}{56-d vs 216-d IQL on $\lambda {=}0.001$ test window. The 56-d configuration sits in the equal-weight basin; the 216-d configuration escapes the basin and engages in active trading at net Sharpe cost}{table.caption.60}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.4}Scope condition: leak-invariance is feature-space-specific}{19}{subsection.B.4}\protected@file@percent }
+\newlabel{app:leak:scope}{{B.4}{19}{Scope condition: leak-invariance is feature-space-specific}{subsection.B.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.5}The one-line fix}{19}{subsection.B.5}\protected@file@percent }
+\newlabel{app:leak:fix}{{B.5}{19}{The one-line fix}{subsection.B.5}{}}
 \bibstyle{plainnat}
 \bibdata{refs}
 \bibcite{an2021uncertainty}{{1}{2021}{{An et~al.}}{{An, Moon, Kim, and Song}}}
 \bibcite{chen2021decision}{{2}{2021}{{Chen et~al.}}{{Chen, Lu, Rajeswaran, Lee, Grover, Laskin, Abbeel, Srinivas, and Mordatch}}}
 \bibcite{deng2017deep}{{3}{2017}{{Deng et~al.}}{{Deng, Bao, Kong, Ren, and Dai}}}
-\bibcite{yu2024rlhf}{{4}{2024}{{Dong et~al.}}{{Dong, Xiong, Pang, Wang, Zhao, Zhou, Jiang, Sahoo, Xiong, and Zhang}}}
+\bibcite{dong2024rlhf}{{4}{2024}{{Dong et~al.}}{{Dong, Xiong, Pang, Wang, Zhao, Zhou, Jiang, Sahoo, Xiong, and Zhang}}}
 \bibcite{dudik2014doubly}{{5}{2014}{{Dud{\'\i }k et~al.}}{{Dud{\'\i }k, Erhan, Langford, and Li}}}
 \bibcite{foerster2018counterfactual}{{6}{2018}{{Foerster et~al.}}{{Foerster, Farquhar, Afouras, Nardelli, and Whiteson}}}
 \bibcite{fujimoto2021minimalist}{{7}{2021}{{Fujimoto and Gu}}{{}}}
 \bibcite{fujimoto2019off}{{8}{2019}{{Fujimoto et~al.}}{{Fujimoto, Meger, and Precup}}}
 \bibcite{jiang2017deep}{{9}{2017}{{Jiang et~al.}}{{Jiang, Xu, and Liang}}}
 \bibcite{joachims2018deep}{{10}{2018}{{Joachims et~al.}}{{Joachims, Swaminathan, and de~Rijke}}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.6}Methodological observation: differential as diagnostic}{20}{subsection.B.6}\protected@file@percent }
+\newlabel{app:leak:diagnostic}{{B.6}{20}{Methodological observation: differential as diagnostic}{subsection.B.6}{}}
 \bibcite{kostrikov2022offline}{{11}{2022}{{Kostrikov et~al.}}{{Kostrikov, Nair, and Levine}}}
 \bibcite{kumar2020conservative}{{12}{2020}{{Kumar et~al.}}{{Kumar, Zhou, Tucker, and Levine}}}
 \bibcite{liu2020finrl}{{13}{2020}{{Liu et~al.}}{{Liu, Yang, Chen, Zhang, Yang, Xiao, and Wang}}}
-\bibcite{ma2022geodesic}{{14}{2022}{{Ma et~al.}}{{Ma, Yan, Hejna, Pavone, Bajcsy, Finn, Pinto, and Bastani}}}
-\bibcite{moody2001learning}{{15}{2001}{{Moody and Saffell}}{{}}}
-\bibcite{nair2020awac}{{16}{2020}{{Nair et~al.}}{{Nair, Gupta, Dalal, and Levine}}}
-\bibcite{pomerleau1991efficient}{{17}{1991}{{Pomerleau}}{{}}}
-\bibcite{shao2024deepseekmath}{{18}{2024}{{Shao et~al.}}{{Shao, Wang, Zhu, Xu, Song, Bi, Zhang, Zhang, Li, Wu, and Guo}}}
-\bibcite{zhao2022adaptive}{{19}{2022}{{Zhao and Pearce}}{{}}}
-\bibcite{zheng2023adaptive}{{20}{2023}{{Zheng et~al.}}{{Zheng, Li, Yu, Yang, Lin, Zhao, Liu, and Zhan}}}
+\bibcite{moody2001learning}{{14}{2001}{{Moody and Saffell}}{{}}}
+\bibcite{nair2020awac}{{15}{2020}{{Nair et~al.}}{{Nair, Gupta, Dalal, and Levine}}}
+\bibcite{pomerleau1991efficient}{{16}{1991}{{Pomerleau}}{{}}}
+\bibcite{shao2024deepseekmath}{{17}{2024}{{Shao et~al.}}{{Shao, Wang, Zhu, Xu, Song, Bi, Zhang, Zhang, Li, Wu, and Guo}}}
+\bibcite{zheng2023adaptive}{{18}{2022}{{Zhao et~al.}}{{Zhao, Boney, Ilin, Kannala, and Pajarinen}}}
+\gdef \@abspage@last{21}

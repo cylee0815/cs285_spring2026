@@ -26,7 +26,7 @@ Policy Optimization \citep{shao2024deepseekmath} replaces PPO's learned
 value baseline with a within-group statistic computed across $G$
 sampled completions of the same prompt. Subsequent work has applied
 GRPO almost exclusively to LLM post-training pipelines
-\citep{yu2024rlhf}, where the original formulation's two structural
+\citep{dong2024rlhf}, where the original formulation's two structural
 assumptions hold by construction: actions are discrete
 tokens with a finite alphabet, and ``state transitions'' are
 deterministic sequence-extension. Our continuous-action portfolio
@@ -42,26 +42,31 @@ the constraint legible to anyone porting the method
 
 \paragraph{Critic removal under exogenous transitions.} The exogeneity
 argument we use to retire the value baseline (Sec.~\ref{sec:method:grpo:exogeneity})
-is closely related to direct policy-gradient estimators in
-contextual-bandit and counterfactual-policy-gradient settings
-\citep{dudik2014doubly,joachims2018deep,foerster2018counterfactual}:
-when state transitions do not respond to the agent's action, the
-bootstrapped continuation cancels in within-state action comparisons.
-The financial-portfolio variant is implicit in early policy-gradient
+is conceptually related to direct policy-gradient estimators in
+contextual-bandit settings, where the absence of a bootstrap term
+makes within-state action comparisons critic-free
+\citep{dudik2014doubly,joachims2018deep}; the multi-agent
+counterfactual-baseline construction of Foerster et al.\ is a closer
+technical analogue \citep{foerster2018counterfactual}. The
+financial-portfolio variant is implicit in early policy-gradient
 trading work \citep{moody2001learning}, but the connection to
 group-relative advantage estimation as a critic-removal mechanism has
 not, to our knowledge, been formalized.
 
 \paragraph{O2O conservatism scheduling.} Offline-to-online fine-tuning
 has been studied in robotics
-\citep{nair2020awac,zheng2023adaptive,zhao2022adaptive}, where the
+\citep{nair2020awac,zheng2023adaptive}, where the
 typical solution is a fixed schedule on the conservatism coefficient
 (linear or cosine decay over a known online budget). Our adaptive
 schedule (Sec.~\ref{sec:method:o2o}) closes the loop by gating
-pessimism on a per-step regime-KL signal. The Geodesic-CQL component
-\citep[Fisher-Rao penalty;][]{ma2022geodesic} contributes the offline
+pessimism on a per-step regime-KL signal. The Geodesic-CQL
+component\footnote{We use this name internally for our offline-phase
+objective: CQL with a Fisher--Rao penalty on the policy. We are not
+aware of prior published work under this name; the name should be
+read as a code-level identifier rather than a reference to an external
+method.} contributes the offline
 phase; we do not modify it. In contrast to prior O2O work, which frames
 the schedule's job as governing online responsiveness to distribution
-shift, our Phase~2C results suggest its load-bearing function on this
+shift, our Phase~2C results suggest its primary apparent effect on this
 universe is convergence-basin selection during fine-tune --- a
 mechanism revision we unpack in Sec.~\ref{sec:discussion}.

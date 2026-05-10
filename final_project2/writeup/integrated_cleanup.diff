@@ -1,0 +1,271 @@
+--- a/writeup/draft_introduction.tex	2026-05-09 22:50:22
++++ b/writeup/draft_introduction.tex	2026-05-10 00:23:16
+@@ -35,11 +35,18 @@
+ --- a per-step CQL-penalty modulation driven by the regime-encoder KL
+ between offline and online observation distributions. On a 1{,}061-day
+ causal test window (2022-Q1 through 2026-Q1, the post-2022
+-stock-bond-correlation regime), this adaptive-O2O agent achieves test
+-Sharpe $1.762 \pm 0.154$ across three seeds. Across four experimental phases (offline baselines, online-only
++stock-bond-correlation regime), this adaptive-O2O agent reliably
++converges to a near-static allocation in the top $1.25\%$ of the
++8-asset simplex: across three seeds, the lowest-performing run reaches
++the 98.75th percentile of $10{,}000$ random Dirichlet$(1)$ simplex
++draws (Sharpe $1.629$), and the mean reaches the 99.49th
++(Sharpe $1.762 \pm 0.154$) --- above the closed-form min-variance
++baseline (94.65th percentile, Sharpe $1.39$), the rolling risk-parity
++reference (81.41st, $1.161$), and equal-weight (59.56th, $0.953$).
++Across four experimental phases (offline baselines, online-only
+ baselines, four-way O2O comparison, GRPO group-size ablation),
+-adaptive O2O is the only RL method to beat both equal-weight ($0.953$)
+-and risk-parity ($1.161$) on this window.
++adaptive O2O is the only RL configuration in our study that lands
++above the strongest classical static optimizer reliably across seeds.
+ 
+ The headline mechanism is not what we pre-registered, and surfacing
+ the revision properly is the second-order contribution of this paper.
+@@ -81,11 +88,12 @@
+ that we recommend as a STOP condition for offline-RL benchmark
+ builders.
+ 
+-Three contributions, then: (1) adaptive-O2O as the only RL method we
+-tested to beat both classical baselines on the post-2022 window, with
+-the basin-selection mechanism revision as the central interpretive
+-finding; (2) Continuous GRPO under exogenous state transitions;
+-(3) the algorithm-class-differential leak diagnostic with its
++Three contributions, then: (1) the basin-selection mechanism revision
++--- a reframing of what O2O conservatism schedules do, evidenced by
++adaptive O2O's percentile-anchored win across seeds and the
++disconfirmation of the pre-registered active-trading mechanism;
++(2) Continuous GRPO under exogenous state transitions; (3) the
++algorithm-class-differential leak diagnostic with its
+ feature-space-specific scope condition. Sec.~\ref{sec:related}
+ positions the work; Sec.~\ref{sec:method} formalizes both methods;
+ Sec.~\ref{sec:experiments} reports the four-phase experimental
+--- a/writeup/draft_method.tex	2026-05-09 22:50:22
++++ b/writeup/draft_method.tex	2026-05-10 00:24:59
+@@ -28,8 +28,8 @@
+ the exogeneity assumption hold (Sec.~\ref{sec:method:grpo:exogeneity}). The
+ optional flag \verb|include_prev_weights=True| injects the previous
+ weight vector into the observation and breaks exogeneity; we leave it
+-disabled, and \texttt{tests/test\_exogeneity.py} guards the constraint
+-with a unit test.
++disabled, and the exogeneity unit tests
++(Sec.~\ref{sec:method:grpo:exogeneity}) guard the constraint.
+ 
+ \subsection{Continuous GRPO}
+ \label{sec:method:grpo}
+@@ -57,7 +57,10 @@
+ heads suffer near $w_i \to 0$. Sampling, log-probability, and entropy are
+ PyTorch's closed-form Dirichlet calls --- no projection step is needed
+ because samples are already in the open simplex (modulo a numerical
+-$10^{-6}$ clamp).
++$10^{-6}$ clamp). (As a side effect, the $+1$ shift means the head
++cannot exactly represent the uniform distribution $\alpha{=}1$; in
++practice the policy approaches but does not reach the simplex
++centroid.)
+ 
+ \subsubsection{Group sampling under exogenous state transitions}
+ \label{sec:method:grpo:exogeneity}
+@@ -157,8 +160,9 @@
+ Continuous GRPO trades a learned critic for an environmental property. In
+ domains where actions \emph{do} affect $s_{t+1}$ (e.g., locomotion, robotics,
+ market-impact-aware finance), the bootstrap term does not cancel and group
+-advantages are biased. The unit tests in \texttt{tests/test\_exogeneity.py}
+-are not stylistic --- they are an algorithmic precondition. We surface this
++advantages are biased. The exogeneity unit tests
++(Sec.~\ref{sec:method:grpo:exogeneity}) are not stylistic --- they are
++an algorithmic precondition. We surface this
+ explicitly in the limitations (Sec.~\ref{sec:limitations}) and recommend
+ that any future port of this method include an analogous test against the
+ host env.
+--- a/writeup/draft_experiments.tex	2026-05-09 23:29:02
++++ b/writeup/draft_experiments.tex	2026-05-10 00:38:02
+@@ -44,13 +44,15 @@
+ 
+ \paragraph{Behavior-policy buffer.} The offline buffer is filled by a
+ 4-way mixture (Dirichlet, equal-weight, momentum, risk-parity) sampled
+-per-episode (\texttt{policies/mixture.py:default\_offline\_mixture}).
++per-episode.\footnote{Implementation in
++\texttt{policies/mixture.py:default\_offline\_mixture}.}
+ ``Risk-parity'' throughout this paper refers to the rolling 60-day
+-inverse-volatility schedule (\texttt{risk\_parity\_60d} in
+-\texttt{figures/classical\_causal.csv}); we flag this explicitly to
+-disambiguate it from a static training-window inverse-vol allocation,
+-whose test Sharpe differs from the rolling schedule's by a small
+-amount we do not report on. This buffer also differs from the
++inverse-volatility schedule (\texttt{risk\_parity\_60d}); we flag this
++explicitly to disambiguate it from a static training-window
++inverse-vol allocation (test Sharpe ${\sim}1.25$, ${\sim}0.09$ above
++the rolling schedule);
++we use the rolling version throughout for consistency with the
++portfolio-allocation literature. This buffer also differs from the
+ milestone's pure uniform-Dirichlet buffer; the IQL $\lambda$-anchor in
+ Phase 2A re-anchors the comparison.
+ 
+@@ -66,7 +68,8 @@
+ plus IQL at $\lambda \in \{0, 0.001, 0.005\}$ (9 runs, the $\lambda$-anchor)
+ = 24 runs. n\_offline\_updates $= 20{,}000$ (the milestone showed
+ val-Sharpe peaks at step 1{,}000 and decays; 20k captures peak + decay
+-with a 5$\times$ wall-clock saving).
++with a $5\times$ wall-clock saving relative to the milestone's
++$100{,}000$-step training budget).
+ 
+ \paragraph{Predictions before running.}
+ \begin{itemize}\setlength\itemsep{0pt}
+@@ -105,8 +108,11 @@
+ allocations. GRPO posts $0.297 \pm 0.017$ with seed range
+ $[+0.277,\,+0.307]$ and turnover $0.242$, the only online method that
+ actively trades on the test window. None of the three beats the
+-equal-weight reference of $0.953$ (Table~\ref{tab:naive-o2o}'s
+-right-hand-column comparison and Fig.~\ref{fig:turnover-by-method}).
++equal-weight reference of $0.953$
++(Fig.~\ref{fig:turnover-by-method} visualizes turnover across all
++conditions; the Phase 2B static-collapse methods sit at functionally
++zero turnover, comparable to the Phase 2C naive O2O column in
++Table~\ref{tab:naive-o2o}).
+ 
+ \paragraph{Mechanism by method.} The three online methods fail in
+ three distinct ways. SAC-Dirichlet's identical-across-seeds Sharpe is
+@@ -118,7 +124,9 @@
+ numbers as ``maximum-entropy regularizer dominating policy
+ specialization on the bounded simplex,'' not as SAC working as
+ intended; the auto-tune blowup is independent of the seed-threading
+-audit, and even with corrected seeding the math would still diverge.
++audit; we expect the divergence to persist with corrected seeding,
++since the temperature update under simplex-bounded actions amplifies
++through any seed-driven variation rather than averaging out.
+ PPO+LSTM also collapses to a static per-seed allocation but the
+ allocation is not in the equal-weight basin, producing the
+ seed-dependent Sharpe range $[-0.075,\,+1.273]$ --- the same
+@@ -190,20 +198,23 @@
+ on the 8-asset simplex and evaluate each as a static (no-rebalance)
+ allocation on the 1{,}061-day test window under
+ Eq.~\ref{eq:reward} at $\lambda{=}0.001$. Against this empirical
+-distribution (Fig.~\ref{fig:static-sharpe-cdf};
+-\texttt{figures/static\_sharpe\_anchor\_table.csv}), the named
++distribution (Fig.~\ref{fig:static-sharpe-cdf}),\footnote{Anchor
++table: \texttt{figures/static\_sharpe\_anchor\_table.csv}. Per-seed
++percentile lookups: \texttt{writeup/per\_seed\_percentiles.csv}.}
++the named
+ classical anchors land at the 59.56th percentile (equal-weight),
+ 81.41st (rolling 60-day inverse-vol risk-parity), 88.27th (GLD-100
+ single-asset), and 94.65th (training-window min-variance); the 60/40
+-SPY-TLT allocation lands well below. ``Min-variance'' here refers to
++SPY-TLT allocation lands at approximately the 3rd percentile, a
++striking failure mode driven by the 2022 stock-bond correlation break
++that defines the test window. ``Min-variance'' here refers to
+ the long-only QP on training-window sample covariance
+ ($\arg\min_w w^\top \widehat{\Sigma} w$ subject to $\sum_i w_i = 1$,
+ $w \geq 0$), solved with SLSQP; the converged weight vector is
+ heavily SHY-tilted ($91\%$ SHY, the lowest-vol asset in the universe),
+-consistent with the min-variance objective. Per-seed
+-Sharpe-to-percentile lookups for the six O2O runs are tabulated in
+-\texttt{writeup/per\_seed\_percentiles.csv} and used as the reference
+-scale in the seed-by-seed comparisons that follow.
++consistent with the min-variance objective. The same percentile
++distribution is used as the reference scale in the seed-by-seed
++comparisons that follow (per-seed lookups in the footnoted CSV above).
+ 
+ \begin{figure}[t]
+ \centering
+@@ -293,6 +304,14 @@
+ sharper narrowing in percentile space (full simplex distribution
+ $\rightarrow$ top $\sim\!1.25\%$); every adaptive seed lands strictly
+ above $+1.6$ Sharpe and inside the top $\sim\!1.25\%$ of the simplex.
++Of the three pre-registered predictions, the second held trivially
++(frozen offline is uncompetitive, inherited from Phase~2A); the first
++held in Sharpe ordering (adaptive $>$ naive on average) but its
++proposed mechanism (lower turnover) was disconfirmed --- both
++adaptive and naive converge to functionally static allocations, see
++\S\ref{sec:discussion}; the third (the schedule actually engages,
++$\beta_t$ non-constant) is the subject of a follow-up audit
++(\S\ref{sec:limit}).
+ 
+ The mechanistic interpretation: the static-collapse pathology
+ (Sec.~\ref{sec:experiments:phase2c}, naive O2O paragraph) is not
+@@ -343,12 +362,16 @@
+ optimizer in the anchor table, as well as the rolling 60-day
+ inverse-vol risk-parity reference ($81.41$st percentile, Sharpe $1.161$)
+ and the equal-weight baseline ($59.56$th percentile, Sharpe $0.953$).
+-Every other RL condition we run (Phase 2A causal offline, Phase 2B
+-online-only, naive O2O on its non-degenerate seeds, GRPO online and
+-the GRPO group-size ablation) sits below the $82$nd percentile of the
+-simplex distribution; adaptive O2O is the only configuration in our
+-study that reliably clears the strongest classical static optimizer
+-across seeds. This is the headline positive result for the adaptive
++Every other RL condition we run has at least one seed below the
++$82$nd percentile of the simplex distribution: Phase~2A causal offline
++clusters near the 60th-percentile equal-weight basin, Phase~2B
++online-only at or below equal-weight, naive O2O with seeds spanning
++$[0.03\text{rd}, 72.60\text{th}, 100\text{th}]$ percentile (one seed
++above 82nd, two below), and GRPO online plus the group-size ablation
++entirely below 82nd. Adaptive O2O is the only configuration in our
++study that places \emph{all three} seeds above the 94.65th percentile
++(the closed-form min-variance threshold), making it the only RL
++method to reliably clear the strongest classical static optimizer. This is the headline positive result for the adaptive
+ contribution.
+ The caveat is that adaptive's win comes from \emph{near-static
+ allocation selection}, not from the active-trading-on-distribution-shift
+@@ -416,8 +439,10 @@
+ env-step budget --- larger $G$ reduces the number of distinct states
+ visited per gradient step, with the cost dominating the precision gain
+ in this range. Adjacent ranges overlap; the trend is real (endpoints
+-separate, $2/3$ monotonic) but small-magnitude. We use $G{=}4$ as the
+-default in Phase~2C.
++separate, $2/3$ monotonic) but small-magnitude. We adopt $G{=}4$ as the
++default going forward; Phase~2B's GRPO results above used the codebase
++default of $G{=}16$, but even the better $G{=}4$ cell at Sharpe
++$0.500 \pm 0.108$ remains below the equal-weight reference.
+ 
+ \begin{figure}[t]
+ \centering
+@@ -459,8 +484,8 @@
+ over $G$). Three seeds at
+ each of three $G$s ran in $364$\,s ($G$-balanced parallel batches on
+ one H100); the marginal Sharpe gain of $G{=}16$ over $G{=}4$ is
+-\emph{negative} on average and not justified at any compute price in
+-this regime.
++\emph{negative} on average and not justified at the compute prices
++we measured.
+ 
+ % Cross-experiment interpretation lives in Sec.~\ref{sec:discussion}
+ % (basin-selection mechanism, O2O scheduling implications, GRPO
+--- a/writeup/draft_limitations.tex	2026-05-09 23:08:46
++++ b/writeup/draft_limitations.tex	2026-05-10 00:25:55
+@@ -33,7 +33,14 @@
+ $[+1.629,\,+1.931]$, std $0.15$, percentile band
+ $[98.74, 99.93]$): an eight-fold reduction in seed-to-seed Sharpe std
+ and a sharper narrowing in percentile space (full simplex
+-distribution $\rightarrow$ top $1.25\%$). The conservatism schedule's load-bearing
++distribution $\rightarrow$ top $1.25\%$). Under a null in which the
++schedule had no steering effect --- i.e., the distribution of
++converged basins matched naive's empirically observed full-simplex
++sampling --- the probability that three independent seeds all land in
++the top $1.25\%$ of the simplex distribution would be approximately
++$0.0125^3 \approx 2 \times 10^{-6}$. The observed clustering across
++all three adaptive seeds is therefore not consistent with the null.
++The conservatism schedule's load-bearing
+ function in our results is convergence-basin steering during fine-tune,
+ not online responsiveness during deployment. We surface this as a
+ mechanism revision rather than a confirmation, in keeping with the
+@@ -137,7 +144,7 @@
+ (Sec.~\ref{sec:method:grpo}) is sound iff the env satisfies the
+ exogeneity property in Eq.~\ref{eq:exogeneity}. We provide unit tests
+ that make the precondition legible
+-(\texttt{tests/test\_exogeneity.py}); we do not claim the method
++(Sec.~\ref{sec:method:grpo:exogeneity}); we do not claim the method
+ transfers to settings where actions affect future state. In particular,
+ trades large enough to move the underlying market, multi-period option
+ strategies, and any setting with persistent inventory state would
+@@ -151,6 +158,11 @@
+ adaptive-O2O number is therefore not apples-to-apples; we surface this
+ here rather than rewrite the milestone narrative.
+ 
++\paragraph{$\beta_t$-trajectory verification.} The third
++pre-registered prediction ($\beta_t$ non-constant) was not explicitly
++verified from the saved Phase~2C artifacts; this is a follow-up
++rather than a finding.
++
+ \paragraph{Post-paper follow-up: theoretical extensions on critic
+ removal under exogeneity.} The exogeneity argument that retires the
+ value baseline (Sec.~\ref{sec:method:grpo:exogeneity}) suggests two

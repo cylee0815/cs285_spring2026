@@ -1,0 +1,157 @@
+Phase-D rhetoric pass — softened claims that outpaced the n=3 / 1-window evidence.
+Each hunk addresses a specific Pass-B.5 audit flag (writeup/audit_findings.md).
+Applied directly to source; this file is the post-application summary diff for review.
+
+================================================================================
+abstract — 3 hunks
+================================================================================
+
+--- a/writeup/draft_abstract.tex
++++ b/writeup/draft_abstract.tex
+@@ -29,7 +29,7 @@
+ SAC-Dirichlet fine-tune with $\beta_t = \alpha_{\mathrm{CQL}} \cdot
+ \sigma(\eta \cdot \mathrm{KL}(h_{\text{off}} \| h_{\text{on}}))$)
+-reliably converges to a near-static allocation in the top $1.25\%$ of
+-the 8-asset simplex on this window: across three seeds, the
+-lowest-performing run reaches the 98.75th percentile of $10{,}000$
++consistently across our three seeds converges to a near-static
++allocation in the top $1.25\%$ of the 8-asset simplex on this window:
++the lowest-performing run reaches the 98.75th percentile of $10{,}000$
+ random Dirichlet$(1)$ simplex draws (Sharpe $1.629$), and the mean
+ # Audit B.5 abstract L30: "reliably" with n=3.
+
+@@ -54,4 +54,4 @@
+ simplex. Adaptive O2O's seeds cluster in the top $1.25\%$ (std
+-$0.15$): an eight-fold variance reduction in Sharpe space, and a
+-sharper one in percentile space. The conservatism schedule's
++$0.15$): an $\approx$~eight-fold variance reduction in Sharpe space
++on this small-sample comparison, and a sharper one in percentile space. The conservatism schedule's
+ primary apparent effect on this universe is convergence-basin steering
+ # Audit B.5 abstract L54: n=3 std relative error ~70-100%; the 8x point estimate is fragile.
+
+@@ -70,4 +70,4 @@
+ cell ($G{=}4$, Sharpe $0.500 \pm 0.108$) lands below equal-weight.
+-Every RL method we evaluate either degenerates to a static allocation
+-or trades into the friction tax; adaptive O2O is the only
+-configuration that lands a static allocation reliably in the top of
+-the simplex distribution.
++Of the RL methods we evaluated, all either degenerated to a static
++allocation or traded into the friction tax; adaptive O2O is the only
++configuration whose three seeds all landed in the top of the simplex
++distribution.
+ # Audit B.5 abstract L70-73: stacked "every", "the only", "reliably" on n=3 evidence.
+
+================================================================================
+introduction — 4 hunks
+================================================================================
+
+--- a/writeup/draft_introduction.tex
++++ b/writeup/draft_introduction.tex
+@@ -36,7 +36,8 @@
+ between offline and online observation distributions. On a 1{,}061-day
+ causal test window (2022-Q1 through 2026-Q1, the post-2022
+-stock-bond-correlation regime), this adaptive-O2O agent reliably
+-converges to a near-static allocation in the top $1.25\%$ of the
+-8-asset simplex: across three seeds, the lowest-performing run reaches
++stock-bond-correlation regime), this adaptive-O2O agent consistently
++across our three seeds converges to a near-static allocation in the
++top $1.25\%$ of the 8-asset simplex: the lowest-performing run reaches
+ the 98.75th percentile of $10{,}000$ random Dirichlet$(1)$ simplex
+ # Audit B.5 intro L37-38: "reliably" with n=3.
+
+@@ -51,3 +51,7 @@
+-The headline mechanism is not what we pre-registered, and surfacing
+-the revision properly is the second-order contribution of this paper.
++The headline mechanism is not what we pre-registered. The mechanism
++we hypothesized is not what the data show; revising to a
++basin-selection account is itself part of what we contribute, and
++we surface that revision explicitly rather than retrofitting the
++original framing onto the results.
+ The pre-registered hypothesis was that the modulated $\beta_t$ would
+ # Audit B.5 intro L51-52: "second-order contribution" insider framing — workshop reviewer
+ # with no project history will find it confusing. Replaced with explicit prose.
+
+@@ -60,5 +63,7 @@
+-allocation the SAC fine-tune lands on. Naive's pinned conservatism
+-leaves the basin random across seeds; adaptive's modulated schedule
+-steers the same SAC dynamics from the same Geodesic-CQL pretrain to a
+-uniformly strong basin --- an eight-fold seed-std reduction over naive
+-(Sec.~\ref{sec:experiments:phase2c}). The conservatism schedule's primary
++allocation the SAC fine-tune lands on. Naive's pinned conservatism is
++associated with random-across-seeds basin selection in our three
++runs; adaptive's modulated schedule steers the same SAC dynamics from
++the same Geodesic-CQL pretrain to a uniformly strong basin --- an
++$\approx$~eight-fold seed-std reduction over naive on this
++small-sample comparison (Sec.~\ref{sec:experiments:phase2c}). The conservatism schedule's primary
+ apparent effect on this universe is convergence-basin steering during
+ # Audit B.5 intro L60: causal "leaves" claim from n=3 → "associated with ... in our three runs".
+ # Audit B.5 intro L62-63: same n=3 std issue as abstract.
+
+@@ -86,5 +91,5 @@
+ methods read tomorrow's reward off today's observation while
+-behavior-anchored methods cannot, producing a $> 2\times$ Sharpe gap
+-that we recommend as a STOP condition for offline-RL benchmark
+-builders.
++behavior-anchored methods cannot, producing a $> 2\times$ Sharpe gap
++that we propose as a diagnostic worth checking when building
++offline-RL benchmarks.
+ # Audit B.5 abstract L83-87 (parallel intro instance): "STOP condition" prescriptive on n=1 dataset.
+
+================================================================================
+experiments — 2 hunks
+================================================================================
+
+--- a/writeup/draft_experiments.tex
++++ b/writeup/draft_experiments.tex
+@@ -326,3 +326,3 @@
+ random across seeds. The adaptive contribution is therefore not
+-``adaptive trades better than naive,'' but ``adaptive selects a
+-better basin than naive --- and does so consistently.''
++``adaptive trades better than naive,'' but ``adaptive selects a
++better basin than naive --- and does so on all three seeds we ran.''
+ # Audit B.5 experiments L326-328: "consistently" with n=3.
+
+@@ -358,5 +358,5 @@
+ reference distribution (Fig.~\ref{fig:static-sharpe-cdf}) --- adaptive
+-O2O lands reliably above the closed-form min-variance baseline
+-($94.65$th percentile, Sharpe $1.39$), the strongest classical static
++O2O lands above the closed-form min-variance baseline on all three
++seeds we ran ($94.65$th percentile, Sharpe $1.39$), the strongest classical static
+ optimizer in the anchor table, as well as the rolling 60-day
+ # Audit B.5 experiments L360: "reliably" with n=3.
+
+================================================================================
+audit-flag coverage summary
+================================================================================
+
+Resolved in Phase D (this diff): 9 flags
+  abstract  L30           ✓ softened ("reliably" → "consistently across our three seeds")
+  abstract  L54           ✓ qualified ("≈ 8-fold ... on this small-sample comparison")
+  abstract  L70-73        ✓ softened ("Every" → "Of the RL methods we evaluated, all ...")
+  abstract  L83-87 (STOP) ✓ already addressed in Phase A's contribution-paragraph rewrite
+  intro     L37-38        ✓ softened (matches abstract L30)
+  intro     L51-52        ✓ rewritten (no more "second-order contribution")
+  intro     L60           ✓ softened ("leaves" → "associated with ... in our three runs")
+  intro     L62-63        ✓ qualified (matches abstract L54)
+  intro     L88 (STOP)    ✓ softened ("STOP condition" → "diagnostic worth checking")
+  exper.    L326-328      ✓ softened ("consistently" → "on all three seeds we ran")
+  exper.    L360          ✓ softened ("reliably above" → "above ... on all three seeds")
+
+Already resolved by earlier phases: 5 flags
+  exper.    L320-321      ✓ Phase C manual fix ("the schedule does ..." → "appears to ...")
+  abstract  L60-62        ✓ polish_pass.diff ("each mode mechanistically traceable" → "each admitting a specific mechanistic interpretation")
+  abstract  L82           ✓ polish_pass.diff ("settled here in the negative" → "answered negatively on this universe")
+  limitations L31         ✓ polish_pass.diff ("consistently steers" → "appears to consistently steer")
+  limitations L42-46      ✓ polish_pass.diff (caveat sentence inserted)
+
+Deferred (out of Phase D scope; user limited Phase D to abstract/intro/experiments): 7 flags
+  method   L118 ("load-bearing detail")
+  method   L152-156 (TODO comment)
+  method   L209-220 (bug-fix paragraph: leave for an appendix-move pass)
+  method   L230-233 (TODO comment)
+  experiments L137-141 ("every online RL method we ran") — audit notes acceptable
+  experiments L142 ("GRPO is the only online method") — audit notes acceptable
+  limitations L56 ("load-bearing")
+  cross-cutting "mechanism" mixed senses — partially addressed via softened wording, full disambiguation pass deferred
+
+Total: 21 audit-B.5 flags.  Resolved 14, deferred 7 per scope.

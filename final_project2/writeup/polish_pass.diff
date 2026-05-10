@@ -1,0 +1,152 @@
+--- a/writeup/draft_abstract.tex
++++ b/writeup/draft_abstract.tex
+@@ -36,7 +36,7 @@
+ equal-weight (59.56th, $0.953$) and rolling risk-parity (81.41st,
+ $1.161$) classical references. Adaptive O2O is the only RL
+-configuration in our study that lands above the strongest classical
+-static optimizer reliably across seeds.
++configuration in our study that places all three seeds above the
++strongest classical static optimizer.
+ 
+ The mechanism behind that headline is not what we pre-registered. Our
+ pre-registered hypothesis was that the modulated $\beta_t$ would let
+@@ -54,5 +54,5 @@
+ $0.15$): an eight-fold variance reduction in Sharpe space, and a
+ sharper one in percentile space. The conservatism schedule's
+-load-bearing function in our results is convergence-basin steering
++primary apparent effect on this universe is convergence-basin steering
+ during fine-tune, not online responsiveness during deployment.
+ 
+@@ -59,4 +59,4 @@
+ The four-way O2O comparison sits inside a broader failure-mode
+-landscape, with each mode mechanistically traceable. (i) On a leaky
++landscape, each admitting a specific mechanistic interpretation. (i) On a leaky
+ offline pipeline (in-observation reward feature, since fixed;
+ Appendix~\ref{app:leak}), $Q$-maximizing offline RL exploits the leak:
+@@ -80,5 +80,5 @@
+ continuation cancels under within-group centering. The formulation is
+ sound; whether it beats classical baselines is a separate empirical
+-question, settled here in the negative.
++question, answered negatively on this universe.
+ \emph{Algorithm-class differential as a leak diagnostic}: a $> 2\times$
+ Sharpe gap between unconstrained $Q$-max and conservative-$Q$/behavior
+--- a/writeup/draft_introduction.tex
++++ b/writeup/draft_introduction.tex
+@@ -46,7 +46,7 @@
+ Across four experimental phases (offline baselines, online-only
+ baselines, four-way O2O comparison, GRPO group-size ablation),
+-adaptive O2O is the only RL configuration in our study that lands
+-above the strongest classical static optimizer reliably across seeds.
++adaptive O2O is the only RL configuration in our study that places
++all three seeds above the strongest classical static optimizer.
+ 
+ The headline mechanism is not what we pre-registered, and surfacing
+ the revision properly is the second-order contribution of this paper.
+@@ -62,6 +62,6 @@
+ steers the same SAC dynamics from the same Geodesic-CQL pretrain to a
+ uniformly strong basin --- an eight-fold seed-std reduction over naive
+-(Sec.~\ref{sec:experiments:phase2c}). The conservatism schedule's load-bearing
+-function on this universe is convergence-basin steering during
++(Sec.~\ref{sec:experiments:phase2c}). The conservatism schedule's primary
++apparent effect on this universe is convergence-basin steering during
+ fine-tune, not online responsiveness during deployment, reframing the
+ design target for O2O scheduling research from ``track distribution
+--- a/writeup/draft_related_work.tex
++++ b/writeup/draft_related_work.tex
+@@ -64,4 +64,4 @@
+ the schedule's job as governing online responsiveness to distribution
+-shift, our Phase~2C results suggest its load-bearing function on this
+-universe is convergence-basin selection during fine-tune --- a
++shift, our Phase~2C results suggest its primary apparent effect on this
++universe is convergence-basin selection during fine-tune --- a
+ mechanism revision we unpack in Sec.~\ref{sec:discussion}.
+--- a/writeup/draft_method.tex
++++ b/writeup/draft_method.tex
+@@ -192,4 +192,8 @@
+ \end{equation}
++Intuitively, this measures how far the rolling distribution of online
++encoder outputs has drifted from the offline reference: small values
++when the deployment regime resembles the offline buffer, larger values
++under distribution shift.
+ 
+ \paragraph{Conservatism weight.} The CQL penalty multiplier passed into
+ \texttt{sac\_agent.update\_critic(\dots, cql\_weight=$\beta_t$)} is
+--- a/writeup/draft_experiments.tex
++++ b/writeup/draft_experiments.tex
+@@ -322,4 +322,4 @@
+ \texttt{cql\_weight} modulation, driven by KL between offline and
+-online regime distributions, evidently steers the SAC fine-tune toward
++online regime distributions, appears to steer the SAC fine-tune toward
+ a static allocation that performs uniformly well on the test split, where naive's pinned $\beta_t \equiv
+ \alpha_{\mathrm{CQL}}$ leaves the convergence basin essentially
+@@ -372,6 +372,6 @@
+ study that places \emph{all three} seeds above the 94.65th percentile
+-(the closed-form min-variance threshold), making it the only RL
+-method to reliably clear the strongest classical static optimizer. This is the headline positive result for the adaptive
++(the closed-form min-variance threshold), making it the only RL method
++to clear, across all three of our seeds, the strongest classical static optimizer. This is the headline positive result for the adaptive
+ contribution.
+ The caveat is that adaptive's win comes from \emph{near-static
+ allocation selection}, not from the active-trading-on-distribution-shift
+@@ -488,5 +488,38 @@
+ we measured.
+ 
++\subsection*{Summary scoreboard}
++
++\begin{table}[h]
++\centering
++\caption{Phase 2 method scoreboard at $\lambda{=}0.001$ on the 1{,}061-day causal test window. Percentile columns are against the $N{=}10{,}000$ random Dirichlet$(1)$ static-allocation reference (Fig.~\ref{fig:static-sharpe-cdf}). Adaptive O2O is the only RL configuration with all three seeds above the 94.65th percentile (the closed-form min-variance threshold).}
++\label{tab:scoreboard}
++\small
++\begin{tabular}{lcccc}
++\toprule
++Method & Test Sharpe & Turnover & \%ile vs simplex & Seeds \\
++\midrule
++Equal-weight                  & $0.953$                    & $0$                                   & $59.6$                       & ---           \\
++Rolling RP-60d                & $1.161$                    & $0.008$                               & $81.4$                       & ---           \\
++Min-variance (long-only QP)   & $1.39$                     & $0$                                   & $94.7$                       & ---           \\
++GLD-100                       & $1.25$                     & $0$                                   & $88.3$                       & ---           \\
++60/40 SPY-TLT                 & (negative)                 & $0$                                   & $\approx 3$                  & ---           \\
++\midrule
++BC (causal)                   & $0.935 \pm 0.002$          & $0.003$                               & $\approx 57$                 & 3             \\
++AWAC (causal)                 & $0.940 \pm 0.004$          & $0.002$                               & $\approx 58$                 & 3             \\
++CQL vanilla (causal)          & $0.952 \pm 0.001$          & $\approx 0$                           & $\approx 59$                 & 3             \\
++IQL (causal)                  & $0.935 \pm 0.009$          & $0.002$                               & $\approx 57$                 & 3             \\
++\midrule
++SAC-Dirichlet online          & $0.941 \pm 10^{-6}$        & $0$                                   & $\approx 58$                 & 3             \\
++PPO+LSTM online               & $0.609 \pm 0.674$          & $\sim 10^{-5}$                        & varies                       & 3             \\
++GRPO online ($G{=}16$)        & $0.297 \pm 0.017$          & $0.24$                                & $<30$                        & 3             \\
++GRPO ablation best ($G{=}4$)  & $0.500 \pm 0.108$          & $\sim 0.20$                           & $\approx 40$                 & 3             \\
++\midrule
++Naive O2O                     & $1.002 \pm 1.208$          & $\approx 0$                           & $0.03/72.6/100$              & 3             \\
++\textbf{Adaptive O2O}         & $\mathbf{1.762 \pm 0.154}$ & $\mathbf{\approx 7\!\times\!10^{-5}}$ & $\mathbf{98.7\text{--}99.9}$ & \textbf{3}    \\
++\bottomrule
++\end{tabular}
++\end{table}
++
+ % Cross-experiment interpretation lives in Sec.~\ref{sec:discussion}
+ % (basin-selection mechanism, O2O scheduling implications, GRPO
+ % vs classical baselines). The §4.7 Interpretation stub that previously
+--- a/writeup/draft_limitations.tex
++++ b/writeup/draft_limitations.tex
+@@ -30,4 +30,4 @@
+ random sample from the full simplex); adaptive O2O's modulated schedule
+-consistently steers the same SAC dynamics from the same Geodesic-CQL
++appears to consistently steer the same SAC dynamics from the same Geodesic-CQL
+ pretrain to a uniformly strong basin (Sharpe range
+ $[+1.629,\,+1.931]$, std $0.15$, percentile band
+@@ -42,6 +42,12 @@
+ all three adaptive seeds is therefore not consistent with the null.
+-The conservatism schedule's load-bearing
+-function in our results is convergence-basin steering during fine-tune,
++This calibrates the empirical observation rather than constituting a
++formal significance test: with three seeds and one test window, we
++cannot rule out that the seed-clustering reflects unmodeled correlations
++in training dynamics rather than the schedule's effect per se. The
++basin-steering interpretation is consistent with the data, not
++established by it.
++The conservatism schedule's primary apparent
++effect on this universe is convergence-basin steering during fine-tune,
+ not online responsiveness during deployment. We surface this as a
+ mechanism revision rather than a confirmation, in keeping with the
+ post-hoc-vs-pre-registered distinction; the empirical headline (adaptive

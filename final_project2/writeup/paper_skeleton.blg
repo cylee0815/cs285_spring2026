@@ -1,46 +1,46 @@
-This is BibTeX, Version 0.99d (TeX Live 2018)
-Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
+This is BibTeX, Version 0.99e (TeX Live 2026)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: paper_skeleton.aux
 The style file: plainnat.bst
 Database file #1: refs.bib
-You've used 20 entries,
+You've used 18 entries,
             2773 wiz_defined-function locations,
-            685 strings with 8856 characters,
-and the built_in function-call counts, 10679 in all, are:
-= -- 829
-> -- 940
-< -- 4
-+ -- 314
-- -- 294
-* -- 936
-:= -- 1720
-add.period$ -- 60
-call.type$ -- 20
-change.case$ -- 158
-chr.to.int$ -- 20
-cite$ -- 40
-duplicate$ -- 431
-empty$ -- 725
-format.name$ -- 320
-if$ -- 2158
+            678 strings with 8434 characters,
+and the built_in function-call counts, 9566 in all, are:
+= -- 751
+> -- 817
+< -- 3
++ -- 273
+- -- 255
+* -- 844
+:= -- 1533
+add.period$ -- 54
+call.type$ -- 18
+change.case$ -- 139
+chr.to.int$ -- 18
+cite$ -- 36
+duplicate$ -- 389
+empty$ -- 664
+format.name$ -- 277
+if$ -- 1936
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 20
-newline$ -- 108
-num.names$ -- 80
-pop$ -- 343
+missing$ -- 18
+newline$ -- 98
+num.names$ -- 72
+pop$ -- 299
 preamble$ -- 1
-purify$ -- 138
+purify$ -- 121
 quote$ -- 0
-skip$ -- 345
+skip$ -- 306
 stack$ -- 0
-substring$ -- 109
-swap$ -- 28
+substring$ -- 130
+swap$ -- 25
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 220
+type$ -- 198
 warning$ -- 0
-while$ -- 66
+while$ -- 62
 width$ -- 0
-write$ -- 250
+write$ -- 227

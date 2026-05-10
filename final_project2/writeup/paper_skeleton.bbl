@@ -1,4 +1,4 @@
-\begin{thebibliography}{20}
+\begin{thebibliography}{18}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -28,7 +28,7 @@ Yue Deng, Feng Bao, Youyong Kong, Zhiquan Ren, and Qionghai Dai.
   28\penalty0 (3):\penalty0 653--664, 2017.
 
 \bibitem[Dong et~al.(2024)Dong, Xiong, Pang, Wang, Zhao, Zhou, Jiang, Sahoo,
-  Xiong, and Zhang]{yu2024rlhf}
+  Xiong, and Zhang]{dong2024rlhf}
 Hanze Dong, Wei Xiong, Bo~Pang, Haoxiang Wang, Han Zhao, Yingbo Zhou, Nan
   Jiang, Doyen Sahoo, Caiming Xiong, and Tong Zhang.
 \newblock {RLHF} workflow: From reward modeling to online {RLHF}.
@@ -38,7 +38,7 @@ Hanze Dong, Wei Xiong, Bo~Pang, Haoxiang Wang, Han Zhao, Yingbo Zhou, Nan
   Li]{dudik2014doubly}
 Miroslav Dud{\'\i}k, Dumitru Erhan, John Langford, and Lihong Li.
 \newblock Doubly robust policy evaluation and optimization.
-\newblock In \emph{Statistical Science}, 2014.
+\newblock \emph{Statistical Science}, 29\penalty0 (4):\penalty0 485--511, 2014.
 
 \bibitem[Foerster et~al.(2018)Foerster, Farquhar, Afouras, Nardelli, and
   Whiteson]{foerster2018counterfactual}
@@ -92,14 +92,6 @@ Xiao-Yang Liu, Hongyang Yang, Qian Chen, Runjia Zhang, Liuqing Yang, Bowen
   trading in quantitative finance.
 \newblock \emph{arXiv preprint arXiv:2011.09607}, 2020.
 
-\bibitem[Ma et~al.(2022)Ma, Yan, Hejna, Pavone, Bajcsy, Finn, Pinto, and
-  Bastani]{ma2022geodesic}
-Yecheng~Jason Ma, Andrew Yan, Joey Hejna, Marco Pavone, Andrea Bajcsy, Chelsea
-  Finn, Lerrel Pinto, and Osbert Bastani.
-\newblock Conservative and adaptive penalty for model-based safe reinforcement
-  learning.
-\newblock \emph{arXiv preprint arXiv:2207.07276}, 2022.
-
 \bibitem[Moody and Saffell(2001)]{moody2001learning}
 John Moody and Matthew Saffell.
 \newblock Learning to trade via direct reinforcement.
@@ -126,17 +118,11 @@ Zhihong Shao, Peiyi Wang, Qihao Zhu, Runxin Xu, Junxiao Song, Xiao Bi, Haowei
   language models.
 \newblock \emph{arXiv preprint arXiv:2402.03300}, 2024.
 
-\bibitem[Zhao and Pearce(2022)]{zhao2022adaptive}
-Sirui Zhao and Tim Pearce.
-\newblock Adaptive online replanning with diffusion models.
-\newblock \emph{arXiv preprint arXiv:2210.06463}, 2022.
-
-\bibitem[Zheng et~al.(2023)Zheng, Li, Yu, Yang, Lin, Zhao, Liu, and
-  Zhan]{zheng2023adaptive}
-Yi~Zheng, Jianxiong Li, Dongjie Yu, Yinan Yang, Sergey~E. Lin, Hang Zhao, Boyi
-  Liu, and Xianyuan Zhan.
+\bibitem[Zhao et~al.(2022)Zhao, Boney, Ilin, Kannala, and
+  Pajarinen]{zheng2023adaptive}
+Yi~Zhao, Rinu Boney, Alexander Ilin, Juho Kannala, and Joni Pajarinen.
 \newblock Adaptive behavior cloning regularization for stable offline-to-online
   reinforcement learning.
-\newblock \emph{arXiv preprint arXiv:2210.13846}, 2023.
+\newblock \emph{arXiv preprint arXiv:2210.13846}, 2022.
 
 \end{thebibliography}

@@ -1,34 +1,34 @@
-\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
-\BOOKMARK [1][-]{section.2}{Related Work}{}% 2
-\BOOKMARK [1][-]{section.3}{Method}{}% 3
-\BOOKMARK [2][-]{subsection.3.1}{Problem setup}{section.3}% 4
-\BOOKMARK [2][-]{subsection.3.2}{Continuous GRPO}{section.3}% 5
-\BOOKMARK [3][-]{subsubsection.3.2.1}{Policy parameterization: Dirichlet head on the simplex}{subsection.3.2}% 6
-\BOOKMARK [3][-]{subsubsection.3.2.2}{Group sampling under exogenous state transitions}{subsection.3.2}% 7
-\BOOKMARK [3][-]{subsubsection.3.2.3}{Group-relative advantage}{subsection.3.2}% 8
-\BOOKMARK [3][-]{subsubsection.3.2.4}{Loss}{subsection.3.2}% 9
-\BOOKMARK [3][-]{subsubsection.3.2.5}{Why this is sound only here}{subsection.3.2}% 10
-\BOOKMARK [2][-]{subsection.3.3}{Adaptive-O2O scheduler}{section.3}% 11
-\BOOKMARK [1][-]{section.4}{Experiments}{}% 12
-\BOOKMARK [2][-]{subsection.4.1}{Setup}{section.4}% 13
-\BOOKMARK [2][-]{subsection.4.2}{Phase 2A \205 offline-baseline landscape}{section.4}% 14
-\BOOKMARK [2][-]{subsection.4.3}{Phase 2B \205 online-only baselines}{section.4}% 15
-\BOOKMARK [2][-]{subsection.4.4}{Phase 2C \205 four-way O2O comparison \(the central experiment\)}{section.4}% 16
-\BOOKMARK [2][-]{subsection.4.5}{Phase 2D \205 GRPO group-size ablation}{section.4}% 17
-\BOOKMARK [1][-]{section.5}{Discussion and Limitations}{}% 18
-\BOOKMARK [2][-]{subsection.5.1}{Discussion}{section.5}% 19
-\BOOKMARK [2][-]{subsection.5.2}{Limitations}{section.5}% 20
-\BOOKMARK [1][-]{appendix.A}{Implementation notes: pre-existing bugs found and fixed}{}% 21
-\BOOKMARK [2][-]{subsection.A.1}{Bug 1: MomentumPolicy collapsed to equal weight}{appendix.A}% 22
-\BOOKMARK [2][-]{subsection.A.2}{Bug 2: run\137o2o.py shadowed O2OAgent import inside main\(\)}{appendix.A}% 23
-\BOOKMARK [2][-]{subsection.A.3}{Bug 3: transfer\137to\137online left the SAC env in a terminal state}{appendix.A}% 24
-\BOOKMARK [2][-]{subsection.A.4}{Bug 4: run\137o2o.py o2o-phase ignored cql\137weight \204 the centerpiece bug}{appendix.A}% 25
-\BOOKMARK [2][-]{subsection.A.5}{GRPO loss implementation scaffolding}{appendix.A}% 26
-\BOOKMARK [2][-]{subsection.A.6}{Cross-bug dependencies and CI implications}{appendix.A}% 27
-\BOOKMARK [1][-]{appendix.B}{Leak detection and the limits of behavior anchoring}{}% 28
-\BOOKMARK [2][-]{subsection.B.1}{The leak}{appendix.B}% 29
-\BOOKMARK [2][-]{subsection.B.2}{Differential exploitation on the leaky pipeline}{appendix.B}% 30
-\BOOKMARK [2][-]{subsection.B.3}{Causal-pipeline confirmation}{appendix.B}% 31
-\BOOKMARK [2][-]{subsection.B.4}{Scope condition: leak-invariance is feature-space-specific}{appendix.B}% 32
-\BOOKMARK [2][-]{subsection.B.5}{The one-line fix}{appendix.B}% 33
-\BOOKMARK [2][-]{subsection.B.6}{Methodological observation: differential as diagnostic}{appendix.B}% 34
+\BOOKMARK [1][-]{section.1}{\376\377\000I\000n\000t\000r\000o\000d\000u\000c\000t\000i\000o\000n}{}% 1
+\BOOKMARK [1][-]{section.2}{\376\377\000R\000e\000l\000a\000t\000e\000d\000\040\000W\000o\000r\000k}{}% 2
+\BOOKMARK [1][-]{section.3}{\376\377\000M\000e\000t\000h\000o\000d}{}% 3
+\BOOKMARK [2][-]{subsection.3.1}{\376\377\000P\000r\000o\000b\000l\000e\000m\000\040\000s\000e\000t\000u\000p}{section.3}% 4
+\BOOKMARK [2][-]{subsection.3.2}{\376\377\000C\000o\000n\000t\000i\000n\000u\000o\000u\000s\000\040\000G\000R\000P\000O}{section.3}% 5
+\BOOKMARK [3][-]{subsubsection.3.2.1}{\376\377\000P\000o\000l\000i\000c\000y\000\040\000p\000a\000r\000a\000m\000e\000t\000e\000r\000i\000z\000a\000t\000i\000o\000n\000:\000\040\000D\000i\000r\000i\000c\000h\000l\000e\000t\000\040\000h\000e\000a\000d\000\040\000o\000n\000\040\000t\000h\000e\000\040\000s\000i\000m\000p\000l\000e\000x}{subsection.3.2}% 6
+\BOOKMARK [3][-]{subsubsection.3.2.2}{\376\377\000G\000r\000o\000u\000p\000\040\000s\000a\000m\000p\000l\000i\000n\000g\000\040\000u\000n\000d\000e\000r\000\040\000e\000x\000o\000g\000e\000n\000o\000u\000s\000\040\000s\000t\000a\000t\000e\000\040\000t\000r\000a\000n\000s\000i\000t\000i\000o\000n\000s}{subsection.3.2}% 7
+\BOOKMARK [3][-]{subsubsection.3.2.3}{\376\377\000G\000r\000o\000u\000p\000-\000r\000e\000l\000a\000t\000i\000v\000e\000\040\000a\000d\000v\000a\000n\000t\000a\000g\000e}{subsection.3.2}% 8
+\BOOKMARK [3][-]{subsubsection.3.2.4}{\376\377\000L\000o\000s\000s}{subsection.3.2}% 9
+\BOOKMARK [3][-]{subsubsection.3.2.5}{\376\377\000W\000h\000y\000\040\000t\000h\000i\000s\000\040\000i\000s\000\040\000s\000o\000u\000n\000d\000\040\000o\000n\000l\000y\000\040\000h\000e\000r\000e}{subsection.3.2}% 10
+\BOOKMARK [2][-]{subsection.3.3}{\376\377\000A\000d\000a\000p\000t\000i\000v\000e\000-\000O\0002\000O\000\040\000s\000c\000h\000e\000d\000u\000l\000e\000r}{section.3}% 11
+\BOOKMARK [1][-]{section.4}{\376\377\000E\000x\000p\000e\000r\000i\000m\000e\000n\000t\000s}{}% 12
+\BOOKMARK [2][-]{subsection.4.1}{\376\377\000S\000e\000t\000u\000p}{section.4}% 13
+\BOOKMARK [2][-]{subsection.4.2}{\376\377\000P\000h\000a\000s\000e\000\040\0002\000A\000\040\040\023\000\040\000o\000f\000f\000l\000i\000n\000e\000-\000b\000a\000s\000e\000l\000i\000n\000e\000\040\000l\000a\000n\000d\000s\000c\000a\000p\000e}{section.4}% 14
+\BOOKMARK [2][-]{subsection.4.3}{\376\377\000P\000h\000a\000s\000e\000\040\0002\000B\000\040\040\023\000\040\000o\000n\000l\000i\000n\000e\000-\000o\000n\000l\000y\000\040\000b\000a\000s\000e\000l\000i\000n\000e\000s}{section.4}% 15
+\BOOKMARK [2][-]{subsection.4.4}{\376\377\000P\000h\000a\000s\000e\000\040\0002\000C\000\040\040\023\000\040\000f\000o\000u\000r\000-\000w\000a\000y\000\040\000O\0002\000O\000\040\000c\000o\000m\000p\000a\000r\000i\000s\000o\000n\000\040\000\050\000t\000h\000e\000\040\000c\000e\000n\000t\000r\000a\000l\000\040\000e\000x\000p\000e\000r\000i\000m\000e\000n\000t\000\051}{section.4}% 16
+\BOOKMARK [2][-]{subsection.4.5}{\376\377\000P\000h\000a\000s\000e\000\040\0002\000D\000\040\040\023\000\040\000G\000R\000P\000O\000\040\000g\000r\000o\000u\000p\000-\000s\000i\000z\000e\000\040\000a\000b\000l\000a\000t\000i\000o\000n}{section.4}% 17
+\BOOKMARK [1][-]{section.5}{\376\377\000D\000i\000s\000c\000u\000s\000s\000i\000o\000n\000\040\000a\000n\000d\000\040\000L\000i\000m\000i\000t\000a\000t\000i\000o\000n\000s}{}% 18
+\BOOKMARK [2][-]{subsection.5.1}{\376\377\000D\000i\000s\000c\000u\000s\000s\000i\000o\000n}{section.5}% 19
+\BOOKMARK [2][-]{subsection.5.2}{\376\377\000L\000i\000m\000i\000t\000a\000t\000i\000o\000n\000s}{section.5}% 20
+\BOOKMARK [1][-]{appendix.A}{\376\377\000I\000m\000p\000l\000e\000m\000e\000n\000t\000a\000t\000i\000o\000n\000\040\000n\000o\000t\000e\000s\000:\000\040\000p\000r\000e\000-\000e\000x\000i\000s\000t\000i\000n\000g\000\040\000b\000u\000g\000s\000\040\000f\000o\000u\000n\000d\000\040\000a\000n\000d\000\040\000f\000i\000x\000e\000d}{}% 21
+\BOOKMARK [2][-]{subsection.A.1}{\376\377\000B\000u\000g\000\040\0001\000:\000\040\000M\000o\000m\000e\000n\000t\000u\000m\000P\000o\000l\000i\000c\000y\000\040\000c\000o\000l\000l\000a\000p\000s\000e\000d\000\040\000t\000o\000\040\000e\000q\000u\000a\000l\000\040\000w\000e\000i\000g\000h\000t}{appendix.A}% 22
+\BOOKMARK [2][-]{subsection.A.2}{\376\377\000B\000u\000g\000\040\0002\000:\000\040\000r\000u\000n\000\137\000o\0002\000o\000.\000p\000y\000\040\000s\000h\000a\000d\000o\000w\000e\000d\000\040\000O\0002\000O\000A\000g\000e\000n\000t\000\040\000i\000m\000p\000o\000r\000t\000\040\000i\000n\000s\000i\000d\000e\000\040\000m\000a\000i\000n\000\050\000\051}{appendix.A}% 23
+\BOOKMARK [2][-]{subsection.A.3}{\376\377\000B\000u\000g\000\040\0003\000:\000\040\000t\000r\000a\000n\000s\000f\000e\000r\000\137\000t\000o\000\137\000o\000n\000l\000i\000n\000e\000\040\000l\000e\000f\000t\000\040\000t\000h\000e\000\040\000S\000A\000C\000\040\000e\000n\000v\000\040\000i\000n\000\040\000a\000\040\000t\000e\000r\000m\000i\000n\000a\000l\000\040\000s\000t\000a\000t\000e}{appendix.A}% 24
+\BOOKMARK [2][-]{subsection.A.4}{\376\377\000B\000u\000g\000\040\0004\000:\000\040\000r\000u\000n\000\137\000o\0002\000o\000.\000p\000y\000\040\000o\0002\000o\000-\000p\000h\000a\000s\000e\000\040\000i\000g\000n\000o\000r\000e\000d\000\040\000c\000q\000l\000\137\000w\000e\000i\000g\000h\000t\000\040\040\024\000\040\000t\000h\000e\000\040\000c\000e\000n\000t\000e\000r\000p\000i\000e\000c\000e\000\040\000b\000u\000g}{appendix.A}% 25
+\BOOKMARK [2][-]{subsection.A.5}{\376\377\000G\000R\000P\000O\000\040\000l\000o\000s\000s\000\040\000i\000m\000p\000l\000e\000m\000e\000n\000t\000a\000t\000i\000o\000n\000\040\000s\000c\000a\000f\000f\000o\000l\000d\000i\000n\000g}{appendix.A}% 26
+\BOOKMARK [2][-]{subsection.A.6}{\376\377\000C\000r\000o\000s\000s\000-\000b\000u\000g\000\040\000d\000e\000p\000e\000n\000d\000e\000n\000c\000i\000e\000s\000\040\000a\000n\000d\000\040\000C\000I\000\040\000i\000m\000p\000l\000i\000c\000a\000t\000i\000o\000n\000s}{appendix.A}% 27
+\BOOKMARK [1][-]{appendix.B}{\376\377\000L\000e\000a\000k\000\040\000d\000e\000t\000e\000c\000t\000i\000o\000n\000\040\000a\000n\000d\000\040\000t\000h\000e\000\040\000l\000i\000m\000i\000t\000s\000\040\000o\000f\000\040\000b\000e\000h\000a\000v\000i\000o\000r\000\040\000a\000n\000c\000h\000o\000r\000i\000n\000g}{}% 28
+\BOOKMARK [2][-]{subsection.B.1}{\376\377\000T\000h\000e\000\040\000l\000e\000a\000k}{appendix.B}% 29
+\BOOKMARK [2][-]{subsection.B.2}{\376\377\000D\000i\000f\000f\000e\000r\000e\000n\000t\000i\000a\000l\000\040\000e\000x\000p\000l\000o\000i\000t\000a\000t\000i\000o\000n\000\040\000o\000n\000\040\000t\000h\000e\000\040\000l\000e\000a\000k\000y\000\040\000p\000i\000p\000e\000l\000i\000n\000e}{appendix.B}% 30
+\BOOKMARK [2][-]{subsection.B.3}{\376\377\000C\000a\000u\000s\000a\000l\000-\000p\000i\000p\000e\000l\000i\000n\000e\000\040\000c\000o\000n\000f\000i\000r\000m\000a\000t\000i\000o\000n}{appendix.B}% 31
+\BOOKMARK [2][-]{subsection.B.4}{\376\377\000S\000c\000o\000p\000e\000\040\000c\000o\000n\000d\000i\000t\000i\000o\000n\000:\000\040\000l\000e\000a\000k\000-\000i\000n\000v\000a\000r\000i\000a\000n\000c\000e\000\040\000i\000s\000\040\000f\000e\000a\000t\000u\000r\000e\000-\000s\000p\000a\000c\000e\000-\000s\000p\000e\000c\000i\000f\000i\000c}{appendix.B}% 32
+\BOOKMARK [2][-]{subsection.B.5}{\376\377\000T\000h\000e\000\040\000o\000n\000e\000-\000l\000i\000n\000e\000\040\000f\000i\000x}{appendix.B}% 33
+\BOOKMARK [2][-]{subsection.B.6}{\376\377\000M\000e\000t\000h\000o\000d\000o\000l\000o\000g\000i\000c\000a\000l\000\040\000o\000b\000s\000e\000r\000v\000a\000t\000i\000o\000n\000:\000\040\000d\000i\000f\000f\000e\000r\000e\000n\000t\000i\000a\000l\000\040\000a\000s\000\040\000d\000i\000a\000g\000n\000o\000s\000t\000i\000c}{appendix.B}% 34

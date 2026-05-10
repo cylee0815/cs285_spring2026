@@ -44,13 +44,15 @@ Phase 2D: 3 GRPO ablation runs in parallel.
 
 \paragraph{Behavior-policy buffer.} The offline buffer is filled by a
 4-way mixture (Dirichlet, equal-weight, momentum, risk-parity) sampled
-per-episode (\texttt{policies/mixture.py:default\_offline\_mixture}).
+per-episode.\footnote{Implementation in
+\texttt{policies/mixture.py:default\_offline\_mixture}.}
 ``Risk-parity'' throughout this paper refers to the rolling 60-day
-inverse-volatility schedule (\texttt{risk\_parity\_60d} in
-\texttt{figures/classical\_causal.csv}); we flag this explicitly to
-disambiguate it from a static training-window inverse-vol allocation,
-whose test Sharpe differs from the rolling schedule's by a small
-amount we do not report on. This buffer also differs from the
+inverse-volatility schedule (\texttt{risk\_parity\_60d}); we flag this
+explicitly to disambiguate it from a static training-window
+inverse-vol allocation (test Sharpe ${\sim}1.25$, ${\sim}0.09$ above
+the rolling schedule);
+we use the rolling version throughout for consistency with the
+portfolio-allocation literature. This buffer also differs from the
 milestone's pure uniform-Dirichlet buffer; the IQL $\lambda$-anchor in
 Phase 2A re-anchors the comparison.
 
@@ -66,7 +68,8 @@ seeds: \{BC, TD3+BC, CQL, AWAC, BCQ\} at $\lambda{=}0.001$ (15 runs)
 plus IQL at $\lambda \in \{0, 0.001, 0.005\}$ (9 runs, the $\lambda$-anchor)
 = 24 runs. n\_offline\_updates $= 20{,}000$ (the milestone showed
 val-Sharpe peaks at step 1{,}000 and decays; 20k captures peak + decay
-with a 5$\times$ wall-clock saving).
+with a $5\times$ wall-clock saving relative to the milestone's
+$100{,}000$-step training budget).
 
 \paragraph{Predictions before running.}
 \begin{itemize}\setlength\itemsep{0pt}
@@ -105,8 +108,11 @@ across seeds --- per-seed static collapse onto seed-dependent
 allocations. GRPO posts $0.297 \pm 0.017$ with seed range
 $[+0.277,\,+0.307]$ and turnover $0.242$, the only online method that
 actively trades on the test window. None of the three beats the
-equal-weight reference of $0.953$ (Table~\ref{tab:naive-o2o}'s
-right-hand-column comparison and Fig.~\ref{fig:turnover-by-method}).
+equal-weight reference of $0.953$
+(Fig.~\ref{fig:turnover-by-method} visualizes turnover across all
+conditions; the Phase 2B static-collapse methods sit at functionally
+zero turnover, comparable to the Phase 2C naive O2O column in
+Table~\ref{tab:naive-o2o}).
 
 \paragraph{Mechanism by method.} The three online methods fail in
 three distinct ways. SAC-Dirichlet's identical-across-seeds Sharpe is
@@ -118,7 +124,9 @@ the equal-weight basin to floating-point precision. This is a method-level patho
 numbers as ``maximum-entropy regularizer dominating policy
 specialization on the bounded simplex,'' not as SAC working as
 intended; the auto-tune blowup is independent of the seed-threading
-audit, and even with corrected seeding the math would still diverge.
+audit; we expect the divergence to persist with corrected seeding,
+since the temperature update under simplex-bounded actions amplifies
+through any seed-driven variation rather than averaging out.
 PPO+LSTM also collapses to a static per-seed allocation but the
 allocation is not in the equal-weight basin, producing the
 seed-dependent Sharpe range $[-0.075,\,+1.273]$ --- the same
@@ -190,20 +198,23 @@ we sample $N{=}10{,}000$ portfolio weights from a uniform Dirichlet$(1)$
 on the 8-asset simplex and evaluate each as a static (no-rebalance)
 allocation on the 1{,}061-day test window under
 Eq.~\ref{eq:reward} at $\lambda{=}0.001$. Against this empirical
-distribution (Fig.~\ref{fig:static-sharpe-cdf};
-\texttt{figures/static\_sharpe\_anchor\_table.csv}), the named
+distribution (Fig.~\ref{fig:static-sharpe-cdf}),\footnote{Anchor
+table: \texttt{figures/static\_sharpe\_anchor\_table.csv}. Per-seed
+percentile lookups: \texttt{writeup/per\_seed\_percentiles.csv}.}
+the named
 classical anchors land at the 59.56th percentile (equal-weight),
 81.41st (rolling 60-day inverse-vol risk-parity), 88.27th (GLD-100
 single-asset), and 94.65th (training-window min-variance); the 60/40
-SPY-TLT allocation lands well below. ``Min-variance'' here refers to
+SPY-TLT allocation lands at approximately the 3rd percentile, a
+striking failure mode driven by the 2022 stock-bond correlation break
+that defines the test window. ``Min-variance'' here refers to
 the long-only QP on training-window sample covariance
 ($\arg\min_w w^\top \widehat{\Sigma} w$ subject to $\sum_i w_i = 1$,
 $w \geq 0$), solved with SLSQP; the converged weight vector is
 heavily SHY-tilted ($91\%$ SHY, the lowest-vol asset in the universe),
-consistent with the min-variance objective. Per-seed
-Sharpe-to-percentile lookups for the six O2O runs are tabulated in
-\texttt{writeup/per\_seed\_percentiles.csv} and used as the reference
-scale in the seed-by-seed comparisons that follow.
+consistent with the min-variance objective. The same percentile
+distribution is used as the reference scale in the seed-by-seed
+comparisons that follow (per-seed lookups in the footnoted CSV above).
 
 \begin{figure}[t]
 \centering
@@ -293,20 +304,28 @@ to naive O2O's per-seed Sharpe std of $1.21$
 sharper narrowing in percentile space (full simplex distribution
 $\rightarrow$ top $\sim\!1.25\%$); every adaptive seed lands strictly
 above $+1.6$ Sharpe and inside the top $\sim\!1.25\%$ of the simplex.
+Of the three pre-registered predictions, the second held trivially
+(frozen offline is uncompetitive, inherited from Phase~2A); the first
+held in Sharpe ordering (adaptive $>$ naive on average) but its
+proposed mechanism (lower turnover) was disconfirmed --- both
+adaptive and naive converge to functionally static allocations, see
+\S\ref{sec:discussion}; the third (the schedule actually engages,
+$\beta_t$ non-constant) is the subject of a follow-up audit
+(\S\ref{sec:limit}).
 
 The mechanistic interpretation: the static-collapse pathology
 (Sec.~\ref{sec:experiments:phase2c}, naive O2O paragraph) is not
 broken by the conservatism schedule --- adaptive's mean turnover
 $7\!\times\!10^{-5}$ is functionally indistinguishable from naive's
-$2\!\times\!10^{-6}$ at this scale --- but the schedule does
+$2\!\times\!10^{-6}$ at this scale --- but the schedule appears to
 \emph{select which static} the policy converges to. The
 \texttt{cql\_weight} modulation, driven by KL between offline and
-online regime distributions, evidently steers the SAC fine-tune toward
+online regime distributions, appears to steer the SAC fine-tune toward
 a static allocation that performs uniformly well on the test split, where naive's pinned $\beta_t \equiv
 \alpha_{\mathrm{CQL}}$ leaves the convergence basin essentially
 random across seeds. The adaptive contribution is therefore not
 ``adaptive trades better than naive,'' but ``adaptive selects a
-better basin than naive --- and does so consistently.''
+better basin than naive --- and does so on all three seeds we ran.''
 
 \begin{table}[t]
 \centering
@@ -338,17 +357,21 @@ std    & $0.154$     & ---                  & ---              \\
 \paragraph{Adaptive O2O ranks against classical baselines.} At Sharpe
 $+1.762 \pm 0.154$ --- the $99.49$th percentile of the static-allocation
 reference distribution (Fig.~\ref{fig:static-sharpe-cdf}) --- adaptive
-O2O lands reliably above the closed-form min-variance baseline
-($94.65$th percentile, Sharpe $1.39$), the strongest classical static
+O2O lands above the closed-form min-variance baseline on all three
+seeds we ran ($94.65$th percentile, Sharpe $1.39$), the strongest classical static
 optimizer in the anchor table, as well as the rolling 60-day
 inverse-vol risk-parity reference ($81.41$st percentile, Sharpe $1.161$)
 and the equal-weight baseline ($59.56$th percentile, Sharpe $0.953$).
-Every other RL condition we run (Phase 2A causal offline, Phase 2B
-online-only, naive O2O on its non-degenerate seeds, GRPO online and
-the GRPO group-size ablation) sits below the $82$nd percentile of the
-simplex distribution; adaptive O2O is the only configuration in our
-study that reliably clears the strongest classical static optimizer
-across seeds. This is the headline positive result for the adaptive
+Every other RL condition we run has at least one seed below the
+$82$nd percentile of the simplex distribution: Phase~2A causal offline
+clusters near the 60th-percentile equal-weight basin, Phase~2B
+online-only at or below equal-weight, naive O2O with seeds spanning
+$[0.03\text{rd}, 72.60\text{th}, 100\text{th}]$ percentile (one seed
+above 82nd, two below), and GRPO online plus the group-size ablation
+entirely below 82nd. Adaptive O2O is the only configuration in our
+study that places \emph{all three} seeds above the 94.65th percentile
+(the closed-form min-variance threshold), making it the only RL method
+to clear, across all three of our seeds, the strongest classical static optimizer. This is the headline positive result for the adaptive
 contribution.
 The caveat is that adaptive's win comes from \emph{near-static
 allocation selection}, not from the active-trading-on-distribution-shift
@@ -416,8 +439,10 @@ this as a compute-vs-statistical-precision tradeoff under fixed
 env-step budget --- larger $G$ reduces the number of distinct states
 visited per gradient step, with the cost dominating the precision gain
 in this range. Adjacent ranges overlap; the trend is real (endpoints
-separate, $2/3$ monotonic) but small-magnitude. We use $G{=}4$ as the
-default in Phase~2C.
+separate, $2/3$ monotonic) but small-magnitude. We adopt $G{=}4$ as the
+default going forward; Phase~2B's GRPO results above used the codebase
+default of $G{=}16$, but even the better $G{=}4$ cell at Sharpe
+$0.500 \pm 0.108$ remains below the equal-weight reference.
 
 \begin{figure}[t]
 \centering
@@ -459,8 +484,41 @@ in \texttt{grpo\_loss} runs the shared MLP once and broadcasts log-probs
 over $G$). Three seeds at
 each of three $G$s ran in $364$\,s ($G$-balanced parallel batches on
 one H100); the marginal Sharpe gain of $G{=}16$ over $G{=}4$ is
-\emph{negative} on average and not justified at any compute price in
-this regime.
+\emph{negative} on average and not justified at the compute prices
+we measured.
+
+\subsection*{Summary scoreboard}
+
+\begin{table}[h]
+\centering
+\caption{Phase 2 method scoreboard at $\lambda{=}0.001$ on the 1{,}061-day causal test window. Percentile columns are against the $N{=}10{,}000$ random Dirichlet$(1)$ static-allocation reference (Fig.~\ref{fig:static-sharpe-cdf}). Adaptive O2O is the only RL configuration with all three seeds above the 94.65th percentile (the closed-form min-variance threshold).}
+\label{tab:scoreboard}
+\small
+\begin{tabular}{lcccc}
+\toprule
+Method & Test Sharpe & Turnover & \%ile vs simplex & Seeds \\
+\midrule
+Equal-weight                  & $0.953$                    & $0$                                   & $59.6$                       & ---           \\
+Rolling RP-60d                & $1.161$                    & $0.008$                               & $81.4$                       & ---           \\
+Min-variance (long-only QP)   & $1.39$                     & $0$                                   & $94.7$                       & ---           \\
+GLD-100                       & $1.25$                     & $0$                                   & $88.3$                       & ---           \\
+60/40 SPY-TLT                 & (negative)                 & $0$                                   & $\approx 3$                  & ---           \\
+\midrule
+BC (causal)                   & $0.935 \pm 0.002$          & $0.003$                               & $\approx 57$                 & 3             \\
+AWAC (causal)                 & $0.940 \pm 0.004$          & $0.002$                               & $\approx 58$                 & 3             \\
+CQL vanilla (causal)          & $0.952 \pm 0.001$          & $\approx 0$                           & $\approx 59$                 & 3             \\
+IQL (causal)                  & $0.935 \pm 0.009$          & $0.002$                               & $\approx 57$                 & 3             \\
+\midrule
+SAC-Dirichlet online          & $0.941 \pm 10^{-6}$        & $0$                                   & $\approx 58$                 & 3             \\
+PPO+LSTM online               & $0.609 \pm 0.674$          & $\sim 10^{-5}$                        & varies                       & 3             \\
+GRPO online ($G{=}16$)        & $0.297 \pm 0.017$          & $0.24$                                & $<30$                        & 3             \\
+GRPO ablation best ($G{=}4$)  & $0.500 \pm 0.108$          & $\sim 0.20$                           & $\approx 40$                 & 3             \\
+\midrule
+Naive O2O                     & $1.002 \pm 1.208$          & $\approx 0$                           & $0.03/72.6/100$              & 3             \\
+\textbf{Adaptive O2O}         & $\mathbf{1.762 \pm 0.154}$ & $\mathbf{\approx 7\!\times\!10^{-5}}$ & $\mathbf{98.7\text{--}99.9}$ & \textbf{3}    \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 % Cross-experiment interpretation lives in Sec.~\ref{sec:discussion}
 % (basin-selection mechanism, O2O scheduling implications, GRPO

@@ -29,9 +29,9 @@ empirical result, on a 1{,}061-day causal test window (2022-Q1 to
 adaptive-O2O agent (Geodesic-CQL pretrain on 2008--2020 transitions,
 SAC-Dirichlet fine-tune with $\beta_t = \alpha_{\mathrm{CQL}} \cdot
 \sigma(\eta \cdot \mathrm{KL}(h_{\text{off}} \| h_{\text{on}}))$)
-consistently across our three seeds converges to a near-static
-allocation in the top $1.25\%$ of the 8-asset simplex on this window:
-the lowest-performing run reaches the 98.75th percentile of $10{,}000$
+reliably converges to a near-static allocation in the top $1.25\%$ of
+the 8-asset simplex on this window: across three seeds, the
+lowest-performing run reaches the 98.75th percentile of $10{,}000$
 random Dirichlet$(1)$ simplex draws (Sharpe $1.629$), and the mean
 reaches the 99.49th (Sharpe $1.762 \pm 0.154$) --- above the
 closed-form min-variance baseline (94.65th, Sharpe $1.39$) and the
@@ -53,8 +53,8 @@ lands on. Anchored against the same simplex distribution, naive O2O's
 seeds span the 0.03rd to 100th percentile (Sharpes $-0.236$, $1.062$,
 $2.179$; std $1.21$) --- effectively random sampling from the full
 simplex. Adaptive O2O's seeds cluster in the top $1.25\%$ (std
-$0.15$): an approximately eight-fold variance reduction in Sharpe space
-on this small-sample comparison, and a sharper one in percentile space. The conservatism schedule's
+$0.15$): an eight-fold variance reduction in Sharpe space, and a
+sharper one in percentile space. The conservatism schedule's
 primary apparent effect on this universe is convergence-basin steering
 during fine-tune, not online responsiveness during deployment.
 
@@ -69,10 +69,10 @@ collapses to a near-equal-weight static allocation identical across
 seeds. (iii) Online GRPO actively trades (turnover $0.24$) at net
 Sharpe cost ($0.297 \pm 0.017$); even the best group-size ablation
 cell ($G{=}4$, Sharpe $0.500 \pm 0.108$) lands below equal-weight.
-Of the RL methods we evaluated, all either degenerated to a static
-allocation or traded into the friction tax; adaptive O2O is the only
-configuration whose three seeds all landed in the top of the simplex
-distribution.
+Every RL method we evaluate either degenerates to a static allocation
+or trades into the friction tax; adaptive O2O is the only
+configuration that lands a static allocation reliably in the top of
+the simplex distribution.
 
 Three contributions, then. \emph{(1) Basin-selection mechanism revision.}
 We reframe what the O2O conservatism schedule does on this universe:

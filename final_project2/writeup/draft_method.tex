@@ -28,8 +28,8 @@ component in the observation is structural, not stylistic: it is what makes
 the exogeneity assumption hold (Sec.~\ref{sec:method:grpo:exogeneity}). The
 optional flag \verb|include_prev_weights=True| injects the previous
 weight vector into the observation and breaks exogeneity; we leave it
-disabled, and \texttt{tests/test\_exogeneity.py} guards the constraint
-with a unit test.
+disabled, and the exogeneity unit tests
+(Sec.~\ref{sec:method:grpo:exogeneity}) guard the constraint.
 
 \subsection{Continuous GRPO}
 \label{sec:method:grpo}
@@ -57,7 +57,10 @@ and avoiding the simplex-corner singularities that vanilla softmax-of-Gaussian
 heads suffer near $w_i \to 0$. Sampling, log-probability, and entropy are
 PyTorch's closed-form Dirichlet calls --- no projection step is needed
 because samples are already in the open simplex (modulo a numerical
-$10^{-6}$ clamp).
+$10^{-6}$ clamp). (As a side effect, the $+1$ shift means the head
+cannot exactly represent the uniform distribution $\alpha{=}1$; in
+practice the policy approaches but does not reach the simplex
+centroid.)
 
 \subsubsection{Group sampling under exogenous state transitions}
 \label{sec:method:grpo:exogeneity}
@@ -112,7 +115,7 @@ three ablation variants (\verb|"raw"|, \verb|"mean_only"|, \verb|"rank"|)
 that we use for the advantage-norm ablation in
 Sec.~\ref{sec:experiments:phase2d}.
 
-A subtle but load-bearing detail: when all $G$ candidates score identical
+A subtle but important detail: when all $G$ candidates score identical
 rewards (e.g., all collapse to equal-weight on a flat-return day), the
 $\sigma_r{+}\varepsilon$ denominator keeps the advantage finite and the
 gradient zero. This prevents the constant-reward pathology that a naive
@@ -145,20 +148,14 @@ manifold rather than toward random init. Implementation scaffolding
 KL, reference-snapshot mechanics --- is in
 Appendix~\ref{app:impl:grpo-loss}.
 
-% TODO(post-2B): the persona's GRPO framing leaves the importance ratio out
-% of the advantage equation. The code's surrogate includes both an
-% importance-ratio (rho) and a clipped-surrogate term --- closer to PPO
-% than to vanilla GRPO. We describe what the code does; if the report needs
-% the simpler form, drop the clipping by setting cfg.clip_eps very large
-% (the hard-ratio clamp would still prevent NaN propagation).
-
 \subsubsection{Why this is sound only here}
 
 Continuous GRPO trades a learned critic for an environmental property. In
 domains where actions \emph{do} affect $s_{t+1}$ (e.g., locomotion, robotics,
 market-impact-aware finance), the bootstrap term does not cancel and group
-advantages are biased. The unit tests in \texttt{tests/test\_exogeneity.py}
-are not stylistic --- they are an algorithmic precondition. We surface this
+advantages are biased. The exogeneity unit tests
+(Sec.~\ref{sec:method:grpo:exogeneity}) are not stylistic --- they are
+an algorithmic precondition. We surface this
 explicitly in the limitations (Sec.~\ref{sec:limitations}) and recommend
 that any future port of this method include an analogous test against the
 host env.
@@ -186,6 +183,10 @@ closed form fit per coordinate:
 + \frac{(\sigma^{\text{off}}_i)^2 + (\mu^{\text{off}}_i - \mu^{\text{on}}_i)^2}{2 (\sigma^{\text{on}}_i)^2}
 - \tfrac{1}{2}.
 \end{equation}
+Intuitively, this measures how far the rolling distribution of online
+encoder outputs has drifted from the offline reference: small values
+when the deployment regime resembles the offline buffer, larger values
+under distribution shift.
 
 \paragraph{Conservatism weight.} The CQL penalty multiplier passed into
 \texttt{sac\_agent.update\_critic(\dots, cql\_weight=$\beta_t$)} is
@@ -201,19 +202,11 @@ condition in our four-way comparison (Sec.~\ref{sec:experiments:phase2c})
 sets $\beta_t \equiv \alpha_{\mathrm{CQL}}$ throughout, exposed as
 \texttt{--adaptive\_conservatism=false} in the runner.
 
-\paragraph{The bug fix that made the comparison meaningful.} The repo
-shipped with an inline online-phase loop that called
-\texttt{sac\_agent.update\_critic(mixed)} \emph{without} forwarding any
-$\beta_t$, defaulting the CQL weight to zero and silently bypassing the
-entire scheduler we describe above. The full
-\texttt{O2OAgent.finetune\_online} method --- which actually plumbs
-$\beta_t$ through the critic update --- existed but was never invoked
-from the CLI. We replaced the inline loop with a call to
-\texttt{agent.finetune\_online(n\_online)}; without this, every Phase 2C
-``adaptive O2O'' run would have been numerically indistinguishable from
-the naive condition, regardless of how the CLI flag was set. We document
-this fix and three other pre-existing bugs in
-Appendix~\ref{app:implementation}.
+\paragraph{Online-loop entrypoint.} All Phase~2C adaptive-vs-naive
+numbers were collected after a fix to the online entrypoint that
+ensures the schedule $\beta_t$ is actually forwarded to the critic
+update; the fix, and three other pre-existing bugs found during Phase~2
+prep, are documented in Appendix~\ref{app:implementation}.
 
 \paragraph{Initialization and env handoff.} \texttt{transfer\_to\_online}
 copies the actor / critic / regime-encoder / temperature parameters from
@@ -223,7 +216,3 @@ at a terminal state left over from offline buffer collection (the env
 reset is itself a bug fix from a pre-existing crash;
 Appendix~\ref{app:implementation}).
 
-% TODO(post-2C): if the cql\_weight\_traj.npy series shows $\beta_t$ saturating
-% at one extreme for the entire test window, we will need to either widen
-% the regime-encoder context or revisit $\eta$. The naive-vs-adaptive
-% comparison loses signal if the schedule is constant in practice.

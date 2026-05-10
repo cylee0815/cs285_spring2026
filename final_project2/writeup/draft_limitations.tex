@@ -28,13 +28,26 @@ basin random across seeds (Sharpe range $[-0.236,\,+2.179]$, std $1.21$;
 $0.03$rd to $100$th percentile of the static-allocation reference
 distribution in Fig.~\ref{fig:static-sharpe-cdf} --- effectively a
 random sample from the full simplex); adaptive O2O's modulated schedule
-consistently steers the same SAC dynamics from the same Geodesic-CQL
+appears to consistently steer the same SAC dynamics from the same Geodesic-CQL
 pretrain to a uniformly strong basin (Sharpe range
 $[+1.629,\,+1.931]$, std $0.15$, percentile band
 $[98.74, 99.93]$): an eight-fold reduction in seed-to-seed Sharpe std
 and a sharper narrowing in percentile space (full simplex
-distribution $\rightarrow$ top $1.25\%$). The conservatism schedule's load-bearing
-function in our results is convergence-basin steering during fine-tune,
+distribution $\rightarrow$ top $1.25\%$). Under a null in which the
+schedule had no steering effect --- i.e., the distribution of
+converged basins matched naive's empirically observed full-simplex
+sampling --- the probability that three independent seeds all land in
+the top $1.25\%$ of the simplex distribution would be approximately
+$0.0125^3 \approx 2 \times 10^{-6}$. The observed clustering across
+all three adaptive seeds is therefore not consistent with the null.
+This calibrates the empirical observation rather than constituting a
+formal significance test: with three seeds and one test window, we
+cannot rule out that the seed-clustering reflects unmodeled correlations
+in training dynamics rather than the schedule's effect per se. The
+basin-steering interpretation is consistent with the data, not
+established by it.
+The conservatism schedule's primary apparent
+effect on this universe is convergence-basin steering during fine-tune,
 not online responsiveness during deployment. We surface this as a
 mechanism revision rather than a confirmation, in keeping with the
 post-hoc-vs-pre-registered distinction; the empirical headline (adaptive
@@ -45,10 +58,10 @@ The standard framing of O2O conservatism scheduling research is
 ``control online responsiveness to distribution shift'' --- the
 schedule's job is to govern how aggressively the online phase departs
 from the offline prior as the deployment distribution drifts. Our
-finding suggests a complementary axis on which the same schedule is
-load-bearing: it shapes which fixed point of the SAC fine-tune dynamics
-the policy converges to, with little observable activity at deployment
-time. For domains where SAC fine-tune dynamics are well-identified
+finding suggests a complementary axis: on this universe the same
+schedule appears to shape which fixed point of the SAC fine-tune
+dynamics the policy converges to, with little observable activity at
+deployment time. For domains where SAC fine-tune dynamics are well-identified
 (rich online reward signal, small batch noise, unconstrained continuous
 actions), the two framings collapse onto the same behavior. For domains
 where SAC fine-tune is weakly identified --- small batches, low
@@ -137,7 +150,7 @@ results. Post-paper follow-up.
 (Sec.~\ref{sec:method:grpo}) is sound iff the env satisfies the
 exogeneity property in Eq.~\ref{eq:exogeneity}. We provide unit tests
 that make the precondition legible
-(\texttt{tests/test\_exogeneity.py}); we do not claim the method
+(Sec.~\ref{sec:method:grpo:exogeneity}); we do not claim the method
 transfers to settings where actions affect future state. In particular,
 trades large enough to move the underlying market, multi-period option
 strategies, and any setting with persistent inventory state would
@@ -150,6 +163,11 @@ ran the ``adaptive O2O'' code path with conservatism turned off
 report post-dates the fix. Comparison with any prior milestone-attributed
 adaptive-O2O number is therefore not apples-to-apples; we surface this
 here rather than rewrite the milestone narrative.
+
+\paragraph{$\beta_t$-trajectory verification.} The third
+pre-registered prediction ($\beta_t$ non-constant) was not explicitly
+verified from the saved Phase~2C artifacts; this is a follow-up
+rather than a finding.
 
 \paragraph{Post-paper follow-up: theoretical extensions on critic
 removal under exogeneity.} The exogeneity argument that retires the

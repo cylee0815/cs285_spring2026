@@ -35,14 +35,24 @@ SAC-Dirichlet fine-tune with $\beta_t = \alpha_{\mathrm{CQL}} \cdot
 --- a per-step CQL-penalty modulation driven by the regime-encoder KL
 between offline and online observation distributions. On a 1{,}061-day
 causal test window (2022-Q1 through 2026-Q1, the post-2022
-stock-bond-correlation regime), this adaptive-O2O agent achieves test
-Sharpe $1.762 \pm 0.154$ across three seeds. Across four experimental phases (offline baselines, online-only
+stock-bond-correlation regime), this adaptive-O2O agent consistently
+across our three seeds converges to a near-static allocation in the
+top $1.25\%$ of the 8-asset simplex: the lowest-performing run reaches
+the 98.75th percentile of $10{,}000$ random Dirichlet$(1)$ simplex
+draws (Sharpe $1.629$), and the mean reaches the 99.49th
+(Sharpe $1.762 \pm 0.154$) --- above the closed-form min-variance
+baseline (94.65th percentile, Sharpe $1.39$), the rolling risk-parity
+reference (81.41st, $1.161$), and equal-weight (59.56th, $0.953$).
+Across four experimental phases (offline baselines, online-only
 baselines, four-way O2O comparison, GRPO group-size ablation),
-adaptive O2O is the only RL method to beat both equal-weight ($0.953$)
-and risk-parity ($1.161$) on this window.
+adaptive O2O is the only RL configuration in our study that places
+all three seeds above the strongest classical static optimizer.
 
-The headline mechanism is not what we pre-registered, and surfacing
-the revision properly is the second-order contribution of this paper.
+The headline mechanism is not what we pre-registered. The mechanism
+we hypothesized is not what the data show; revising to a
+basin-selection account is itself part of what we contribute, and
+we surface that revision explicitly rather than retrofitting the
+original framing onto the results.
 The pre-registered hypothesis was that the modulated $\beta_t$ would
 let the SAC fine-tune trade actively against distribution shift in the
 test window: relax pessimism under in-support observations, saturate
@@ -50,12 +60,13 @@ it under shift. The Phase~2C results disconfirm that mechanism. Both
 naive ($\beta_t \equiv \alpha_{\mathrm{CQL}}$) and adaptive O2O
 converge to functionally static allocations on the test window; the
 differential between them is not how they trade but which static
-allocation the SAC fine-tune lands on. Naive's pinned conservatism
-leaves the basin random across seeds; adaptive's modulated schedule
-steers the same SAC dynamics from the same Geodesic-CQL pretrain to a
-uniformly strong basin --- an eight-fold seed-std reduction over naive
-(Sec.~\ref{sec:experiments:phase2c}). The conservatism schedule's load-bearing
-function on this universe is convergence-basin steering during
+allocation the SAC fine-tune lands on. Naive's pinned conservatism is
+associated with random-across-seeds basin selection in our three
+runs; adaptive's modulated schedule steers the same SAC dynamics from
+the same Geodesic-CQL pretrain to a uniformly strong basin --- an
+$\approx$~eight-fold seed-std reduction over naive on this
+small-sample comparison (Sec.~\ref{sec:experiments:phase2c}). The conservatism schedule's primary
+apparent effect on this universe is convergence-basin steering during
 fine-tune, not online responsiveness during deployment, reframing the
 design target for O2O scheduling research from ``track distribution
 shift'' to ``stabilize the converged fixed point of the fine-tune
@@ -78,14 +89,15 @@ contribution and empirical winning are independent claims.
 the offline-RL pipeline mid-Phase-2: unconstrained $Q$-maximizing
 methods read tomorrow's reward off today's observation while
 behavior-anchored methods cannot, producing a $> 2\times$ Sharpe gap
-that we recommend as a STOP condition for offline-RL benchmark
-builders.
+that we propose as a diagnostic worth checking when building
+offline-RL benchmarks.
 
-Three contributions, then: (1) adaptive-O2O as the only RL method we
-tested to beat both classical baselines on the post-2022 window, with
-the basin-selection mechanism revision as the central interpretive
-finding; (2) Continuous GRPO under exogenous state transitions;
-(3) the algorithm-class-differential leak diagnostic with its
+Three contributions, then: (1) the basin-selection mechanism revision
+--- a reframing of what O2O conservatism schedules do, evidenced by
+adaptive O2O's percentile-anchored win across seeds and the
+disconfirmation of the pre-registered active-trading mechanism;
+(2) Continuous GRPO under exogenous state transitions; (3) the
+algorithm-class-differential leak diagnostic with its
 feature-space-specific scope condition. Sec.~\ref{sec:related}
 positions the work; Sec.~\ref{sec:method} formalizes both methods;
 Sec.~\ref{sec:experiments} reports the four-phase experimental
