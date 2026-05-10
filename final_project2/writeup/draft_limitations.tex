@@ -145,3 +145,15 @@ ran the ``adaptive O2O'' code path with conservatism turned off
 report post-dates the fix. Comparison with any prior milestone-attributed
 adaptive-O2O number is therefore not apples-to-apples; we surface this
 here rather than rewrite the milestone narrative.
+
+\paragraph{Post-paper follow-up: theoretical extensions on critic
+removal under exogeneity.} The exogeneity argument that retires the
+value baseline (Sec.~\ref{sec:method:grpo:exogeneity}) suggests two
+formal extensions: (a) a fully critic-free actor-only policy gradient
+under action-independent dynamics, with no Bellman backup, no TD
+learning, and analytically tractable variance properties; (b) a
+Rao-Blackwellized estimator that marginalizes the action-independent
+future randomness, with provably lower variance than REINFORCE under
+the exogeneity precondition. Both are theoretical contributions out of
+scope for this paper's empirical focus, and both are constrained to
+settings where the precondition holds.

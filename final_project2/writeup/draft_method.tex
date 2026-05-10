@@ -17,20 +17,19 @@ post-cost log return
 r_t \;=\; \log\!\big(1 + \max(w_t^{\top} R_{t+1} - \lambda\, \|w_t - w_{t-1}\|_1,\, -0.9999)\big),
 \end{equation}
 where $R_{t+1}$ is the realized one-step return vector and $\lambda$ the
-linear transaction-cost coefficient. This is implemented in
-\texttt{core/envs/portfolio\_env.py:155} and re-derived bit-for-bit in
-\texttt{peek\_reward\_batch} (line~249), which is the operation that makes
-group sampling cheap (Sec.~\ref{sec:method:grpo}).
+linear transaction-cost coefficient. The reward is also re-derived
+bit-for-bit in a side-effect-free \texttt{peek\_reward\_batch} primitive
+that makes group sampling cheap (Sec.~\ref{sec:method:grpo}).
 
 The state $s_t$ is a 216-dimensional vector of causal market features --- past
 log-returns, rolling volatility, multi-window moving averages, and momentum
 signals --- with no portfolio-state coordinates. The lack of a $w_{t-1}$
 component in the observation is structural, not stylistic: it is what makes
 the exogeneity assumption hold (Sec.~\ref{sec:method:grpo:exogeneity}). The
-optional flag \verb|include_prev_weights=True|
-(\texttt{core/envs/portfolio\_env.py:72}) injects the previous weight vector
-into the observation and breaks exogeneity; we leave it disabled, and
-\texttt{tests/test\_exogeneity.py:104} guards the constraint with a unit test.
+optional flag \verb|include_prev_weights=True| injects the previous
+weight vector into the observation and breaks exogeneity; we leave it
+disabled, and \texttt{tests/test\_exogeneity.py} guards the constraint
+with a unit test.
 
 \subsection{Continuous GRPO}
 \label{sec:method:grpo}
@@ -47,8 +46,7 @@ agent's action.
 \subsubsection{Policy parameterization: Dirichlet head on the simplex}
 
 The actor is a 2-layer MLP with $\tanh$ activations whose output head emits
-$N$ concentration parameters
-($\texttt{core/networks/policies.py:401--429}$):
+$N$ concentration parameters:
 \begin{equation}
 \alpha(s_t) \;=\; \softplus(W_\alpha h(s_t) + b_\alpha) + \mathbf{1},
 \quad
@@ -59,7 +57,7 @@ and avoiding the simplex-corner singularities that vanilla softmax-of-Gaussian
 heads suffer near $w_i \to 0$. Sampling, log-probability, and entropy are
 PyTorch's closed-form Dirichlet calls --- no projection step is needed
 because samples are already in the open simplex (modulo a numerical
-$10^{-6}$ clamp at \texttt{core/networks/policies.py:452}).
+$10^{-6}$ clamp).
 
 \subsubsection{Group sampling under exogenous state transitions}
 \label{sec:method:grpo:exogeneity}
@@ -67,9 +65,9 @@ $10^{-6}$ clamp at \texttt{core/networks/policies.py:452}).
 At rollout time, at each visited state $s_t$ we draw
 $\{a_t^{(i)}\}_{i=1}^G \sim \pi_{\theta_{\text{old}}}(\cdot \mid s_t)$ from
 the current actor, then compute their per-candidate rewards
-$\{r_t^{(i)}\}_{i=1}^G$ from the same realized return $R_{t+1}$
-(\texttt{online\_rl/agents/grpo.py:271--284}). This is the \emph{group}
-in GRPO: $G$ siblings sharing $s_t$ and $R_{t+1}$ but differing in $a_t^{(i)}$.
+$\{r_t^{(i)}\}_{i=1}^G$ from the same realized return $R_{t+1}$.
+This is the \emph{group} in GRPO: $G$ siblings sharing $s_t$ and
+$R_{t+1}$ but differing in $a_t^{(i)}$.
 
 The soundness of using these per-candidate rewards as relative advantages
 hinges on a property of the environment, not of the policy:
@@ -81,13 +79,11 @@ A retail allocation does not move broad-index ETF prices on a one-day
 horizon, so the next observation depends only on the realized market path,
 not the agent's weight choice. The default-obs PortfolioEnv satisfies
 Eq.~\ref{eq:exogeneity} exactly --- no market-impact model, no
-weight-aware feature, no replay-style state mutation. We verify this with
-two adversarial unit tests
-(\texttt{tests/test\_exogeneity.py:52, 91}) that step two seed-aligned envs
-with maximally different one-hot allocations and assert bit-identical
-$s_{t+1}$, and a third test
-(\texttt{tests/test\_exogeneity.py:104}) that documents the configuration
-flag which would break the property.
+weight-aware feature, no replay-style state mutation. We verify this with two adversarial unit tests in
+\texttt{tests/test\_exogeneity.py} that step two seed-aligned envs with
+maximally different one-hot allocations and assert bit-identical
+$s_{t+1}$, plus a third test in the same file that documents the
+configuration flag which would break the property.
 
 Under Eq.~\ref{eq:exogeneity}, the standard advantage
 $A^{(i)} = Q(s_t, a_t^{(i)}) - V(s_t)$ admits a critic-free closed form
@@ -97,8 +93,7 @@ is independent of $i$ and cancels under within-group centering. What
 remains is just the immediate reward difference, which we score directly
 through \texttt{env.peek\_reward\_batch} --- a method that recomputes the
 step reward formula (Eq.~\ref{eq:reward}) for $G$ candidates against the
-same $R_{t+1}$ pointer without mutating env state
-(\texttt{core/envs/portfolio\_env.py:195--250}).
+same $R_{t+1}$ pointer without mutating env state.
 
 \subsubsection{Group-relative advantage}
 
@@ -112,11 +107,10 @@ A_t^{(i)} \;=\; \frac{r_t^{(i)} - \bar{r}_t}{\sigma_{r_t} + \varepsilon},
 \sigma_{r_t}^2 = \tfrac{1}{G}\sum_j (r_t^{(j)} - \bar{r}_t)^2,
 \end{equation}
 with $\varepsilon = 10^{-8}$. This is the default
-\verb|advantage_norm="mean_std"| mode in
-\texttt{online\_rl/agents/grpo\_advantages.py:66--69}. The same module also
-implements three ablation variants (\verb|"raw"|, \verb|"mean_only"|,
-\verb|"rank"|; lines~60--72, 75--95) that we use for the advantage-norm
-ablation in Sec.~\ref{sec:experiments:phase2d}.
+\verb|advantage_norm="mean_std"| mode. The same module also implements
+three ablation variants (\verb|"raw"|, \verb|"mean_only"|, \verb|"rank"|)
+that we use for the advantage-norm ablation in
+Sec.~\ref{sec:experiments:phase2d}.
 
 A subtle but load-bearing detail: when all $G$ candidates score identical
 rewards (e.g., all collapse to equal-weight on a flat-return day), the
@@ -127,8 +121,7 @@ $(r - \bar r)/\sigma_r$ would produce.
 \subsubsection{Loss}
 
 We fit $\pi_\theta$ with a PPO-style clipped surrogate plus a KL anchor to
-a frozen reference $\pi_{\text{ref}}$ snapshotted at training start
-(\texttt{online\_rl/agents/grpo.py:227--231}):
+a frozen reference $\pi_{\text{ref}}$ snapshotted at training start:
 \begin{equation}
 \label{eq:grpo-loss}
 \mathcal{L}(\theta) \;=\;
@@ -176,20 +169,17 @@ host env.
 The offline-to-online (O2O) pipeline pre-trains a Geodesic-CQL critic on
 2008--2020 transitions (the \emph{offline} phase) and fine-tunes a
 SAC-Dirichlet actor on the 2022Q1--2026Q1 test window (the \emph{online}
-phase), mixing offline and online batches in each gradient step
-(\texttt{hybrid\_rl/agents/o2o\_agent.py:204--263}). The adaptive
-contribution is a per-step schedule on the conservatism weight that
-attenuates pessimism when the online state distribution looks like
+phase), mixing offline and online batches in each gradient step. The
+adaptive contribution is a per-step schedule on the conservatism weight
+that attenuates pessimism when the online state distribution looks like
 something the offline buffer covered.
 
 \paragraph{Regime encoder and KL.} A 1-layer GRU over the last 20-day
-observation window produces a regime embedding $h_t \in \mathbb{R}^{64}$
-(\texttt{hybrid\_rl/configs/o2o\_config.py:7}). At training start we record
-the offline-batch encoder outputs as the reference distribution; during
-fine-tuning we maintain a 5-step rolling buffer of online encoder outputs
-(\texttt{hybrid\_rl/agents/o2o\_agent.py:225--241}). The regime KL is a
-diagonal-Gaussian closed form fit per coordinate
-(\texttt{hybrid\_rl/agents/o2o\_agent.py:23--32}):
+observation window produces a regime embedding $h_t \in \mathbb{R}^{64}$.
+At training start we record the offline-batch encoder outputs as the
+reference distribution; during fine-tuning we maintain a 5-step rolling
+buffer of online encoder outputs. The regime KL is a diagonal-Gaussian
+closed form fit per coordinate:
 \begin{equation}
 \widehat{\mathrm{KL}}(h_{\text{off}} \,\|\, h_{\text{on}}) \;=\;
 \sum_{i=1}^{64} \log\!\frac{\sigma^{\text{on}}_i}{\sigma^{\text{off}}_i}
@@ -203,9 +193,7 @@ diagonal-Gaussian closed form fit per coordinate
 \label{eq:cql-schedule}
 \beta_t \;=\; \alpha_{\mathrm{CQL}} \cdot \sigma\!\big(\eta \cdot \widehat{\mathrm{KL}}(h_{\text{off}} \,\|\, h_{\text{on}})\big),
 \end{equation}
-with $\alpha_{\mathrm{CQL}} = 5.0$ and $\eta = 0.5$ as defaults
-(\texttt{hybrid\_rl/configs/o2o\_config.py:22--24};
-implementation \texttt{hybrid\_rl/agents/o2o\_agent.py:166--200}). Under
+with $\alpha_{\mathrm{CQL}} = 5.0$ and $\eta = 0.5$ as defaults. Under
 distribution shift the sigmoid saturates near $1$, restoring full offline
 conservatism; under distribution match it relaxes toward zero, freeing the
 online updates to chase the in-domain reward signal. The naive-fine-tune
@@ -214,28 +202,26 @@ sets $\beta_t \equiv \alpha_{\mathrm{CQL}}$ throughout, exposed as
 \texttt{--adaptive\_conservatism=false} in the runner.
 
 \paragraph{The bug fix that made the comparison meaningful.} The repo
-shipped with \texttt{run\_o2o.py} containing an inline online-phase loop
-that called \texttt{sac\_agent.update\_critic(mixed)} \emph{without}
-forwarding any $\beta_t$, defaulting the CQL weight to zero and silently
-bypassing the entire scheduler we describe above. The full
+shipped with an inline online-phase loop that called
+\texttt{sac\_agent.update\_critic(mixed)} \emph{without} forwarding any
+$\beta_t$, defaulting the CQL weight to zero and silently bypassing the
+entire scheduler we describe above. The full
 \texttt{O2OAgent.finetune\_online} method --- which actually plumbs
-$\beta_t$ through the critic update --- existed but was never invoked from
-the CLI. We replaced the inline loop with a call to
-\texttt{agent.finetune\_online(n\_online)}
-(\texttt{scripts/run\_o2o.py:309--312}); without this, every Phase 2C
+$\beta_t$ through the critic update --- existed but was never invoked
+from the CLI. We replaced the inline loop with a call to
+\texttt{agent.finetune\_online(n\_online)}; without this, every Phase 2C
 ``adaptive O2O'' run would have been numerically indistinguishable from
 the naive condition, regardless of how the CLI flag was set. We document
 this fix and three other pre-existing bugs in
-\texttt{writeup/draft\_implementation\_notes.md}.
+Appendix~\ref{app:implementation}.
 
 \paragraph{Initialization and env handoff.} \texttt{transfer\_to\_online}
 copies the actor / critic / regime-encoder / temperature parameters from
 the Geodesic-CQL agent to the SAC-Dirichlet agent, then re-resets the
 shared training env so the SAC agent's cached observation does not point
-at a terminal state left over from offline buffer collection
-(\texttt{hybrid\_rl/agents/o2o\_agent.py:142--164}; the env reset on
-lines~155--164 is also a bug fix from a pre-existing crash documented in
-the implementation notes).
+at a terminal state left over from offline buffer collection (the env
+reset is itself a bug fix from a pre-existing crash;
+Appendix~\ref{app:implementation}).
 
 % TODO(post-2C): if the cql\_weight\_traj.npy series shows $\beta_t$ saturating
 % at one extreme for the entire test window, we will need to either widen

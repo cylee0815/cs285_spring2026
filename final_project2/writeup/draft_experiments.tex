@@ -13,13 +13,11 @@
 ETFs (SPY, EEM, TLT, HYG, DBC, GLD, UUP, SHY) at daily resolution.
 Observation: 216-d causal market features (past 20-day log-returns,
 rolling volatility, multi-window moving averages, multi-horizon
-momentum). Action: portfolio weights on the 7-simplex, projected per
-\texttt{core/envs/portfolio\_env.py:144}. Reward as in
+momentum). Action: portfolio weights on the 7-simplex. Reward as in
 Eq.~\ref{eq:reward}.
 
 \paragraph{Splits.} Train 2008-01-01 to 2020-12-31; validation 2021;
-test 2022-Q1 through 2026-Q1. Set in
-\texttt{data/splits.py:DEFAULT\_SPLIT}. Test window is the 2022 stock-bond
+test 2022-Q1 through 2026-Q1. Test window is the 2022 stock-bond
 correlation break.
 
 \paragraph{Friction grid.} Every method evaluated at $\lambda \in
@@ -34,10 +32,9 @@ appendix. Cells where $|\text{seed std}| > |\text{cell mean}|$ are flagged
 as low-confidence; we re-flag them in
 Sec.~\ref{sec:limitations}. Seed-threading is not bit-exact -- the
 PortfolioEnv random-start RNG is constructed without reading the global
-seed (\texttt{core/envs/portfolio\_env.py:87};
-\texttt{writeup/sac\_seed\_audit.md}). Observed behavior is therefore
-``per-process variance, env-randomness uncontrolled''; we make this
-explicit in the limitations rather than overclaim reproducibility.
+seed. Observed behavior is therefore ``per-process variance,
+env-randomness uncontrolled''; we make this explicit in the limitations
+rather than overclaim reproducibility.
 
 \paragraph{Compute.} All runs on a single H100 80\,GB. Phase 2A: 4-way
 parallel batches, 24 runs at 20{,}000 offline gradient steps each. Phase
@@ -109,12 +106,9 @@ right-hand-column comparison and Fig.~\ref{fig:turnover-by-method}).
 three distinct ways. SAC-Dirichlet's identical-across-seeds Sharpe is
 the post-blowup signature of an auto-temperature pathology: $\tau$
 exploded from $\tau{=}18$ at step 10{,}000 to $\tau{=}1.2 \times 10^9$
-at step 70{,}000 across all 3 seeds
-(\texttt{logs/phase2b/sac\_dirichlet\_*}; full account in
-\texttt{writeup/sac\_degeneracy\_postmortem.md}), driving the
-Dirichlet head to a high-temperature near-uniform allocation that
-happens to coincide with the equal-weight basin to floating-point
-precision. This is a method-level pathology and we read the SAC
+at step 70{,}000 across all 3 seeds, driving the Dirichlet head to a
+high-temperature near-uniform allocation that happens to coincide with
+the equal-weight basin to floating-point precision. This is a method-level pathology and we read the SAC
 numbers as ``maximum-entropy regularizer dominating policy
 specialization on the bounded simplex,'' not as SAC working as
 intended; the auto-tune blowup is independent of the seed-threading
@@ -193,17 +187,17 @@ produces test turnover $\le 6.5\!\times\!10^{-6}$ across all three seeds
 because the CQL pretrain converges to a seed-dependent near-constant
 $\alpha$ vector (Phase 2A causal CQL\_vanilla turnover
 $\approx 6.7\!\times\!10^{-5}$, Table~\ref{tab:causal-confirmation}),
-and the SAC fine-tune does not break out of this basin: as documented
-in the postmortem (\texttt{writeup/sac\_degeneracy\_postmortem.md}),
-SAC-Dirichlet on this universe suffers an entropy-temperature blowup
-that compresses any obs-dependence in $\alpha$. The combination
+and the SAC fine-tune does not break out of this basin: SAC-Dirichlet
+on this universe suffers an entropy-temperature blowup that compresses
+any obs-dependence in $\alpha$ (the same blowup observed in Phase~2B
+online-only SAC, Sec.~\ref{sec:experiments:phase2b}). The combination
 ``CQL-locked init $+$ SAC-blowup compression'' yields a constant
 allocation per run; per-seed Sharpe variance is therefore enormous
 (\textbf{range $[-0.236, +2.179]$, mean $+1.002$, std $1.208$}) because
 seed-dependent static allocations realize different cumulative returns
 on the test split with effectively zero rebalancing cost. The mechanical
-correctness of the fine-tune was audited and confirmed
-(\texttt{writeup/o2o\_audit.md}); this is a pathology, not a bug.
+correctness of the fine-tune was audited and confirmed; this is a
+pathology, not a bug.
 
 \begin{table}[t]
 \centering
@@ -248,10 +242,8 @@ $7\!\times\!10^{-5}$ is functionally indistinguishable from naive's
 $2\!\times\!10^{-6}$ at this scale --- but the schedule does
 \emph{select which static} the policy converges to. The
 \texttt{cql\_weight} modulation, driven by KL between offline and
-online regime distributions
-(\texttt{hybrid\_rl/agents/o2o\_agent.py:166--200}), evidently steers
-the SAC fine-tune toward a static allocation that performs uniformly
-well on the test split, where naive's pinned $\beta_t \equiv
+online regime distributions, evidently steers the SAC fine-tune toward
+a static allocation that performs uniformly well on the test split, where naive's pinned $\beta_t \equiv
 \alpha_{\mathrm{CQL}}$ leaves the convergence basin essentially
 random across seeds. The adaptive contribution is therefore not
 ``adaptive trades better than naive,'' but ``adaptive selects a
@@ -317,10 +309,10 @@ cost). The leak-driven TD3+BC and BCQ rows are appendix-only
 \end{figure}
 
 \paragraph{The adaptive-vs-naive comparison is meaningful only post-fix.}
-The pre-Phase-2 \texttt{run\_o2o.py} silently passed
+The pre-Phase-2 O2O entrypoint silently passed
 \texttt{cql\_weight=0} regardless of CLI flag
-(\texttt{writeup/draft\_implementation\_notes.md} \S 4). All Phase 2C
-results post-date the swap from the inline online-loop to
+(Appendix~\ref{app:impl:cql-weight}). All Phase 2C results post-date
+the swap from the inline online-loop to
 \texttt{O2OAgent.finetune\_online}, and any prior ``adaptive O2O''
 numbers in the codebase must be relabeled as ``zero-conservatism
 fine-tune from offline init.''
@@ -389,11 +381,10 @@ std     & $0.108$   & $0.099$   & $0.051$   \\
 
 \paragraph{Compute.} Per-update forward-pass count scales as
 $\mathcal{O}(G)$; at fixed env-step budget, total wall-clock is
-roughly $G$-independent (the actor forward in
-\texttt{collect}, \texttt{online\_rl/agents/grpo.py:271--275}, is
-batched as a single sample of shape $(G, 1, N)$, and the loss
-forward in \texttt{grpo\_loss}, \texttt{grpo.py:138--140}, runs the
-shared MLP once and broadcasts log-probs over $G$). Three seeds at
+roughly $G$-independent (the actor forward in \texttt{collect} is
+batched as a single sample of shape $(G, 1, N)$, and the loss forward
+in \texttt{grpo\_loss} runs the shared MLP once and broadcasts log-probs
+over $G$). Three seeds at
 each of three $G$s ran in $364$\,s ($G$-balanced parallel batches on
 one H100); the marginal Sharpe gain of $G{=}16$ over $G{=}4$ is
 \emph{negative} on average and not justified at any compute price in

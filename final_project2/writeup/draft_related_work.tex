@@ -26,8 +26,8 @@ Policy Optimization \citep{shao2024deepseekmath} replaces PPO's learned
 value baseline with a within-group statistic computed across $G$
 sampled completions of the same prompt. Subsequent work has applied
 GRPO almost exclusively to LLM post-training pipelines
-\citep{liu2024deepseek,yu2024rlhf}, where the original formulation's
-two structural assumptions hold by construction: actions are discrete
+\citep{yu2024rlhf}, where the original formulation's two structural
+assumptions hold by construction: actions are discrete
 tokens with a finite alphabet, and ``state transitions'' are
 deterministic sequence-extension. Our continuous-action portfolio
 setting violates the first assumption (the policy emits a Dirichlet
