@@ -264,8 +264,16 @@ def make_train_test_envs(
         from core.envs.sentiment_features import load_sentiment
         sentiment_arr = load_sentiment(prices.index, start, end, tickers=tickers)
 
-    flat_features = _build_flat_features(features, macro_arr, sentiment_arr)
-    forward_returns = np.expm1(log_returns).astype(np.float32)
+    flat_features_full = _build_flat_features(features, macro_arr, sentiment_arr)
+    fwd_full = np.expm1(log_returns).astype(np.float32)
+    # Causal shift: forward_returns[t] is the return realized AFTER the
+    # agent acts on features[t] (matches PortfolioEnv contract,
+    # core/envs/portfolio_env.py:30-31). Pre-fix, forward_returns[t] was
+    # today's return AND features[t, :, 0] was the same log-return —
+    # leaking the reward into the observation. See
+    # writeup/td3_bcq_anomaly_triage.md §1.
+    flat_features = flat_features_full[:-1]
+    forward_returns = fwd_full[1:]
 
     def _make_env(s, e):
         return PortfolioEnv(
@@ -368,8 +376,16 @@ def make_train_val_test_envs(
 
     # Build the flat observation features and simple-return forward_returns
     # used by the canonical env (env.portfolio_env.PortfolioEnv).
-    flat_features = _build_flat_features(features, macro_arr, sentiment_arr)
-    forward_returns = np.expm1(log_returns).astype(np.float32)
+    flat_features_full = _build_flat_features(features, macro_arr, sentiment_arr)
+    fwd_full = np.expm1(log_returns).astype(np.float32)
+    # Causal shift: forward_returns[t] is the return realized AFTER the
+    # agent acts on features[t] (matches PortfolioEnv contract,
+    # core/envs/portfolio_env.py:30-31). Pre-fix, forward_returns[t] was
+    # today's return AND features[t, :, 0] was the same log-return —
+    # leaking the reward into the observation. See
+    # writeup/td3_bcq_anomaly_triage.md §1.
+    flat_features = flat_features_full[:-1]
+    forward_returns = fwd_full[1:]
 
     def _date_slice(start_str: str, end_str: str):
         mask = (prices.index >= pd.Timestamp(start_str)) & (prices.index <= pd.Timestamp(end_str))
