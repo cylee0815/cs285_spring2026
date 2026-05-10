@@ -1,10 +1,14 @@
 % Extended Abstract --- 1-page grading-critical artifact (CS285 final
-% project rubric, p.2). Five paragraphs: setup+headline,
-% basin-selection mechanism revision (lifts the load-bearing-function
-% sentence from Sec.~\ref{sec:discussion} verbatim), failure-mode
-% landscape, methodological contributions, implications + scope.
-% All numbers cross-checked against results/paper_master_table.csv.
-% Compressed in v2 to fit on 1 page in A4+1in geometry.
+% project rubric, p.2). Revised v3 to anchor the headline against the
+% empirical distribution of static allocations on the test window
+% (figures/static_sharpe_cdf.png, writeup/static_anchor_summary.md,
+% figures/static_sharpe_anchor_table.csv). Five paragraphs:
+% setup + percentile-anchored headline; basin-selection mechanism
+% revision (now grounded in percentile data, with mode-iii merged in);
+% compressed failure-mode landscape; methodological contributions;
+% implications + scope. All numbers cross-checked against
+% results/paper_master_table.csv. Compressed to fit on 1 page in
+% A4 + 1in geometry.
 
 \section*{Extended Abstract}
 
@@ -18,64 +22,76 @@ offline-trained policies fail to reach the equal-weight baseline at
 $\lambda{=}0.001$ and actively destroy capital at $\lambda{=}0.005$.
 This paper asks whether offline-to-online (O2O) fine-tuning with
 adaptive conservatism scheduling repairs the collapse. The headline
-empirical result, on a 1{,}061-day causal test window
-(2022-Q1 to 2026-Q1, the post-2022 stock-bond-correlation regime), is
-yes: an adaptive-O2O agent (Geodesic-CQL pretrain on 2008--2020
-transitions, SAC-Dirichlet fine-tune with $\beta_t = \alpha_{\mathrm{CQL}}
-\cdot \sigma(\eta \cdot \mathrm{KL}(h_{\text{off}} \| h_{\text{on}}))$)
-achieves test Sharpe $1.762 \pm 0.154$ across three seeds --- the only
-RL method in our study to beat both equal-weight ($0.953$) and
-risk-parity ($1.161$) on this window.
+empirical result, on a 1{,}061-day causal test window (2022-Q1 to
+2026-Q1, the post-2022 stock-bond-correlation regime), is that an
+adaptive-O2O agent (Geodesic-CQL pretrain on 2008--2020 transitions,
+SAC-Dirichlet fine-tune with $\beta_t = \alpha_{\mathrm{CQL}} \cdot
+\sigma(\eta \cdot \mathrm{KL}(h_{\text{off}} \| h_{\text{on}}))$)
+reliably converges to a near-static allocation in the top $1.25\%$ of
+the 8-asset simplex on this window: across three seeds, the
+lowest-performing run reaches the 98.75th percentile of $10{,}000$
+random Dirichlet$(1)$ simplex draws (Sharpe $1.629$), and the mean
+reaches the 99.49th (Sharpe $1.762 \pm 0.154$) --- above the
+closed-form min-variance baseline (94.65th, Sharpe $1.39$) and the
+equal-weight (59.56th, $0.953$) and rolling risk-parity (81.41st,
+$1.161$) classical references. Adaptive O2O is the only RL
+configuration in our study that lands above the strongest classical
+static optimizer reliably across seeds.
 
 The mechanism behind that headline is not what we pre-registered. Our
 pre-registered hypothesis was that the modulated $\beta_t$ would let
 the SAC fine-tune trade actively in response to distribution shift in
-the test window. The Phase~2C results disconfirm that mechanism. Both naive ($\beta_t \equiv
-\alpha_{\mathrm{CQL}}$) and adaptive O2O converge to functionally
-static allocations (per-seed turnover $\le 2.2\!\times\!10^{-4}$
-across all six runs, three orders of magnitude below GRPO online's
-$0.24$); the differential between them is not how they trade but which
-static allocation the SAC fine-tune lands on. Naive O2O's pinned
-conservatism leaves the basin random across seeds (Sharpe range
-$[-0.236,\,+2.179]$, std $1.21$); adaptive O2O's modulated schedule
-consistently steers the same SAC dynamics from the same Geodesic-CQL
-pretrain to a uniformly strong basin (Sharpe range $[+1.629,\,+1.931]$,
-std $0.15$, an eight-fold variance reduction). The conservatism
-schedule's load-bearing function in our results is convergence-basin
-steering during fine-tune, not online responsiveness during deployment.
+the test window. The Phase~2C results disconfirm that mechanism. Both
+naive ($\beta_t \equiv \alpha_{\mathrm{CQL}}$) and adaptive O2O
+converge to functionally static allocations (per-seed turnover
+$\le 2.2\!\times\!10^{-4}$ across all six runs, three orders of
+magnitude below GRPO online's $0.24$); the differential between them
+is not how they trade but which static allocation the SAC fine-tune
+lands on. Anchored against the same simplex distribution, naive O2O's
+seeds span the 0.03rd to 100th percentile (Sharpes $-0.236$, $1.062$,
+$2.179$; std $1.21$) --- effectively random sampling from the full
+simplex. Adaptive O2O's seeds cluster in the top $1.25\%$ (std
+$0.15$): an eight-fold variance reduction in Sharpe space, and a
+sharper one in percentile space. The conservatism schedule's
+load-bearing function in our results is convergence-basin steering
+during fine-tune, not online responsiveness during deployment.
 
 The four-way O2O comparison sits inside a broader failure-mode
 landscape, with each mode mechanistically traceable. (i) On a leaky
 offline pipeline (in-observation reward feature, since fixed;
 Appendix~\ref{app:leak}), $Q$-maximizing offline RL exploits the leak:
 TD3+BC test Sharpe $6.785 \pm 0.628$, BCQ $3.905 \pm 0.232$, vs
-behavior-anchored algorithms at $\sim\!0.94$. (ii) SAC-Dirichlet's auto-temperature blows up ($\tau \sim 10^9$);
-the online-only policy collapses to a near-equal-weight static
-allocation identical across seeds. (iii) Naive O2O exhibits the
-seed-dependent-static pathology unpacked above. (iv) Online GRPO
-actively trades (turnover $0.24$) at net Sharpe cost ($0.297 \pm
-0.017$); even the best group-size ablation cell ($G{=}4$, Sharpe
-$0.500 \pm 0.108$) lands below equal-weight.
+behavior-anchored algorithms at $\sim\!0.94$. (ii) SAC-Dirichlet's
+auto-temperature blows up ($\tau \sim 10^9$); the online-only policy
+collapses to a near-equal-weight static allocation identical across
+seeds. (iii) Online GRPO actively trades (turnover $0.24$) at net
+Sharpe cost ($0.297 \pm 0.017$); even the best group-size ablation
+cell ($G{=}4$, Sharpe $0.500 \pm 0.108$) lands below equal-weight.
+Every RL method we evaluate either degenerates to a static allocation
+or trades into the friction tax; adaptive O2O is the only
+configuration that lands a static allocation reliably in the top of
+the simplex distribution.
 
-Three methodological contributions. \emph{Continuous GRPO}: a critic-free adaptation of
-Group Relative Policy Optimization to a continuous Dirichlet actor on
-the simplex. The derivation exploits next-state independence from the
-agent's action (\emph{exogeneity}; unit-tested at the env boundary),
-under which the bootstrapped continuation cancels under within-group
-centering. The formulation is sound; whether it beats classical
-baselines is a separate empirical question, settled here in the
-negative.
+Three methodological contributions. \emph{Continuous GRPO}: a
+critic-free adaptation of Group Relative Policy Optimization to a
+continuous Dirichlet actor on the simplex. The derivation exploits
+next-state independence from the agent's action (\emph{exogeneity};
+unit-tested at the env boundary), under which the bootstrapped
+continuation cancels under within-group centering. The formulation is
+sound; whether it beats classical baselines is a separate empirical
+question, settled here in the negative.
 \emph{Algorithm-class differential as a leak diagnostic}: a $> 2\times$
-Sharpe gap between unconstrained $Q$-max and conservative-$Q$/behavior-anchored
-methods on the same dataset signals label leakage (CQL\_vanilla as the
-``no signal''/``leakage'' control row).
-\emph{Scope condition}: the behavior-anchored basin is
-feature-space-specific --- on a 216-d feature space, IQL exits the
-basin and ends in active trading (Sharpe $0.40$, turnover $0.21$, vs.
-the 56-d basin's $\sim\!0.94$).
+Sharpe gap between unconstrained $Q$-max and conservative-$Q$/behavior
+-anchored methods on the same dataset signals label leakage
+(CQL\_vanilla as the ``no signal''/``leakage'' control row); we
+propose this as a STOP condition for offline-RL benchmark builders.
+\emph{Scope condition for behavior-anchored basin invariance}: the
+basin is feature-space-specific --- on a 216-d feature space, IQL
+exits the basin and ends in active trading (Sharpe $0.40$, turnover
+$0.21$, vs.\ the 56-d basin's $\sim\!0.94$).
 
 The basin-selection finding suggests an underweighted axis for
-conservatism scheduling research --- seed-stability of the fine-tune's
+conservatism-scheduling research --- seed-stability of the fine-tune's
 converged fixed point under weakly identified dynamics, not just
 online responsiveness to drift --- evaluated here under one universe,
 one $\lambda$, one behavior mixture, one test window.
