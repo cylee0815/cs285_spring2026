@@ -140,34 +140,17 @@ a frozen reference $\pi_{\text{ref}}$ snapshotted at training start
 \;-\; c_H\, \mathbb{E}_s[H(\pi_\theta)],
 \end{equation}
 where $\rho^{(i)} = \pi_\theta(a^{(i)} \mid s) / \pi_{\theta_{\text{old}}}(a^{(i)} \mid s)$
-is the importance ratio against the actor that produced the samples. The
-log-ratio is hard-clamped to $[\log 10^{-3}, \log 10^{3}]$
-(\texttt{online\_rl/agents/grpo.py:79--80, 145--148}) before exponentiation;
-this is belt-and-suspenders against the first-epoch divergence that PPO
-clipping alone admits. Defaults: $G{=}16$, $\epsilon{=}0.2$,
-$\beta_{\mathrm{KL}}{=}0.01$, $c_H{=}0$, 4 epochs of size-256 minibatches per
-update phase (\texttt{online\_rl/agents/grpo.py:34--71}).
-
-The KL anchor term is the closed-form Dirichlet$\to$Dirichlet KL
-(\texttt{online\_rl/agents/grpo.py:164--166}); no Monte-Carlo estimate. The
-reference actor's parameters are frozen for the entire run and never
-re-snapshotted --- a stronger anchor than RLHF-style periodic refreshes,
-chosen so that the policy cannot drift unboundedly under the small-batch
-financial signal-to-noise ratio.
-
-The reference policy $\pi_{\text{ref}}$ is the actor weights at trainer
-construction time, i.e.\ \emph{after} any optional offline warm-start
-load (\texttt{online\_rl/agents/grpo.py:228}; ref is a frozen
-\texttt{deepcopy} of the actor immediately following the
-\texttt{actor.load\_state\_dict(\dots)} block in
-\texttt{scripts/train\_grpo.py}). In the online-only configuration
-$\pi_{\text{ref}}$ is therefore a random-init Dirichlet; in the offline
-warm-start configuration used as one Phase~2C condition,
-$\pi_{\text{ref}}$ is the offline-pretrained policy snapshot, providing
-a meaningful prior anchor toward the offline-RL solution manifold rather
-than toward random init. The KL term then reads as ``do not drift far
-from what the offline pretraining converged to,'' which is the standard
-O2O semantic.
+is the importance ratio against the actor that produced the samples.
+Defaults: $G{=}16$, $\epsilon{=}0.2$, $\beta_{\mathrm{KL}}{=}0.01$,
+$c_H{=}0$, 4 epochs of size-256 minibatches per update phase. In the
+online-only configuration $\pi_{\text{ref}}$ is a random-init
+Dirichlet; in the offline warm-start configuration (one Phase~2C
+condition), $\pi_{\text{ref}}$ is the offline-pretrained policy
+snapshot, anchoring the online phase toward the offline-RL solution
+manifold rather than toward random init. Implementation scaffolding
+--- importance-ratio hard-clamp, closed-form Dirichlet$\to$Dirichlet
+KL, reference-snapshot mechanics --- is in
+Appendix~\ref{app:impl:grpo-loss}.
 
 % TODO(post-2B): the persona's GRPO framing leaves the importance ratio out
 % of the advantage equation. The code's surrogate includes both an

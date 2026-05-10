@@ -23,11 +23,12 @@
 \BOOKMARK [2][-]{subsection.A.2}{Bug 2: run\137o2o.py shadowed O2OAgent import inside main\(\)}{appendix.A}% 23
 \BOOKMARK [2][-]{subsection.A.3}{Bug 3: transfer\137to\137online left the SAC env in a terminal state}{appendix.A}% 24
 \BOOKMARK [2][-]{subsection.A.4}{Bug 4: run\137o2o.py o2o-phase ignored cql\137weight \204 the centerpiece bug}{appendix.A}% 25
-\BOOKMARK [2][-]{subsection.A.5}{Cross-bug dependencies and CI implications}{appendix.A}% 26
-\BOOKMARK [1][-]{appendix.B}{Leak detection and the limits of behavior anchoring}{}% 27
-\BOOKMARK [2][-]{subsection.B.1}{The leak}{appendix.B}% 28
-\BOOKMARK [2][-]{subsection.B.2}{Differential exploitation on the leaky pipeline}{appendix.B}% 29
-\BOOKMARK [2][-]{subsection.B.3}{Causal-pipeline confirmation}{appendix.B}% 30
-\BOOKMARK [2][-]{subsection.B.4}{Scope condition: leak-invariance is feature-space-specific}{appendix.B}% 31
-\BOOKMARK [2][-]{subsection.B.5}{The one-line fix}{appendix.B}% 32
-\BOOKMARK [2][-]{subsection.B.6}{Methodological observation: differential as diagnostic}{appendix.B}% 33
+\BOOKMARK [2][-]{subsection.A.5}{GRPO loss implementation scaffolding}{appendix.A}% 26
+\BOOKMARK [2][-]{subsection.A.6}{Cross-bug dependencies and CI implications}{appendix.A}% 27
+\BOOKMARK [1][-]{appendix.B}{Leak detection and the limits of behavior anchoring}{}% 28
+\BOOKMARK [2][-]{subsection.B.1}{The leak}{appendix.B}% 29
+\BOOKMARK [2][-]{subsection.B.2}{Differential exploitation on the leaky pipeline}{appendix.B}% 30
+\BOOKMARK [2][-]{subsection.B.3}{Causal-pipeline confirmation}{appendix.B}% 31
+\BOOKMARK [2][-]{subsection.B.4}{Scope condition: leak-invariance is feature-space-specific}{appendix.B}% 32
+\BOOKMARK [2][-]{subsection.B.5}{The one-line fix}{appendix.B}% 33
+\BOOKMARK [2][-]{subsection.B.6}{Methodological observation: differential as diagnostic}{appendix.B}% 34

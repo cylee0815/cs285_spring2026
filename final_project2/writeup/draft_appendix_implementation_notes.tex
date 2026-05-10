@@ -207,6 +207,44 @@ from earlier branches must be relabeled or discarded. We surface this
 in Sec.~\ref{sec:limitations} (Adaptive-O2O bug fix paragraph) rather
 than retroactively rewriting the milestone.
 
+\subsection{GRPO loss implementation scaffolding}
+\label{app:impl:grpo-loss}
+
+Implementation details elided from the inline loss derivation
+(Sec.~\ref{sec:method:grpo}, Eq.~\ref{eq:grpo-loss}); load-bearing for
+reproduction but not for the formulation contribution.
+
+\textbf{Importance-ratio hard-clamp.} The log-ratio
+$\log \rho^{(i)} = \log \pi_\theta(a^{(i)} \mid s) - \log
+\pi_{\theta_{\text{old}}}(a^{(i)} \mid s)$ is clamped to $[\log
+10^{-3},\,\log 10^{3}]$ before exponentiation
+(\texttt{online\_rl/agents/grpo.py:79--80, 145--148}). This is
+belt-and-suspenders against the first-epoch divergence that PPO
+clipping alone admits: when the policy moves far in a single epoch,
+$\rho$ can blow up before the surrogate clip is consulted, and the
+exponentiation overflows; the log-domain clamp prevents NaN
+propagation through the gradient.
+
+\textbf{Closed-form Dirichlet$\to$Dirichlet KL.} The KL anchor term
+$D_{\mathrm{KL}}(\pi_\theta \,\|\, \pi_{\text{ref}})$ uses the
+closed-form Dirichlet$\to$Dirichlet KL
+(\texttt{online\_rl/agents/grpo.py:164--166}); no Monte-Carlo
+estimate. The reference actor's parameters are frozen for the entire
+run and never re-snapshotted --- a stronger anchor than RLHF-style
+periodic refreshes, chosen so that the policy cannot drift unboundedly
+under the small-batch financial signal-to-noise ratio.
+
+\textbf{Reference-snapshot mechanics.} The reference policy
+$\pi_{\text{ref}}$ is the actor weights at trainer construction time,
+i.e.\ \emph{after} any optional offline warm-start load
+(\texttt{online\_rl/agents/grpo.py:228}; ref is a frozen
+\texttt{deepcopy} of the actor immediately following the
+\texttt{actor.load\_state\_dict(\dots)} block in
+\texttt{scripts/train\_grpo.py}). In the offline warm-start
+configuration, the KL term then reads as ``do not drift far from what
+the offline pretraining converged to,'' which is the standard O2O
+semantic.
+
 \subsection{Cross-bug dependencies and CI implications}
 \label{app:impl:ci}
 

@@ -76,14 +76,11 @@ with a 5$\times$ wall-clock saving).
     pre-registration; they are not in the priority Tier-1 sweep.
 \end{itemize}
 
-\paragraph{TODO(post-2A): Results.}
-\begin{itemize}\setlength\itemsep{0pt}
-  \item Per-method test Sharpe table at $\lambda{=}0.001$:
-    [\texttt{TODO from results/phase2a/per\_run.csv}].
-  \item IQL $\lambda$-anchor: confirm the friction collapse holds under
-    the new behavior mixture
-    [\texttt{TODO: compare to figures/ablation\_summary.csv}].
-\end{itemize}
+\paragraph{Results.} Phase 2A results are reported alongside the
+leak-detection appendix (Tables~\ref{tab:leak-differential},~\ref{tab:causal-confirmation});
+the four behavior-anchored algorithms cluster at Sharpe $\sim 0.94$ on
+the causal pipeline, confirming the friction-collapse equal-weight
+basin.
 
 \subsection{Phase 2B -- online-only baselines}
 \label{sec:experiments:phase2b}
@@ -216,16 +213,16 @@ because each seed locks into a different static allocation from the
 CQL pretrain.}
 \label{tab:naive-o2o}
 \small
-\begin{tabular}{lcccc}
+\begin{tabular}{lcc}
 \toprule
-seed   & test Sharpe & turnover         & cum.\ return & max DD \\
+seed   & test Sharpe & turnover         \\
 \midrule
-$42$   & $-0.236$    & $6.5\!\times\!10^{-6}$ & $-0.008$  & $0.045$ \\
-$1337$ & $+2.179$    & $0.0$            & $+0.032$  & $0.024$ \\
-$2024$ & $+1.062$    & $0.0$            & $+0.015$  & $0.024$ \\
+$42$   & $-0.236$    & $6.5\!\times\!10^{-6}$ \\
+$1337$ & $+2.179$    & $0.0$            \\
+$2024$ & $+1.062$    & $0.0$            \\
 \midrule
-mean   & $+1.002$    & $\approx 0$      & $+0.013$  & $0.031$ \\
-std    & $1.208$     & ---              & $0.020$   & $0.012$ \\
+mean   & $+1.002$    & $\approx 0$      \\
+std    & $1.208$     & ---              \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -268,16 +265,16 @@ $[-0.24, +2.18]$ range (Table~\ref{tab:naive-o2o}); turnover remains
 functionally static.}
 \label{tab:adaptive-o2o}
 \small
-\begin{tabular}{lcccc}
+\begin{tabular}{lcc}
 \toprule
-seed   & test Sharpe & turnover         & cum.\ return & max DD \\
+seed   & test Sharpe & turnover         \\
 \midrule
-$42$   & $+1.726$    & $0.000220$       & $+0.024$  & $0.036$ \\
-$1337$ & $+1.629$    & $0.0$            & $+0.026$  & $0.031$ \\
-$2024$ & $+1.931$    & $0.0$            & $+0.022$  & $0.034$ \\
+$42$   & $+1.726$    & $0.000220$       \\
+$1337$ & $+1.629$    & $0.0$            \\
+$2024$ & $+1.931$    & $0.0$            \\
 \midrule
-mean   & $+1.762$    & $7\!\times\!10^{-5}$ & $+0.024$  & $0.034$ \\
-std    & $0.154$     & ---              & $0.002$   & $0.003$ \\
+mean   & $+1.762$    & $7\!\times\!10^{-5}$ \\
+std    & $0.154$     & ---              \\
 \bottomrule
 \end{tabular}
 \end{table}
