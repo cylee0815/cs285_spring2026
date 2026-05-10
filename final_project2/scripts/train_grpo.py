@@ -195,6 +195,13 @@ def parse_args() -> argparse.Namespace:
                    choices=["auto", "cpu", "cuda", "mps"])
     p.add_argument("--output_dir", type=str, default="results/online")
     p.add_argument("--run_name", type=str, default=None)
+    p.add_argument("--init_actor_checkpoint", type=str, default=None,
+                   help="Path to a Phase 2A actor.pt (DirichletActor state_dict). "
+                        "If set, the GRPO actor (DirichletMLPPolicy) is warm-started "
+                        "by remapping 6 keys (net.0/2/4 -> shared.0/2 + actor_alpha) "
+                        "and dropping the unused critic head. The KL reference "
+                        "policy is snapshotted AFTER this load (see "
+                        "writeup/grpo_implementation_audit.md addendum).")
     return p.parse_args()
 
 
@@ -243,6 +250,37 @@ def main() -> int:
         obs_dim=obs_dim, action_dim=action_dim,
         hidden_dim=args.hidden_dim, n_layers=args.n_layers,
     )
+    # Optional offline warm-start. The Phase 2A IQL/AWAC/BC actor
+    # (DirichletActor) and the GRPO actor (DirichletMLPPolicy) have
+    # bit-identical layer shapes and are forward-equivalent under a
+    # 6-key state-dict rename; see writeup/grpo_implementation_audit.md.
+    if args.init_actor_checkpoint is not None:
+        ckpt_path = args.init_actor_checkpoint
+        src_state = torch.load(ckpt_path, map_location="cpu")
+        rename = {
+            "net.0.weight": "shared.0.weight", "net.0.bias": "shared.0.bias",
+            "net.2.weight": "shared.2.weight", "net.2.bias": "shared.2.bias",
+            "net.4.weight": "actor_alpha.weight", "net.4.bias": "actor_alpha.bias",
+        }
+        remapped = {rename[k]: v for k, v in src_state.items() if k in rename}
+        if not remapped:
+            raise ValueError(
+                f"Checkpoint {ckpt_path} does not contain any of the expected "
+                f"DirichletActor keys ({list(rename)}). Was it saved from a "
+                f"DirichletActor (BC/AWAC/CQL/IQL agent.actor.state_dict())?"
+            )
+        missing, unexpected = actor.load_state_dict(remapped, strict=False)
+        if unexpected:
+            raise RuntimeError(f"Unexpected keys when warm-starting: {unexpected}")
+        expected_missing = {"critic.weight", "critic.bias"}
+        unexpected_missing = set(missing) - expected_missing
+        if unexpected_missing:
+            raise RuntimeError(
+                f"Unexpected missing keys when warm-starting: {unexpected_missing} "
+                f"(expected only critic.{{weight,bias}} to be missing)"
+            )
+        print(f"[init] warm-started GRPO actor from {ckpt_path}")
+        print(f"[init] critic.* fresh init (GRPO does not use the value head)")
     cfg = GRPOConfig(
         group_size=args.group_size,
         advantage_norm=args.advantage_norm,

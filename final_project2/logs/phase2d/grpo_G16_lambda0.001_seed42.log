@@ -1,0 +1,15 @@
+[data] state_dim=216  n_assets=8  train=3274  val=252  test=1061
+[envs] train.obs_dim=216  n_assets=8  val.T=252  test.T=1061
+[actor] DirichletMLPPolicy  hidden_dim=256  params=123,657
+[grpo]  G=16  norm=mean_std  beta_kl=0.01  clip_eps=0.2  lr=0.0003  epochs=4  mb=256
+============================================================
+[TEST] algo=grpo  seed=42
+  sharpe_ratio        = +0.2540
+  annual_return       = +0.0254
+  annual_volatility   = +0.0999
+  max_drawdown        = +0.2114
+  turnover            = +0.2512
+  cumulative_return   = +0.0896
+  n_steps             = 1060
+============================================================
+[save] results/phase2d/grpo_G16_lambda0.001_seed42

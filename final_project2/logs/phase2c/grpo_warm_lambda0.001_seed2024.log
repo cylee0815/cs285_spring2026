@@ -1,0 +1,13 @@
+[data] state_dim=216  n_assets=8  train=3274  val=252  test=1061
+[envs] train.obs_dim=216  n_assets=8  val.T=252  test.T=1061
+Traceback (most recent call last):
+  File "/jet/home/tlee8/cs285_spring2026/final_project2/scripts/train_grpo.py", line 374, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/jet/home/tlee8/cs285_spring2026/final_project2/scripts/train_grpo.py", line 272, in main
+    missing, unexpected = actor.load_state_dict(remapped, strict=False)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/jet/home/tlee8/cs285_spring2026/final_project2/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 2153, in load_state_dict
+    raise RuntimeError('Error(s) in loading state_dict for {}:\n\t{}'.format(
+RuntimeError: Error(s) in loading state_dict for DirichletMLPPolicy:
+	size mismatch for shared.0.weight: copying a param with shape torch.Size([256, 56]) from checkpoint, the shape in current model is torch.Size([256, 216]).

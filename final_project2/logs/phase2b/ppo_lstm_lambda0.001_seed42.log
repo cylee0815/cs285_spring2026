@@ -1,0 +1,24 @@
+[data] state_dim=216  n_assets=8  train=3274  val=252  test=1061
+[envs] train.obs_dim=216  val.T=252  test.T=1061
+  policy=dirichlet_lstm  params=584,201  reward_scale=100.0
+  step=   10240  train_ret=-0.0309  val_sharpe=+1.336  val_ann=+0.066  val_mdd=0.028  turnover=0.735  HHI=0.186
+  step=   20480  train_ret=-0.0230  val_sharpe=+0.603  val_ann=+0.026  val_mdd=0.038  turnover=0.519  HHI=0.230
+  step=   30720  train_ret=-0.0061  val_sharpe=+0.278  val_ann=+0.013  val_mdd=0.047  turnover=0.290  HHI=0.286
+  step=   40960  train_ret=-0.0020  val_sharpe=+0.151  val_ann=+0.007  val_mdd=0.051  turnover=0.209  HHI=0.306
+  step=   51200  train_ret=-0.0044  val_sharpe=+0.097  val_ann=+0.004  val_mdd=0.052  turnover=0.176  HHI=0.315
+  step=   61440  train_ret=+0.0106  val_sharpe=+0.042  val_ann=+0.001  val_mdd=0.053  turnover=0.155  HHI=0.323
+  step=   71680  train_ret=+0.0030  val_sharpe=+0.026  val_ann=-0.000  val_mdd=0.054  turnover=0.142  HHI=0.327
+  step=   81920  train_ret=-0.0010  val_sharpe=+0.020  val_ann=-0.000  val_mdd=0.054  turnover=0.135  HHI=0.328
+  step=   90112  train_ret=+0.0003  val_sharpe=+0.016  val_ann=-0.001  val_mdd=0.055  turnover=0.127  HHI=0.330
+  step=  100352  train_ret=-0.0027  val_sharpe=+0.011  val_ann=-0.001  val_mdd=0.055  turnover=0.122  HHI=0.331
+============================================================
+[TEST] algo=ppo_lstm  seed=42
+  sharpe_ratio        = -0.0745
+  annual_return       = -0.0048
+  annual_volatility   = +0.0644
+  max_drawdown        = +0.1404
+  turnover            = +0.0000
+  cumulative_return   = -0.0285
+  n_steps             = 1060
+============================================================
+[save] results/phase2b/ppo_lstm_lambda0.001_seed42

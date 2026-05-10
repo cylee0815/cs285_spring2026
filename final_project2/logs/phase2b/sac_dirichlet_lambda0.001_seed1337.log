@@ -1,0 +1,24 @@
+[data] state_dim=216  n_assets=8  train=3274  val=252  test=1061
+[envs] train.obs_dim=216  val.T=252  test.T=1061
+  policy=sac_dirichlet  params=419,850
+  step=   10000  val_sharpe=+1.294  val_ann=+0.078  val_mdd=0.026  tau=18.548  entropy=-8.525
+  step=   20000  val_sharpe=+1.294  val_ann=+0.078  val_mdd=0.026  tau=372.298  entropy=-8.525
+  step=   30000  val_sharpe=+1.293  val_ann=+0.078  val_mdd=0.026  tau=7483.579  entropy=-8.525
+  step=   40000  val_sharpe=+0.738  val_ann=+0.046  val_mdd=0.031  tau=150925.328  entropy=-8.525
+  step=   50000  val_sharpe=+0.934  val_ann=+0.057  val_mdd=0.029  tau=3043792.000  entropy=-8.525
+  step=   60000  val_sharpe=+1.161  val_ann=+0.072  val_mdd=0.027  tau=61010328.000  entropy=-8.525
+  step=   70000  val_sharpe=+1.063  val_ann=+0.066  val_mdd=0.028  tau=1218749312.000  entropy=-8.525
+  step=   80000  val_sharpe=+1.186  val_ann=+0.073  val_mdd=0.026  tau=24345878528.000  entropy=-8.525
+  step=   90000  val_sharpe=+1.184  val_ann=+0.074  val_mdd=0.029  tau=486348128256.000  entropy=-8.525
+  step=  100000  val_sharpe=+1.295  val_ann=+0.078  val_mdd=0.026  tau=9715570442240.000  entropy=-8.525
+============================================================
+[TEST] algo=sac_dirichlet  seed=1337
+  sharpe_ratio        = +0.9413
+  annual_return       = +0.0698
+  annual_volatility   = +0.0741
+  max_drawdown        = +0.1188
+  turnover            = +0.0000
+  cumulative_return   = +0.3255
+  n_steps             = 1060
+============================================================
+[save] results/phase2b/sac_dirichlet_lambda0.001_seed1337

@@ -92,14 +92,23 @@ class O2OAgent:
     def load_offline_data(
         self,
         behavioral_policy=None,
+        policy_mixture=None,
         n_steps: Optional[int] = None,
+        mixture_seed: Optional[int] = None,
     ):
-        """Populate offline buffer from environment trajectories."""
+        """Populate offline buffer from environment trajectories.
+
+        Pass either ``behavioral_policy`` (single callable) or
+        ``policy_mixture`` (list of (callable, weight)). Defaults to the
+        legacy uniform-Dirichlet behavior baked into ``load_from_env``.
+        """
         n = n_steps or self.config.offline_buffer_size
         self.offline_buffer.load_from_env(
             self.train_env,
             n_steps=n,
             policy=behavioral_policy,
+            policy_mixture=policy_mixture,
+            mixture_seed=mixture_seed,
             verbose=True,
         )
         self.offline_buffer.freeze()
@@ -143,6 +152,16 @@ class O2OAgent:
         self.sac_agent.target_critic.load_state_dict(policy_state['target_critic'])
         self.sac_agent.regime_encoder.load_state_dict(policy_state['regime_encoder'])
         self.sac_agent.log_temperature.data.copy_(policy_state['log_temperature'])
+        # The shared train_env was rolled to exhaustion while populating the
+        # offline buffer; re-anchor the SAC agent on a fresh reset so its
+        # next collect_step() doesn't trip the env's "Episode is done"
+        # guard before the first online action is taken.
+        self.sac_agent._obs, _ = self.sac_agent.env.reset()
+        self.sac_agent._episode_start = True
+        self.sac_agent._episode_return = 0.0
+        self.sac_agent._gru_hidden = self.sac_agent.regime_encoder.init_hidden(
+            1, self.sac_agent.device
+        )
 
     def _compute_adaptive_cql_weight(
         self,
@@ -221,8 +240,13 @@ class O2OAgent:
                         recent_regimes = recent_regimes[-20:]
                         recent_vars = recent_vars[-20:]
 
-            # Adaptive CQL weight (with optional Bayesian variance term)
-            if recent_regimes:
+            # Adaptive CQL weight (with optional Bayesian variance term).
+            # When ``getattr(config, 'adaptive_conservatism', True)`` is False,
+            # the weight is pinned to ``config.cql_alpha`` for the whole online
+            # phase — that's the Phase 2C 'naive fine-tune' condition.
+            if not getattr(self.config, 'adaptive_conservatism', True):
+                cql_w = self.config.cql_alpha
+            elif recent_regimes:
                 h_online = torch.cat(recent_regimes[-5:], dim=0).to(self.device)
                 var_online = torch.cat(recent_vars[-5:], dim=0) if recent_vars else None
                 cql_w = self._compute_adaptive_cql_weight(h_online, var_online)

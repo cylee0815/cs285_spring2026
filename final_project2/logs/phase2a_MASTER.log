@@ -1,0 +1,53 @@
+===== Batch 1/6 =====
+[skip] bc_lambda0.001_seed1337 (metrics.json already exists)
+[skip] bc_lambda0.001_seed42 (metrics.json already exists)
+[skip] td3_bc_lambda0.001_seed42 (metrics.json already exists)
+[skip] bc_lambda0.001_seed2024 (metrics.json already exists)
+[batch1] elapsed 0s
+===== Batch 2/6 =====
+[skip] td3_bc_lambda0.001_seed1337 (metrics.json already exists)
+[skip] td3_bc_lambda0.001_seed2024 (metrics.json already exists)
+[skip] cql_vanilla_lambda0.001_seed42 (metrics.json already exists)
+[skip] cql_vanilla_lambda0.001_seed1337 (metrics.json already exists)
+[batch2] elapsed 0s
+===== Batch 3/6 =====
+[start] cql_vanilla_lambda0.001_seed2024 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2a/cql_vanilla_lambda0.001_seed2024.log
+[start] awac_lambda0.001_seed42 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2a/awac_lambda0.001_seed42.log
+[start] awac_lambda0.001_seed1337 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2a/awac_lambda0.001_seed1337.log
+[start] awac_lambda0.001_seed2024 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2a/awac_lambda0.001_seed2024.log
+[done 0] awac_lambda0.001_seed2024
+[done 0] awac_lambda0.001_seed1337
+[done 0] awac_lambda0.001_seed42
+[done 0] cql_vanilla_lambda0.001_seed2024
+[batch3] elapsed 513s
+===== Batch 4/6 =====
+[start] bcq_lambda0.001_seed42 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2a/bcq_lambda0.001_seed42.log
+[start] bcq_lambda0.001_seed1337 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2a/bcq_lambda0.001_seed1337.log
+[start] iql_lambda0_seed42 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2a/iql_lambda0_seed42.log
+[start] bcq_lambda0.001_seed2024 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2a/bcq_lambda0.001_seed2024.log
+[done 0] bcq_lambda0.001_seed42
+[done 0] bcq_lambda0.001_seed1337
+[done 0] bcq_lambda0.001_seed2024
+[done 0] iql_lambda0_seed42
+[batch4] elapsed 296s
+===== Batch 5/6 =====
+[start] iql_lambda0_seed2024 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2a/iql_lambda0_seed2024.log
+[start] iql_lambda0_seed1337 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2a/iql_lambda0_seed1337.log
+[start] iql_lambda0.001_seed42 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2a/iql_lambda0.001_seed42.log
+[start] iql_lambda0.001_seed1337 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2a/iql_lambda0.001_seed1337.log
+[done 0] iql_lambda0_seed1337
+[done 0] iql_lambda0.001_seed42
+[done 0] iql_lambda0_seed2024
+[done 0] iql_lambda0.001_seed1337
+[batch5] elapsed 319s
+===== Batch 6/6 =====
+[start] iql_lambda0.001_seed2024 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2a/iql_lambda0.001_seed2024.log
+[start] iql_lambda0.005_seed2024 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2a/iql_lambda0.005_seed2024.log
+[start] iql_lambda0.005_seed1337 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2a/iql_lambda0.005_seed1337.log
+[start] iql_lambda0.005_seed42 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2a/iql_lambda0.005_seed42.log
+[done 0] iql_lambda0.005_seed42
+[done 0] iql_lambda0.005_seed1337
+[done 0] iql_lambda0.001_seed2024
+[done 0] iql_lambda0.005_seed2024
+[batch6] elapsed 322s
+===== Phase 2A complete in 1450s =====

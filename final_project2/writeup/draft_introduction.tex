@@ -1,0 +1,93 @@
+% Introduction --- v2 rewrite from scratch. The previous milestone-era
+% draft predated the leak-detection finding and the basin-selection
+% mechanism revision; rewriting was faster than editing. Calibrated to
+% mirror the locked abstract framing while expanding/motivating rather
+% than restating: every paragraph adds one substantive beat the
+% abstract did not have room for.
+
+\section{Introduction}
+\label{sec:intro}
+
+Reinforcement learning for portfolio allocation hits a striking
+failure mode under realistic friction. Our prior milestone evaluated
+Implicit Q-Learning on an 8-ETF universe (SPY, EEM, TLT, HYG, DBC,
+GLD, UUP, SHY) at daily frequency across a 27-run sweep over expectile
+$\tau$, advantage temperature $\beta$, and transaction cost $\lambda$.
+Within each $\lambda$ band the per-cell seed std stayed below $0.02$,
+but the mean test Sharpe collapsed monotonically: $0.94$ at
+$\lambda{=}0$, $0.36$ at $\lambda{=}0.001$, $-1.98$ at $\lambda{=}0.005$
+(with a $47\%$ mean drawdown). Classical equal-weight on the same
+window posted Sharpe $\sim 0.95$. The gap between $+0.95$ and $-1.98$
+is not a hyperparameter problem: $(\tau, \beta)$ moves the second
+decimal place; $\lambda$ moves the sign. We read it as a property of
+the offline-RL family on this dataset and ask whether offline-to-online
+(O2O) fine-tuning with adaptive conservatism scheduling can repair the
+collapse.
+
+The hypothesis is straightforward: an offline pretrain on a diverse
+4-policy mixture buffer compresses the search space; an online
+fine-tune resolves the residual offline-vs-deployment distribution
+shift; an adaptive conservatism coefficient gates how aggressively the
+online updates can leave the offline prior. We instantiate this as
+Geodesic-CQL pretrain on 2008--2020 transitions feeding a
+SAC-Dirichlet fine-tune with $\beta_t = \alpha_{\mathrm{CQL}} \cdot
+\sigma(\eta \cdot \mathrm{KL}(h_{\mathrm{off}} \| h_{\mathrm{on}}))$
+--- a per-step CQL-penalty modulation driven by the regime-encoder KL
+between offline and online observation distributions. On a 1{,}061-day
+causal test window (2022-Q1 through 2026-Q1, the post-2022
+stock-bond-correlation regime), this adaptive-O2O agent achieves test
+Sharpe $1.762 \pm 0.154$ across three seeds. Across four experimental phases (offline baselines, online-only
+baselines, four-way O2O comparison, GRPO group-size ablation),
+adaptive O2O is the only RL method to beat both equal-weight ($0.953$)
+and risk-parity ($1.161$) on this window.
+
+The headline mechanism is not what we pre-registered, and surfacing
+the revision properly is the second-order contribution of this paper.
+The pre-registered hypothesis was that the modulated $\beta_t$ would
+let the SAC fine-tune trade actively against distribution shift in the
+test window: relax pessimism under in-support observations, saturate
+it under shift. The Phase~2C results disconfirm that mechanism. Both
+naive ($\beta_t \equiv \alpha_{\mathrm{CQL}}$) and adaptive O2O
+converge to functionally static allocations on the test window; the
+differential between them is not how they trade but which static
+allocation the SAC fine-tune lands on. Naive's pinned conservatism
+leaves the basin random across seeds; adaptive's modulated schedule
+steers the same SAC dynamics from the same Geodesic-CQL pretrain to a
+uniformly strong basin --- an eight-fold seed-std reduction over naive
+(Sec.~\ref{sec:experiments:phase2c}). The conservatism schedule's load-bearing
+function on this universe is convergence-basin steering during
+fine-tune, not online responsiveness during deployment, reframing the
+design target for O2O scheduling research from ``track distribution
+shift'' to ``stabilize the converged fixed point of the fine-tune
+dynamics.'' Sec.~\ref{sec:discussion} unpacks the implication.
+
+The paper's other two contributions are methodological and orthogonal
+to the headline empirical result. \emph{Continuous GRPO}
+(Sec.~\ref{sec:method:grpo}) adapts Group Relative Policy Optimization
+\citep{shao2024deepseekmath} from discrete-token LM action spaces to a
+continuous Dirichlet actor on the simplex. The critic-free derivation
+exploits an environmental property: next-state independence from the
+agent's action (\emph{exogeneity}; Eq.~\ref{eq:exogeneity},
+unit-tested at the env boundary), under which the bootstrapped
+continuation cancels in within-group centering. The formulation is
+sound; empirically it does not beat classical baselines on this
+universe --- a separation we surface as evidence that methodological
+contribution and empirical winning are independent claims.
+\emph{Algorithm-class differential as a leak diagnostic}
+(Appendix~\ref{app:leak}) emerged from a label leak we discovered in
+the offline-RL pipeline mid-Phase-2: unconstrained $Q$-maximizing
+methods read tomorrow's reward off today's observation while
+behavior-anchored methods cannot, producing a $> 2\times$ Sharpe gap
+that we recommend as a STOP condition for offline-RL benchmark
+builders.
+
+Three contributions, then: (1) adaptive-O2O as the only RL method we
+tested to beat both classical baselines on the post-2022 window, with
+the basin-selection mechanism revision as the central interpretive
+finding; (2) Continuous GRPO under exogenous state transitions;
+(3) the algorithm-class-differential leak diagnostic with its
+feature-space-specific scope condition. Sec.~\ref{sec:related}
+positions the work; Sec.~\ref{sec:method} formalizes both methods;
+Sec.~\ref{sec:experiments} reports the four-phase experimental
+program; Sec.~\ref{sec:limitations} discusses interpretation and
+limitations.

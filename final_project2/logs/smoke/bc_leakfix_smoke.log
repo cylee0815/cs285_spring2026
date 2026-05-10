@@ -1,0 +1,16 @@
+Device: cuda
+Downloading market data: ['SPY', 'EEM', 'TLT', 'HYG', 'DBC', 'GLD', 'UUP', 'SHY']
+Train (offline): 2008-01-02 -> 2020-12-31  (3274 days)
+Val   (HP eval): 2021-01-04 -> 2021-12-31  (252 days)
+Test  (eval):    2022-01-03 -> 2026-03-30  (1063 days)
+obs_dim=56, action_dim=8
+Collecting 50000 offline transitions...
+Collected 50000 transitions in replay buffer.
+bc:   0%|          | 0/200 [00:00<?, ?it/s]bc:   0%|          | 1/200 [00:00<01:08,  2.90it/s]bc:  32%|███▏      | 64/200 [00:00<00:00, 186.05it/s]bc:  50%|█████     | 101/200 [00:00<00:00, 207.02it/s]bc:  82%|████████▏ | 164/200 [00:00<00:00, 319.38it/s]bc: 100%|██████████| 200/200 [00:00<00:00, 264.33it/s]
+
+=== Final evaluation ===
+Train : ret=+0.5001  pv=1.6489  annret=+0.0392  annvol=0.0748  sharpe=+0.552  sortino=+0.696  calmar=+0.186  mdd=0.2106  win=0.540  turnover=0.0095
+Val   : ret=+0.0717  pv=1.0743  annret=+0.0743  annvol=0.0548  sharpe=+1.340  sortino=+1.882  calmar=+2.847  mdd=0.0261  win=0.558  turnover=0.0104
+Test  : ret=+0.2582  pv=1.2946  annret=+0.0631  annvol=0.0718  sharpe=+0.890  sortino=+1.242  calmar=+0.513  mdd=0.1230  win=0.539  turnover=0.0097
+[save] results/smoke/bc_leakfix_smoke/metrics.json
+Done.

@@ -114,24 +114,34 @@ class ReplayBuffer:
         env: gym.Env,
         n_steps: int,
         policy=None,  # callable(obs) -> action, or None for random
+        policy_mixture=None,  # list of (callable, float weight) tuples
         verbose: bool = True,
+        mixture_seed: Optional[int] = None,
     ):
         """
         Collect offline data by rolling out a behavioral policy in the environment.
 
-        Uses a uniform-Dirichlet behavioral policy by default (proper simplex
-        samples rather than the unbounded Gaussian draws that
-        ``env.action_space.sample()`` produces for Box(-inf, inf) spaces).
+        Behavior selection:
+            * ``policy_mixture`` — list of ``(callable, weight)`` pairs. One
+              policy is sampled per episode according to the (re-normalized)
+              weights and used for that whole episode. Mutually exclusive
+              with ``policy``.
+            * ``policy`` — a single callable, used for every step.
+            * neither — falls back to a uniform-Dirichlet(α=1) behavioral
+              policy (proper simplex samples).
 
         Whenever the env reports ``info['executed_weights']`` we store THAT as
         the transition's action. This way the buffer always holds the true
         behavioral policy on the simplex — downstream algorithms that compute a
         behavioral log-prob or BC loss get a consistent, valid target regardless
         of whether the env was in logit or portfolio-weight mode.
+
+        ``mixture_seed`` controls episode-level policy sampling determinism;
+        it does NOT affect within-policy stochasticity (e.g., Dirichlet draws),
+        which the policy callables manage themselves.
         """
-        obs, _ = env.reset()
-        episode_start = True
-        collected = 0
+        if policy is not None and policy_mixture is not None:
+            raise ValueError("pass `policy` or `policy_mixture`, not both")
 
         action_dim = env.action_space.shape[0]
 
@@ -141,11 +151,55 @@ class ReplayBuffer:
             u = np.random.exponential(scale=1.0, size=action_dim).astype(np.float32)
             return u / (u.sum() + 1e-12)
 
+        # Validate + pre-normalize the mixture once so per-episode sampling
+        # is just a single ``rng.choice`` call.
+        mixture_callables = None
+        mixture_probs = None
+        if policy_mixture is not None:
+            if not policy_mixture:
+                raise ValueError("policy_mixture must be non-empty")
+            mixture_callables = []
+            weights = []
+            for entry in policy_mixture:
+                if not (isinstance(entry, tuple) and len(entry) == 2):
+                    raise ValueError(
+                        "policy_mixture entries must be (callable, weight) tuples"
+                    )
+                pol, w = entry
+                if not callable(pol):
+                    raise ValueError("first element of each entry must be callable")
+                w = float(w)
+                if w <= 0:
+                    raise ValueError("policy_mixture weights must be positive")
+                mixture_callables.append(pol)
+                weights.append(w)
+            weights_arr = np.asarray(weights, dtype=np.float64)
+            mixture_probs = weights_arr / weights_arr.sum()
+
+        mixture_rng = (
+            np.random.default_rng(mixture_seed)
+            if mixture_seed is not None
+            else np.random.default_rng()
+        )
+
+        def _pick_episode_policy():
+            if mixture_callables is not None:
+                idx = int(mixture_rng.choice(len(mixture_callables), p=mixture_probs))
+                return mixture_callables[idx]
+            if policy is not None:
+                return policy
+            return _default_policy
+
+        obs, _ = env.reset()
+        episode_start = True
+        collected = 0
+        episode_policy = _pick_episode_policy()
+
         if verbose:
             print(f"Collecting {n_steps} offline transitions...")
 
         while collected < n_steps:
-            action = policy(obs) if policy is not None else _default_policy(obs)
+            action = episode_policy(obs)
 
             next_obs, reward, terminated, truncated, info = env.step(action)
             done = terminated or truncated
@@ -161,6 +215,7 @@ class ReplayBuffer:
             if done:
                 obs, _ = env.reset()
                 episode_start = True
+                episode_policy = _pick_episode_policy()
 
         if verbose:
             print(f"Collected {self._size} transitions in replay buffer.")

@@ -1,0 +1,41 @@
+Device: cuda
+[splits] train=3274 val=252 test=1061
+[shapes] obs_dim=216  action_dim=8
+[buffer] loading 3274 train transitions from datasets/real_dirichlet.npz
+[eval] val env T=252
+[train] 20000 updates
+  step  1000/20000  val_sharpe=+1.321  val_turn=0.0041  v_loss=0.0000  q_loss=0.0000  actor_loss=-8.5336
+  step  2000/20000  val_sharpe=+1.223  val_turn=0.0175  v_loss=0.0000  q_loss=0.0001  actor_loss=-8.5647
+  step  3000/20000  val_sharpe=+0.966  val_turn=0.0712  v_loss=0.0000  q_loss=0.0001  actor_loss=-8.6333
+  step  4000/20000  val_sharpe=+0.496  val_turn=0.1344  v_loss=0.0000  q_loss=0.0001  actor_loss=-8.7175
+  step  5000/20000  val_sharpe=+0.052  val_turn=0.1852  v_loss=0.0000  q_loss=0.0001  actor_loss=-8.8819
+  step  6000/20000  val_sharpe=-0.187  val_turn=0.2064  v_loss=0.0000  q_loss=0.0001  actor_loss=-8.8423
+  step  7000/20000  val_sharpe=-0.287  val_turn=0.2290  v_loss=0.0000  q_loss=0.0001  actor_loss=-8.8730
+  step  8000/20000  val_sharpe=-0.436  val_turn=0.2542  v_loss=0.0000  q_loss=0.0001  actor_loss=-8.8360
+  step  9000/20000  val_sharpe=-0.550  val_turn=0.2685  v_loss=0.0000  q_loss=0.0001  actor_loss=-9.0471
+  step 10000/20000  val_sharpe=-0.592  val_turn=0.2757  v_loss=0.0000  q_loss=0.0001  actor_loss=-9.0352
+  step 11000/20000  val_sharpe=-0.669  val_turn=0.2916  v_loss=0.0000  q_loss=0.0001  actor_loss=-8.9146
+  step 12000/20000  val_sharpe=-0.709  val_turn=0.3025  v_loss=0.0000  q_loss=0.0001  actor_loss=-8.9181
+  step 13000/20000  val_sharpe=-0.733  val_turn=0.3092  v_loss=0.0000  q_loss=0.0001  actor_loss=-9.0856
+  step 14000/20000  val_sharpe=-0.744  val_turn=0.3113  v_loss=0.0000  q_loss=0.0001  actor_loss=-9.0145
+  step 15000/20000  val_sharpe=-0.785  val_turn=0.3196  v_loss=0.0000  q_loss=0.0001  actor_loss=-9.1819
+  step 16000/20000  val_sharpe=-0.830  val_turn=0.3234  v_loss=0.0000  q_loss=0.0001  actor_loss=-8.9604
+  step 17000/20000  val_sharpe=-0.857  val_turn=0.3239  v_loss=0.0000  q_loss=0.0001  actor_loss=-8.7691
+  step 18000/20000  val_sharpe=-0.901  val_turn=0.3247  v_loss=0.0000  q_loss=0.0001  actor_loss=-8.7804
+  step 19000/20000  val_sharpe=-0.946  val_turn=0.3334  v_loss=0.0000  q_loss=0.0001  actor_loss=-9.0411
+[eval] test env T=1061
+============================================================
+  sharpe_ratio        = +0.3979
+  annual_return       = +0.0298
+  max_drawdown        = +0.1674
+  turnover            = +0.2060
+  cumulative_return   = +0.1203
+  n_steps             = 1060
+  weights_mean = [0.113, 0.122, 0.133, 0.125, 0.119, 0.124, 0.138, 0.126]
+  weights_std  = [0.043, 0.045, 0.058, 0.049, 0.039, 0.047, 0.08, 0.048]
+============================================================
+[save] results/aux_iql_216d_diag/iql_216d_diag_seed42/actor.pt
+[save] results/aux_iql_216d_diag/iql_216d_diag_seed42/metrics.json
+[save] results/aux_iql_216d_diag/iql_216d_diag_seed42/diag_history.json (19 snapshots)
+
+[SANITY FAIL] test Sharpe +0.3979 outside [0.85, 1.05]

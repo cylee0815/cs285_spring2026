@@ -1,0 +1,34 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.2}{Related Work}{}% 2
+\BOOKMARK [1][-]{section.3}{Method}{}% 3
+\BOOKMARK [2][-]{subsection.3.1}{Problem setup}{section.3}% 4
+\BOOKMARK [2][-]{subsection.3.2}{Continuous GRPO}{section.3}% 5
+\BOOKMARK [3][-]{subsubsection.3.2.1}{Policy parameterization: Dirichlet head on the simplex}{subsection.3.2}% 6
+\BOOKMARK [3][-]{subsubsection.3.2.2}{Group sampling under exogenous state transitions}{subsection.3.2}% 7
+\BOOKMARK [3][-]{subsubsection.3.2.3}{Group-relative advantage}{subsection.3.2}% 8
+\BOOKMARK [3][-]{subsubsection.3.2.4}{Loss}{subsection.3.2}% 9
+\BOOKMARK [3][-]{subsubsection.3.2.5}{Why this is sound only here}{subsection.3.2}% 10
+\BOOKMARK [2][-]{subsection.3.3}{Adaptive-O2O scheduler}{section.3}% 11
+\BOOKMARK [1][-]{section.4}{Experiments}{}% 12
+\BOOKMARK [2][-]{subsection.4.1}{Setup}{section.4}% 13
+\BOOKMARK [2][-]{subsection.4.2}{Phase 2A \205 offline-baseline landscape}{section.4}% 14
+\BOOKMARK [2][-]{subsection.4.3}{Phase 2B \205 online-only baselines}{section.4}% 15
+\BOOKMARK [2][-]{subsection.4.4}{Phase 2C \205 four-way O2O comparison \(the central experiment\)}{section.4}% 16
+\BOOKMARK [2][-]{subsection.4.5}{Phase 2D \205 GRPO group-size ablation}{section.4}% 17
+\BOOKMARK [1][-]{section.5}{Discussion and Limitations}{}% 18
+\BOOKMARK [2][-]{subsection.5.1}{Discussion}{section.5}% 19
+\BOOKMARK [2][-]{subsection.5.2}{Limitations}{section.5}% 20
+\BOOKMARK [1][-]{appendix.A}{Implementation notes: pre-existing bugs found and fixed}{}% 21
+\BOOKMARK [2][-]{subsection.A.1}{Bug 1: MomentumPolicy collapsed to equal weight}{appendix.A}% 22
+\BOOKMARK [2][-]{subsection.A.2}{Bug 2: run\137o2o.py shadowed O2OAgent import inside main\(\)}{appendix.A}% 23
+\BOOKMARK [2][-]{subsection.A.3}{Bug 3: transfer\137to\137online left the SAC env in a terminal state}{appendix.A}% 24
+\BOOKMARK [2][-]{subsection.A.4}{Bug 4: run\137o2o.py o2o-phase ignored cql\137weight \204 the centerpiece bug}{appendix.A}% 25
+\BOOKMARK [2][-]{subsection.A.5}{GRPO loss implementation scaffolding}{appendix.A}% 26
+\BOOKMARK [2][-]{subsection.A.6}{Cross-bug dependencies and CI implications}{appendix.A}% 27
+\BOOKMARK [1][-]{appendix.B}{Leak detection and the limits of behavior anchoring}{}% 28
+\BOOKMARK [2][-]{subsection.B.1}{The leak}{appendix.B}% 29
+\BOOKMARK [2][-]{subsection.B.2}{Differential exploitation on the leaky pipeline}{appendix.B}% 30
+\BOOKMARK [2][-]{subsection.B.3}{Causal-pipeline confirmation}{appendix.B}% 31
+\BOOKMARK [2][-]{subsection.B.4}{Scope condition: leak-invariance is feature-space-specific}{appendix.B}% 32
+\BOOKMARK [2][-]{subsection.B.5}{The one-line fix}{appendix.B}% 33
+\BOOKMARK [2][-]{subsection.B.6}{Methodological observation: differential as diagnostic}{appendix.B}% 34
