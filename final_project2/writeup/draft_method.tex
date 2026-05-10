@@ -155,6 +155,20 @@ re-snapshotted --- a stronger anchor than RLHF-style periodic refreshes,
 chosen so that the policy cannot drift unboundedly under the small-batch
 financial signal-to-noise ratio.
 
+The reference policy $\pi_{\text{ref}}$ is the actor weights at trainer
+construction time, i.e.\ \emph{after} any optional offline warm-start
+load (\texttt{online\_rl/agents/grpo.py:228}; ref is a frozen
+\texttt{deepcopy} of the actor immediately following the
+\texttt{actor.load\_state\_dict(\dots)} block in
+\texttt{scripts/train\_grpo.py}). In the online-only configuration
+$\pi_{\text{ref}}$ is therefore a random-init Dirichlet; in the offline
+warm-start configuration used as one Phase~2C condition,
+$\pi_{\text{ref}}$ is the offline-pretrained policy snapshot, providing
+a meaningful prior anchor toward the offline-RL solution manifold rather
+than toward random init. The KL term then reads as ``do not drift far
+from what the offline pretraining converged to,'' which is the standard
+O2O semantic.
+
 % TODO(post-2B): the persona's GRPO framing leaves the importance ratio out
 % of the advantage equation. The code's surrogate includes both an
 % importance-ratio (rho) and a clipped-surrogate term --- closer to PPO

@@ -1,0 +1,148 @@
+\begin{thebibliography}{21}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[An et~al.(2021)An, Moon, Kim, and Song]{an2021uncertainty}
+Gaon An, Seungyong Moon, Jang-Hyun Kim, and Hyun~Oh Song.
+\newblock Uncertainty-based offline reinforcement learning with diversified
+  q-ensemble.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2021.
+
+\bibitem[Chen et~al.(2021)Chen, Lu, Rajeswaran, Lee, Grover, Laskin, Abbeel,
+  Srinivas, and Mordatch]{chen2021decision}
+Lili Chen, Kevin Lu, Aravind Rajeswaran, Kimin Lee, Aditya Grover, Misha
+  Laskin, Pieter Abbeel, Aravind Srinivas, and Igor Mordatch.
+\newblock Decision transformer: Reinforcement learning via sequence modeling.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2021.
+
+\bibitem[DeepSeek-AI(2024)]{liu2024deepseek}
+DeepSeek-AI.
+\newblock Deepseek-v2: A strong, economical, and efficient mixture-of-experts
+  language model.
+\newblock \emph{arXiv preprint arXiv:2405.04434}, 2024.
+
+\bibitem[Deng et~al.(2017)Deng, Bao, Kong, Ren, and Dai]{deng2017deep}
+Yue Deng, Feng Bao, Youyong Kong, Zhiquan Ren, and Qionghai Dai.
+\newblock Deep direct reinforcement learning for financial signal
+  representation and trading.
+\newblock \emph{IEEE Transactions on Neural Networks and Learning Systems},
+  28\penalty0 (3):\penalty0 653--664, 2017.
+
+\bibitem[Dong et~al.(2024)Dong, Xiong, Pang, Wang, Zhao, Zhou, Jiang, Sahoo,
+  Xiong, and Zhang]{yu2024rlhf}
+Hanze Dong, Wei Xiong, Bo~Pang, Haoxiang Wang, Han Zhao, Yingbo Zhou, Nan
+  Jiang, Doyen Sahoo, Caiming Xiong, and Tong Zhang.
+\newblock {RLHF} workflow: From reward modeling to online {RLHF}.
+\newblock \emph{arXiv preprint arXiv:2405.07863}, 2024.
+
+\bibitem[Dud{\'\i}k et~al.(2014)Dud{\'\i}k, Erhan, Langford, and
+  Li]{dudik2014doubly}
+Miroslav Dud{\'\i}k, Dumitru Erhan, John Langford, and Lihong Li.
+\newblock Doubly robust policy evaluation and optimization.
+\newblock In \emph{Statistical Science}, 2014.
+
+\bibitem[Foerster et~al.(2018)Foerster, Farquhar, Afouras, Nardelli, and
+  Whiteson]{foerster2018counterfactual}
+Jakob Foerster, Gregory Farquhar, Triantafyllos Afouras, Nantas Nardelli, and
+  Shimon Whiteson.
+\newblock Counterfactual multi-agent policy gradients.
+\newblock In \emph{AAAI Conference on Artificial Intelligence}, 2018.
+
+\bibitem[Fujimoto and Gu(2021)]{fujimoto2021minimalist}
+Scott Fujimoto and Shixiang~Shane Gu.
+\newblock A minimalist approach to offline reinforcement learning.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2021.
+
+\bibitem[Fujimoto et~al.(2019)Fujimoto, Meger, and Precup]{fujimoto2019off}
+Scott Fujimoto, David Meger, and Doina Precup.
+\newblock Off-policy deep reinforcement learning without exploration.
+\newblock In \emph{International Conference on Machine Learning (ICML)}, 2019.
+
+\bibitem[Jiang et~al.(2017)Jiang, Xu, and Liang]{jiang2017deep}
+Zhengyao Jiang, Dixing Xu, and Jinjun Liang.
+\newblock A deep reinforcement learning framework for the financial portfolio
+  management problem.
+\newblock \emph{arXiv preprint arXiv:1706.10059}, 2017.
+
+\bibitem[Joachims et~al.(2018)Joachims, Swaminathan, and
+  de~Rijke]{joachims2018deep}
+Thorsten Joachims, Adith Swaminathan, and Maarten de~Rijke.
+\newblock Deep learning with logged bandit feedback.
+\newblock \emph{International Conference on Learning Representations}, 2018.
+
+\bibitem[Kostrikov et~al.(2022)Kostrikov, Nair, and
+  Levine]{kostrikov2022offline}
+Ilya Kostrikov, Ashvin Nair, and Sergey Levine.
+\newblock Offline reinforcement learning with implicit q-learning.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2022.
+
+\bibitem[Kumar et~al.(2020)Kumar, Zhou, Tucker, and
+  Levine]{kumar2020conservative}
+Aviral Kumar, Aurick Zhou, George Tucker, and Sergey Levine.
+\newblock Conservative q-learning for offline reinforcement learning.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2020.
+
+\bibitem[Liu et~al.(2020)Liu, Yang, Chen, Zhang, Yang, Xiao, and
+  Wang]{liu2020finrl}
+Xiao-Yang Liu, Hongyang Yang, Qian Chen, Runjia Zhang, Liuqing Yang, Bowen
+  Xiao, and Christina~Dan Wang.
+\newblock {FinRL}: A deep reinforcement learning library for automated stock
+  trading in quantitative finance.
+\newblock \emph{arXiv preprint arXiv:2011.09607}, 2020.
+
+\bibitem[Ma et~al.(2022)Ma, Yan, Hejna, Pavone, Bajcsy, Finn, Pinto, and
+  Bastani]{ma2022geodesic}
+Yecheng~Jason Ma, Andrew Yan, Joey Hejna, Marco Pavone, Andrea Bajcsy, Chelsea
+  Finn, Lerrel Pinto, and Osbert Bastani.
+\newblock Conservative and adaptive penalty for model-based safe reinforcement
+  learning.
+\newblock \emph{arXiv preprint arXiv:2207.07276}, 2022.
+
+\bibitem[Moody and Saffell(2001)]{moody2001learning}
+John Moody and Matthew Saffell.
+\newblock Learning to trade via direct reinforcement.
+\newblock \emph{IEEE Transactions on Neural Networks}, 12\penalty0
+  (4):\penalty0 875--889, 2001.
+
+\bibitem[Nair et~al.(2020)Nair, Gupta, Dalal, and Levine]{nair2020awac}
+Ashvin Nair, Abhishek Gupta, Murtaza Dalal, and Sergey Levine.
+\newblock {AWAC}: Accelerating online reinforcement learning with offline
+  datasets.
+\newblock \emph{arXiv preprint arXiv:2006.09359}, 2020.
+
+\bibitem[Pomerleau(1991)]{pomerleau1991efficient}
+Dean~A. Pomerleau.
+\newblock Efficient training of artificial neural networks for autonomous
+  navigation.
+\newblock \emph{Neural Computation}, 3\penalty0 (1):\penalty0 88--97, 1991.
+
+\bibitem[Shao et~al.(2024)Shao, Wang, Zhu, Xu, Song, Bi, Zhang, Zhang, Li, Wu,
+  and Guo]{shao2024deepseekmath}
+Zhihong Shao, Peiyi Wang, Qihao Zhu, Runxin Xu, Junxiao Song, Xiao Bi, Haowei
+  Zhang, Mingchuan Zhang, Y.~K. Li, Y.~Wu, and Daya Guo.
+\newblock Deepseekmath: Pushing the limits of mathematical reasoning in open
+  language models.
+\newblock \emph{arXiv preprint arXiv:2402.03300}, 2024.
+
+\bibitem[Zhao and Pearce(2022)]{zhao2022adaptive}
+Sirui Zhao and Tim Pearce.
+\newblock Adaptive online replanning with diffusion models.
+\newblock \emph{arXiv preprint arXiv:2210.06463}, 2022.
+
+\bibitem[Zheng et~al.(2023)Zheng, Li, Yu, Yang, Lin, Zhao, Liu, and
+  Zhan]{zheng2023adaptive}
+Yi~Zheng, Jianxiong Li, Dongjie Yu, Yinan Yang, Sergey~E. Lin, Hang Zhao, Boyi
+  Liu, and Xianyuan Zhan.
+\newblock Adaptive behavior cloning regularization for stable offline-to-online
+  reinforcement learning.
+\newblock \emph{arXiv preprint arXiv:2210.13846}, 2023.
+
+\end{thebibliography}

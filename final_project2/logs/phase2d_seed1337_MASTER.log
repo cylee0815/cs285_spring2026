@@ -1,0 +1,7 @@
+[start] grpo_G16_lambda0.001_seed1337 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2d/grpo_G16_lambda0.001_seed1337.log
+[start] grpo_G8_lambda0.001_seed1337 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2d/grpo_G8_lambda0.001_seed1337.log
+[start] grpo_G4_lambda0.001_seed1337 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2d/grpo_G4_lambda0.001_seed1337.log
+[done 0] grpo_G4_lambda0.001_seed1337
+[done 0] grpo_G8_lambda0.001_seed1337
+[done 0] grpo_G16_lambda0.001_seed1337
+===== Phase 2D seed=1337 complete in 364s =====

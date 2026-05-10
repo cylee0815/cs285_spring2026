@@ -1,0 +1,225 @@
+% Appendix: implementation notes — pre-existing bugs found and fixed
+% during Phase 2 prep. Ported from writeup/draft_implementation_notes.md.
+% Faithful port (appendix is beyond the 8-page main-body cap), with
+% LaTeX-friendly verbatim blocks for code and \texttt{} for inline.
+
+\section{Implementation notes: pre-existing bugs found and fixed}
+\label{app:implementation}
+
+Four bugs surfaced during smoke testing of the existing Phase-2 code
+paths before any new training runs were launched. Each is fixed in the
+\texttt{phase2-writeup} branch and was in place before any of the
+Phase 2A / 2B / 2C / 2D runs reported in this paper started. Lines are
+quoted at post-fix locations; pre-fix locations differ by $\le 5$ lines
+for the non-deleted bugs.
+
+\subsection{Bug 1: \texttt{MomentumPolicy} collapsed to equal weight}
+\label{app:impl:momentum}
+
+\textbf{File.} \texttt{policies/behavior.py:54--65}.
+
+\textbf{Pre-fix code.}
+\begin{verbatim}
+window = returns_history[-self.lookback:]
+scores = np.mean(window, axis=0)
+scores_shifted = scores - np.max(scores)
+exp_scores = np.exp(scores_shifted)
+weights = exp_scores / exp_scores.sum()
+\end{verbatim}
+
+\textbf{Failure mode.} Daily forward-return magnitudes for the 8-ETF
+basket are $\sim\!10^{-4}$. Taking the mean over a 60-day lookback gives
+scores in the same range. After \texttt{scores - max(scores)} they sit
+in $[-10^{-3},\,0]$, so \texttt{exp(scores)} is in $[0.999,\,1.000]$ for
+every asset. The softmax is numerically uniform: \texttt{weights} $\approx
+[1/N,\,1/N,\,\ldots,\,1/N]$. The momentum policy emitted equal-weight
+allocations for the entire dataset.
+
+\textbf{Detected by.} Sanity-checking the four
+\texttt{datasets/real\_*.npz} builds. \texttt{real\_momentum.npz} had
+\texttt{actions.mean(0) = [0.125]*8} and reward stats
+(mean=0.00021, std=0.00516) bit-identical to
+\texttt{real\_equal\_weight.npz}. With 4587 transitions over 18 years
+that is statistically impossible for a genuinely momentum-tilted policy.
+
+\textbf{Fix.} \texttt{scores = np.sum(window, axis=0)} (60-day cumulative
+log return, typical magnitude $\sim\!10^{-2}$ to $10^{-1}$, gives
+meaningful softmax spread). One line. Verified post-fix: per-row
+max-min spread of the saved actions went from $0.0$ to $0.023$ with
+non-zero per-coordinate std ($\sim\!1\%$).
+
+\textbf{Integrity impact.} The milestone narrative claims the offline
+behavior distribution was a mixture of Dirichlet / equal-weight /
+momentum / risk-parity. Pre-fix, the momentum component was
+indistinguishable from the equal-weight component, so the mixture was
+effectively three policies with one duplicated. Behavior coverage in
+the offline dataset was narrower than reported. The Phase 2
+\texttt{default\_offline\_mixture} (in \texttt{policies/mixture.py})
+loads the post-fix policy, so the new offline runs are trained on the
+corrected mixture. The pre-Phase-2 27-IQL ablation predates this
+finding entirely --- its uniform-Dirichlet behavior buffer sidesteps
+the problem by not invoking \texttt{MomentumPolicy} at all.
+
+\subsection{Bug 2: \texttt{run\_o2o.py} shadowed \texttt{O2OAgent}
+import inside \texttt{main()}}
+\label{app:impl:shadow-import}
+
+\textbf{File (pre-fix).} \texttt{scripts/run\_o2o.py:309} had a
+redundant \texttt{from hybrid\_rl.agents.o2o\_agent import O2OAgent}
+inside the \texttt{elif args.phase == "offline":} branch, in addition
+to the canonical top-of-file import at \texttt{scripts/run\_o2o.py:45}.
+
+\textbf{Failure mode.} Python's name-resolution rule: if any statement
+inside a function rebinds a name, that name is treated as local for the
+entire function body, regardless of textual order. So when
+\texttt{main()} reached
+\texttt{agent = O2OAgent(custom\_train\_env, test\_env, config, device)}
+on line $\sim 270$ in the \texttt{o2o} branch, the local-binding
+promise had already been made by the import inside the unreached
+\texttt{offline} branch --- and the local had not yet been assigned.
+Result: \texttt{UnboundLocalError: cannot access local variable
+'O2OAgent' where it is not associated with a value} at the first
+instruction of the o2o phase.
+
+\textbf{Detected by.} First O2O smoke test
+(\texttt{run\_o2o.py --phase=o2o}).
+
+\textbf{Fix.} Delete the redundant inline import
+(\texttt{scripts/run\_o2o.py} line 309 at HEAD now contains a docstring
+comment instead). One line.
+
+\textbf{Integrity impact.} Pre-fix, the \texttt{o2o} phase could not
+run at all. Any prior milestone result attributed to the O2O pipeline
+either came from the \texttt{phase=offline} branch (which doesn't
+trigger the shadow) or was never produced. This bug is interlocked with
+Bug 3 below: even after fixing the import, the \texttt{o2o} branch
+crashed on its first online step. Together, Bugs 2 and 3 indicate the
+o2o phase had not been end-to-end exercised in CI before the Phase 2
+prep work.
+
+\subsection{Bug 3: \texttt{transfer\_to\_online} left the SAC env in a
+terminal state}
+\label{app:impl:terminal-env}
+
+\textbf{File.} \texttt{hybrid\_rl/agents/o2o\_agent.py:142--164}.
+
+\textbf{Pre-fix behavior.} \texttt{O2OAgent.\_\_init\_\_} calls
+\texttt{self.sac\_agent = SACDirichlet(train\_env, config, device)}
+(line 84), and \texttt{SACDirichlet.\_\_init\_\_} immediately runs
+\texttt{self.\_obs, \_ = env.reset()}
+(\texttt{online\_rl/agents/sac\_dirichlet.py:109}) to cache the first
+observation. Subsequently, \texttt{agent.load\_offline\_data(...)}
+calls \texttt{self.offline\_buffer.load\_from\_env(self.train\_env, ...)}
+--- which shares the same env object --- and rolls it forward to
+populate the offline buffer, leaving \texttt{train\_env.\_t} at an
+exhausted/terminal index. The cached \texttt{sac\_agent.\_obs} is now
+stale.
+
+When \texttt{transfer\_to\_online} finishes copying parameters and the
+next \texttt{sac\_agent.collect\_step()} runs, line 147 of
+\texttt{sac\_dirichlet.py} calls \texttt{self.env.step(action)} on the
+still-exhausted env, which raises \texttt{RuntimeError: Episode is
+done. Call reset() before stepping.}
+(\texttt{core/envs/portfolio\_env.py:142}).
+
+\textbf{Detected by.} First successful run past Bug 2: the O2O smoke
+crashed immediately on entering Phase 2.
+
+\textbf{Fix.} Append four lines to \texttt{transfer\_to\_online}:
+\begin{verbatim}
+self.sac_agent._obs, _ = self.sac_agent.env.reset()
+self.sac_agent._episode_start = True
+self.sac_agent._episode_return = 0.0
+self.sac_agent._gru_hidden = self.sac_agent.regime_encoder.init_hidden(
+    1, self.sac_agent.device
+)
+\end{verbatim}
+This re-anchors the SAC agent on a fresh post-reset env state, matching
+the contract the rest of \texttt{collect\_step} expects.
+
+\textbf{Integrity impact.} Same as Bug 2: pre-fix, the o2o phase could
+not make a single online gradient step. Any reported O2O result must
+have post-dated this fix.
+
+\subsection{Bug 4: \texttt{run\_o2o.py} o2o-phase ignored
+\texttt{cql\_weight} --- the centerpiece bug}
+\label{app:impl:cql-weight}
+
+\textbf{File (pre-fix).} \texttt{scripts/run\_o2o.py:307--326}, an
+inline online-phase loop that called
+\begin{verbatim}
+m.update(agent.sac_agent.update_critic(mixed))
+\end{verbatim}
+without forwarding any \texttt{cql\_weight} argument.
+
+\textbf{File (post-fix).} \texttt{scripts/run\_o2o.py:307--312},
+replaced by a call to
+\begin{verbatim}
+o2o_history = agent.finetune_online(n_online)
+\end{verbatim}
+
+\textbf{Failure mode.} \texttt{SACDirichlet.update\_critic}'s signature
+is \texttt{def update\_critic(self, batch, cql\_weight: float = 0.0)}
+(\texttt{online\_rl/agents/sac\_dirichlet.py:173}). The pre-fix inline
+loop never passed the kwarg, so the critic was updated with
+\texttt{cql\_weight=0.0} for the entire online phase --- i.e.,
+\textbf{no conservatism} in any iteration, regardless of the
+\texttt{-{}-adaptive\_conservatism} CLI flag that we added in this
+branch (and regardless of the original config's \texttt{cql\_alpha=5.0}).
+
+The full \texttt{O2OAgent.finetune\_online} method
+(\texttt{hybrid\_rl/agents/o2o\_agent.py:204--275}) implements the
+adaptive schedule:
+\begin{itemize}\setlength\itemsep{0pt}
+  \item Tracks recent online regime samples (lines 225--241).
+  \item Computes
+    \texttt{cql\_w = self.\_compute\_adaptive\_cql\_weight(h\_online, var\_online)}
+    via $\alpha_{\mathrm{CQL}} \cdot \sigma(\eta \cdot \mathrm{KL})$
+    (line 247, formula at lines 191--200).
+  \item Calls \texttt{update\_critic(mixed\_batch, cql\_weight=cql\_w)}
+    (line 258) --- this time with the kwarg.
+\end{itemize}
+This entire pipeline existed in the codebase but was \emph{never
+invoked} from the CLI: \texttt{run\_o2o.py} rolled its own (broken)
+inline replacement.
+
+\textbf{Detected by.} Reading both files side-by-side after Bug 3 was
+fixed, to figure out where the \texttt{-{}-adaptive\_conservatism} flag
+would actually take effect. It didn't. The flag was a no-op until we
+swapped the inline loop for \texttt{agent.finetune\_online}.
+
+\textbf{Fix.} Replace the inline loop (and add metrics + cql-trajectory
+save): \texttt{scripts/run\_o2o.py:307--356}. The new code calls
+\texttt{finetune\_online}, which is the only path that respects the
+\texttt{adaptive\_conservatism} config flag.
+
+\textbf{Integrity impact --- read this carefully.} Pre-fix, every
+\texttt{o2o} phase run, regardless of CLI flags, was a ``fully-online
+fine-tune from offline init with zero conservatism'' --- i.e., it
+neither was the \emph{adaptive O2O} condition described in the proposal
+nor the \emph{naive fine-tune} condition in the four-way comparison nor
+anything in between. It was a third, different condition that the
+experimental design had no name for. Therefore: \textbf{the milestone's
+planned adaptive-O2O vs naive-fine-tune comparison was silently a
+degenerate-case-vs-degenerate-case comparison until this fix.} All
+Phase 2C results post-date this fix; any prior ``adaptive O2O'' numbers
+from earlier branches must be relabeled or discarded. We surface this
+in Sec.~\ref{sec:limitations} (Adaptive-O2O bug fix paragraph) rather
+than retroactively rewriting the milestone.
+
+\subsection{Cross-bug dependencies and CI implications}
+\label{app:impl:ci}
+
+Bugs 2, 3, and 4 are stacked: fixing 2 is a prerequisite to even
+encountering 3, and fixing 3 is a prerequisite to encountering 4. The
+fact that all three lived in \texttt{run\_o2o.py}'s \texttt{o2o} branch
+and were discovered in sequence by a single five-minute smoke test
+indicates the o2o phase had not been exercised end-to-end in the
+existing CI. We added no new CI step for this phase (Phase 2 budget did
+not allow it), but recommend a smoke-level integration test
+(\texttt{tests/test\_o2o\_pipeline\_smoke.py}) that runs
+\texttt{-{}-phase=o2o -{}-n\_offline\_updates=10 -{}-n\_online\_steps=20}
+as a follow-up before any extension of this work. The
+\texttt{MomentumPolicy} bug (1) is independent of the O2O cluster but
+has the same flavor: a unit test for behavior-policy diversity would
+have caught it in seconds.

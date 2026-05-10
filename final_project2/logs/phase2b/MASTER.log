@@ -1,0 +1,25 @@
+===== Batch 1/3: SAC-Dirichlet x 3 seeds =====
+[start] sac_dirichlet_lambda0.001_seed42 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2b/sac_dirichlet_lambda0.001_seed42.log
+[start] sac_dirichlet_lambda0.001_seed1337 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2b/sac_dirichlet_lambda0.001_seed1337.log
+[start] sac_dirichlet_lambda0.001_seed2024 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2b/sac_dirichlet_lambda0.001_seed2024.log
+[done 0] sac_dirichlet_lambda0.001_seed1337
+[done 0] sac_dirichlet_lambda0.001_seed42
+[done 0] sac_dirichlet_lambda0.001_seed2024
+[batch1] elapsed 3227s
+===== Batch 2/3: PPO-LSTM x 3 seeds =====
+[start] ppo_lstm_lambda0.001_seed42 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2b/ppo_lstm_lambda0.001_seed42.log
+[start] ppo_lstm_lambda0.001_seed2024 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2b/ppo_lstm_lambda0.001_seed2024.log
+[start] ppo_lstm_lambda0.001_seed1337 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2b/ppo_lstm_lambda0.001_seed1337.log
+[done 0] ppo_lstm_lambda0.001_seed2024
+[done 0] ppo_lstm_lambda0.001_seed42
+[done 0] ppo_lstm_lambda0.001_seed1337
+[batch2] elapsed 367s
+===== Batch 3/3: GRPO x 3 seeds =====
+[start] grpo_lambda0.001_seed42 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2b/grpo_lambda0.001_seed42.log
+[start] grpo_lambda0.001_seed1337 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2b/grpo_lambda0.001_seed1337.log
+[start] grpo_lambda0.001_seed2024 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2b/grpo_lambda0.001_seed2024.log
+[done 0] grpo_lambda0.001_seed1337
+[done 0] grpo_lambda0.001_seed42
+[done 0] grpo_lambda0.001_seed2024
+[batch3] elapsed 208s
+===== Phase 2B complete in 3802s =====

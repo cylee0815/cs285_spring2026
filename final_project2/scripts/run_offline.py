@@ -34,6 +34,10 @@ from core.envs.data_utils import (
 from core.envs.portfolio_obs_wrapper import PortfolioObsWrapper
 from core.buffers.replay_buffer import ReplayBuffer, NStepReplayBuffer
 from offline_rl.configs import CONFIG_MAP
+from policies.behavior import (
+    DirichletPolicy, EqualWeightPolicy, MomentumPolicy, RiskParityPolicy,
+)
+from policies.mixture import default_offline_mixture, make_episode_callable
 
 
 AGENT_MAP = {
@@ -92,6 +96,34 @@ def parse_args():
                              "and --offline_data_steps when set.")
     parser.add_argument("--no_wandb", action="store_true",
                         help="Disable WandB logging (also implied by --smoke_test).")
+    parser.add_argument(
+        "--behavior_mix", type=str, default="mixture",
+        choices=["mixture", "dirichlet", "equal_weight", "momentum", "risk_parity",
+                 "uniform_legacy"],
+        help=(
+            "Offline-buffer behavior policy. 'mixture' (default) rolls the "
+            "canonical 4-way Dirichlet/EW/Momentum/RP mix used by the Phase 2 "
+            "report. 'uniform_legacy' reproduces the pre-Phase-2 hardcoded "
+            "uniform-Dirichlet(1) behavior so old runs stay reproducible. "
+            "Single-policy choices pin the buffer to one rollout."
+        ),
+    )
+    parser.add_argument(
+        "--results_dir", type=str, default=None,
+        help=(
+            "If set, after training write a local metrics.json under "
+            "{results_dir}/{run_name}/. Used by the Phase 2 aggregator so "
+            "results don't depend on wandb access."
+        ),
+    )
+    parser.add_argument(
+        "--run_name", type=str, default=None,
+        help=(
+            "Override the auto-generated run name "
+            "({base_config}_seed{seed}). Useful when sweeping over "
+            "transaction_cost so runs don't overwrite each other on disk."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -449,7 +481,7 @@ def main():
               f"buffer_size={getattr(config, 'offline_buffer_size', 'n/a')}")
 
     # Init WandB (disabled entirely for smoke tests or when --no_wandb is set).
-    run_name = f"{args.base_config}_seed{args.seed}"
+    run_name = args.run_name or f"{args.base_config}_seed{args.seed}"
     use_wandb = not (args.smoke_test or args.no_wandb)
     if use_wandb:
         wandb.init(
@@ -479,7 +511,32 @@ def main():
             config.offline_buffer_size, obs_dim, action_dim, device,
             seq_len=seq_len,
         )
-    offline_buffer.load_from_env(train_env, n_steps=args.offline_data_steps)
+    # Behavior policy used to populate the offline buffer.
+    # Phase 2 default: 4-way mixture (Dirichlet/EW/Momentum/RP).
+    # ``uniform_legacy`` reproduces the pre-Phase-2 hardcoded uniform Dirichlet.
+    n_assets = train_env.action_space.shape[0]
+    if args.behavior_mix == "mixture":
+        policy_mixture = default_offline_mixture(train_env, seed=args.seed)
+        offline_buffer.load_from_env(
+            train_env,
+            n_steps=args.offline_data_steps,
+            policy_mixture=policy_mixture,
+            mixture_seed=args.seed,
+        )
+    elif args.behavior_mix == "uniform_legacy":
+        offline_buffer.load_from_env(train_env, n_steps=args.offline_data_steps)
+    else:
+        single = {
+            "dirichlet": DirichletPolicy(n_assets=n_assets, alpha=1.0, seed=args.seed),
+            "equal_weight": EqualWeightPolicy(n_assets=n_assets),
+            "momentum": MomentumPolicy(n_assets=n_assets, lookback=60),
+            "risk_parity": RiskParityPolicy(n_assets=n_assets, lookback=60),
+        }[args.behavior_mix]
+        offline_buffer.load_from_env(
+            train_env,
+            n_steps=args.offline_data_steps,
+            policy=make_episode_callable(single, train_env),
+        )
     offline_buffer.freeze()
 
     # Build agent
@@ -498,6 +555,8 @@ def main():
     # split. The test set is held out until the single final evaluation
     # after training completes, to prevent data leakage / test-set HP tuning.
     n_updates = config.n_offline_updates
+    best_val_sharpe = -float("inf")
+    best_val_step = 0
     for step in trange(n_updates, desc=args.base_config):
         metrics = agent.update()
         if step % args.eval_interval == 0 and metrics:
@@ -510,6 +569,10 @@ def main():
                 save_csv=True,
                 csv_path=val_csv,
             )
+            val_sharpe = float(eval_metrics.get("eval/sharpe_ratio", float("-inf")))
+            if val_sharpe > best_val_sharpe:
+                best_val_sharpe = val_sharpe
+                best_val_step = step
             wandb.log({
                 **{f"train/{k}": v for k, v in metrics.items()},
                 **eval_metrics,
@@ -573,6 +636,51 @@ def main():
     print(f"Train : {_fmt(final_train)}")
     print(f"Val   : {_fmt(final_val)}")
     print(f"Test  : {_fmt(final_test)}")
+
+    # Local metrics save (independent of wandb) so the Phase 2 aggregator
+    # can build per_run.csv from the filesystem.
+    if args.results_dir is not None:
+        out_dir = os.path.join(args.results_dir, run_name)
+        os.makedirs(out_dir, exist_ok=True)
+        record = {
+            "algo": args.base_config,
+            "seed": args.seed,
+            "transaction_cost": float(args.transaction_cost),
+            "n_step": int(args.n_step),
+            "behavior_mix": args.behavior_mix,
+            "n_offline_updates": int(n_updates),
+            "best_val_sharpe": (
+                float(best_val_sharpe) if best_val_sharpe != -float("inf") else None
+            ),
+            "best_val_step": int(best_val_step),
+            "test": {
+                "sharpe_ratio": float(final_test["eval/sharpe_ratio"]),
+                "annual_return": float(final_test["eval/annual_return"]),
+                "annual_volatility": float(final_test["eval/annual_volatility"]),
+                "max_drawdown": float(final_test["eval/max_drawdown"]),
+                "turnover": float(final_test["eval/avg_turnover"]),
+                "cumulative_return": float(final_test["eval/portfolio_value"]) - 1.0,
+                "sortino_ratio": float(final_test["eval/sortino_ratio"]),
+                "calmar_ratio": float(final_test["eval/calmar_ratio"]),
+            },
+            "val": {
+                "sharpe_ratio": float(final_val["eval/sharpe_ratio"]),
+                "annual_return": float(final_val["eval/annual_return"]),
+                "max_drawdown": float(final_val["eval/max_drawdown"]),
+                "turnover": float(final_val["eval/avg_turnover"]),
+            },
+        }
+        import json as _json
+        with open(os.path.join(out_dir, "metrics.json"), "w") as _f:
+            _json.dump(record, _f, indent=2)
+        print(f"[save] {out_dir}/metrics.json")
+        # Save actor state_dict so downstream tools (e.g. GRPO offline
+        # warm-start in scripts/train_grpo.py) can load this run as an
+        # initialization. Cheap (~few MB) and unconditional.
+        if hasattr(agent, "actor") and hasattr(agent.actor, "state_dict"):
+            actor_path = os.path.join(out_dir, "actor.pt")
+            torch.save(agent.actor.state_dict(), actor_path)
+            print(f"[save] {actor_path}")
 
     wandb.finish()
     print("Done.")

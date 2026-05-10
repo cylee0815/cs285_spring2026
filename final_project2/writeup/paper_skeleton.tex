@@ -1,0 +1,110 @@
+%% paper_skeleton.tex — Phase 2 paper assembly.
+%%
+%% Order follows NeurIPS-workshop convention. Each section uses
+%% \input{} so the existing draft files remain individually editable;
+%% no copy-paste of section content into this skeleton.
+%%
+%% Compile with:  pdflatex paper_skeleton; bibtex paper_skeleton; pdflatex paper_skeleton; pdflatex paper_skeleton
+%%
+%% Sections marked \input{} but not yet drafted: abstract, introduction.
+%% Both benefit from the integrated paper context and should be drafted
+%% in a fresh session with results/paper_master_table.csv and this
+%% skeleton both in hand.
+
+\documentclass{article}
+
+% --- Packages -----------------------------------------------------------
+\usepackage[a4paper, margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{natbib}     % \citep / \citet
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{caption}
+
+% --- Title / authors ----------------------------------------------------
+\title{Adaptive Conservatism Selection in Offline-to-Online Reinforcement
+       Learning for Portfolio Allocation}
+
+\author{Thomas Lee \\
+        UC Berkeley \\
+        \texttt{tholee@berkeley.edu}}
+
+\date{\today}
+
+% --- Section commands the drafts already use ----------------------------
+% (Some draft files reference \citealp; alias if needed.)
+\DeclareMathOperator{\softplus}{softplus}
+\providecommand{\bm}[1]{\boldsymbol{#1}}
+
+\begin{document}
+
+% Compact title block: article-class \maketitle eats ~2in of vertical
+% real estate, which pushes the extended abstract onto page 2.
+% Hand-rolled tighter version below preserves authorship info but
+% reclaims ~5--7 lines of body space for the abstract.
+\begingroup
+  \centering
+  {\Large\bfseries Adaptive Conservatism Selection in Offline-to-Online \\
+   Reinforcement Learning for Portfolio Allocation\par}
+  \vspace{0.5em}
+  {Thomas Lee \quad UC Berkeley \quad
+   \texttt{tholee@berkeley.edu}\par}
+  \vspace{0.5em}
+  {\small\today\par}
+\endgroup
+\vspace{1em}
+
+% =======================================================================
+% EXTENDED ABSTRACT (CS285 rubric: 1-page grading-critical artifact)
+% =======================================================================
+% Uses \section*{Extended Abstract} (full-width body text) rather than
+% the standard \begin{abstract} env (narrow-column italic), since the
+% extended-abstract format is a multi-paragraph mini-paper.
+\input{draft_abstract}
+
+% =======================================================================
+% INTRODUCTION
+% =======================================================================
+\input{draft_introduction}
+
+% =======================================================================
+% RELATED WORK
+% =======================================================================
+\input{draft_related_work}
+
+% =======================================================================
+% METHOD
+% =======================================================================
+\input{draft_method}
+
+% =======================================================================
+% EXPERIMENTS
+% =======================================================================
+\input{draft_experiments}
+
+% =======================================================================
+% DISCUSSION + LIMITATIONS
+% =======================================================================
+\input{draft_limitations}
+
+% =======================================================================
+% APPENDICES
+% =======================================================================
+\appendix
+
+% A. Implementation notes (four pre-existing bugs found during Phase 2
+% prep). Ported from writeup/draft_implementation_notes.md.
+\input{draft_appendix_implementation_notes}
+
+% B. Leak-detection appendix (the methodological sidebar)
+\input{draft_appendix_leak_detection}
+
+% --- Bibliography -------------------------------------------------------
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\end{document}

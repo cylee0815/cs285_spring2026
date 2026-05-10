@@ -1,0 +1,7 @@
+[start] grpo_G16_lambda0.001_seed42 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2d/grpo_G16_lambda0.001_seed42.log
+[start] grpo_G8_lambda0.001_seed42 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2d/grpo_G8_lambda0.001_seed42.log
+[start] grpo_G4_lambda0.001_seed42 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2d/grpo_G4_lambda0.001_seed42.log
+[done 0] grpo_G4_lambda0.001_seed42
+[done 0] grpo_G8_lambda0.001_seed42
+[done 0] grpo_G16_lambda0.001_seed42
+===== Phase 2D GRPO ablation complete in 366s =====

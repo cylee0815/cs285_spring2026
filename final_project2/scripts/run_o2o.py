@@ -44,6 +44,27 @@ from offline_rl.agents.cql_geodesic import GeodesicCQL
 from online_rl.agents.sac_dirichlet import SACDirichlet
 from hybrid_rl.agents.o2o_agent import O2OAgent
 from core.buffers.replay_buffer import ReplayBuffer, NStepReplayBuffer
+from policies.behavior import (
+    DirichletPolicy, EqualWeightPolicy, MomentumPolicy, RiskParityPolicy,
+)
+from policies.mixture import default_offline_mixture, make_episode_callable
+
+
+def _build_behavior(behavior_mix: str, env, seed: int):
+    """Return (policy, mixture) compatible with load_from_env. Exactly one is
+    non-None; both None means use the legacy uniform-Dirichlet default."""
+    if behavior_mix == "mixture":
+        return None, default_offline_mixture(env, seed=seed)
+    if behavior_mix == "uniform_legacy":
+        return None, None
+    n_assets = env.action_space.shape[0]
+    single_map = {
+        "dirichlet": DirichletPolicy(n_assets=n_assets, alpha=1.0, seed=seed),
+        "equal_weight": EqualWeightPolicy(n_assets=n_assets),
+        "momentum": MomentumPolicy(n_assets=n_assets, lookback=60),
+        "risk_parity": RiskParityPolicy(n_assets=n_assets, lookback=60),
+    }
+    return make_episode_callable(single_map[behavior_mix], env), None
 
 
 def parse_args():
@@ -116,6 +137,28 @@ def parse_args():
     # Multi-step returns
     parser.add_argument("--n_step", type=int, default=1,
                         help="N-step returns (1=standard, 3/5/10 for multi-step)")
+    parser.add_argument(
+        "--behavior_mix", type=str, default="mixture",
+        choices=["mixture", "dirichlet", "equal_weight", "momentum", "risk_parity",
+                 "uniform_legacy"],
+        help=(
+            "Offline-buffer behavior policy. 'mixture' = canonical 4-way mix; "
+            "'uniform_legacy' = pre-Phase-2 hardcoded uniform Dirichlet."
+        ),
+    )
+    parser.add_argument(
+        "--adaptive_conservatism", type=str, default="true",
+        choices=["true", "false"],
+        help=(
+            "If 'true' (default), use the regime-KL-driven sigmoid schedule "
+            "for cql_weight during online fine-tuning. If 'false', pin "
+            "cql_weight = config.cql_alpha throughout — this is the Phase 2C "
+            "'naive fine-tune' condition."
+        ),
+    )
+    parser.add_argument("--results_dir", type=str, default=None,
+                        help="If set, write metrics.json under {results_dir}/{run_name}.")
+    parser.add_argument("--run_name", type=str, default=None)
     return parser.parse_args()
 
 
@@ -224,9 +267,10 @@ def main():
         config.bayesian = True
     if args.n_step > 1:
         config.n_step = args.n_step
+    config.adaptive_conservatism = (args.adaptive_conservatism == "true")
 
     # Init WandB
-    run_name = f"{args.phase}_seed{args.seed}"
+    run_name = args.run_name or f"{args.phase}_seed{args.seed}"
     wandb.init(
         project="cs285-portfolio-rl",
         group=args.run_group,
@@ -242,7 +286,13 @@ def main():
         agent.sac_agent.env = online_train_env
 
         # Load offline data
-        agent.load_offline_data(n_steps=args.offline_data_steps)
+        _bp, _bmix = _build_behavior(args.behavior_mix, train_env, args.seed)
+        agent.load_offline_data(
+            behavioral_policy=_bp,
+            policy_mixture=_bmix,
+            n_steps=args.offline_data_steps,
+            mixture_seed=args.seed,
+        )
 
         # Phase 1: offline pre-training — evaluate on val split (2021) to avoid look-ahead bias
         print("\n=== Phase 1: Offline Geodesic-CQL Pre-training ===")
@@ -254,26 +304,60 @@ def main():
                 wandb.log({**{f"offline/{k}": v for k, v in metrics.items()},
                            **eval_metrics, "step": step})
 
-        # Phase 2: online fine-tuning on test split (2022+)
+        # Phase 2: online fine-tuning on test split (2022+).
+        # Use ``agent.finetune_online`` so the adaptive (or pinned)
+        # ``cql_weight`` schedule actually drives the critic update — the
+        # previous inline loop called ``update_critic`` without a cql_weight
+        # and silently ran a naive-online fine-tune regardless of the
+        # ``--adaptive_conservatism`` flag.
         print("\n=== Phase 2: Online SAC-Dirichlet Fine-tuning ===")
-        agent.transfer_to_online()
         n_online = config.n_online_steps
-        for step in trange(n_online, desc="Online"):
-            agent.sac_agent.collect_step()
-            if len(agent.sac_agent.buffer) >= config.batch_size:
-                online_batch = agent.sac_agent.buffer.sample_with_context(config.batch_size // 2)
-                offline_batch = agent.offline_buffer.sample_with_context(config.batch_size // 2)
-                mixed = {k: torch.cat([online_batch[k], offline_batch[k]], dim=0)
-                         for k in online_batch if k in offline_batch}
-                m = {}
-                m.update(agent.sac_agent.update_critic(mixed))
-                m.update(agent.sac_agent.update_actor(mixed))
-                m.update(agent.sac_agent.update_temperature(mixed))
-                agent.sac_agent.update_target_critic()
-                if step % args.eval_interval == 0:
-                    eval_metrics = agent.sac_agent.evaluate(test_env, n_episodes=5)
-                    wandb.log({**{f"online/{k}": v for k, v in m.items()},
-                               **eval_metrics, "step": n_offline + step})
+        o2o_history = agent.finetune_online(n_online)
+        # Final eval on test env after fine-tuning. The mid-training eval the
+        # old inline loop produced is dropped intentionally — for Phase 2C the
+        # final test metrics + the cql_weight trajectory carry the analysis.
+        final_eval = agent.sac_agent.evaluate(test_env, n_episodes=5)
+        wandb.log({
+            **{f"final_test/{k.split('/')[-1]}": v for k, v in final_eval.items()},
+            "step": n_offline + n_online,
+        })
+        if args.results_dir is not None:
+            import json as _json, numpy as _np
+            out_dir = os.path.join(args.results_dir, run_name)
+            os.makedirs(out_dir, exist_ok=True)
+            cql_w_traj = _np.asarray(
+                [float(h.get("cql_weight", 0.0)) for h in o2o_history],
+                dtype=_np.float32,
+            )
+            _np.save(os.path.join(out_dir, "cql_weight_traj.npy"), cql_w_traj)
+            record = {
+                "phase": "o2o",
+                "seed": args.seed,
+                "transaction_cost": float(args.transaction_cost),
+                "adaptive_conservatism": (args.adaptive_conservatism == "true"),
+                "n_offline_updates": int(n_offline),
+                "n_online_steps": int(n_online),
+                "test": {
+                    "sharpe_ratio": float(final_eval.get("eval/sharpe_ratio", float("nan"))),
+                    "annual_return": float(final_eval.get("eval/annual_return", float("nan"))),
+                    "max_drawdown": float(final_eval.get("eval/max_drawdown", float("nan"))),
+                    "turnover": float(final_eval.get("eval/avg_turnover", float("nan"))),
+                    "cumulative_return": (
+                        float(final_eval["eval/portfolio_value"]) - 1.0
+                        if "eval/portfolio_value" in final_eval else None
+                    ),
+                    "episode_return": float(final_eval.get("eval/episode_return", float("nan"))),
+                },
+                "cql_weight": {
+                    "mean": float(cql_w_traj.mean()) if cql_w_traj.size else None,
+                    "min": float(cql_w_traj.min()) if cql_w_traj.size else None,
+                    "max": float(cql_w_traj.max()) if cql_w_traj.size else None,
+                    "n_steps_logged": int(cql_w_traj.size),
+                },
+            }
+            with open(os.path.join(out_dir, "metrics.json"), "w") as _f:
+                _json.dump(record, _f, indent=2)
+            print(f"[save] {out_dir}/metrics.json")
 
     # --- Online SAC-Dirichlet only (baseline) ---
     elif args.phase == "sac":
@@ -298,7 +382,14 @@ def main():
         else:
             offline_buffer = ReplayBuffer(config.offline_buffer_size, obs_dim, action_dim, device,
                                           seq_len=config.regime_window)
-        offline_buffer.load_from_env(train_env, n_steps=args.offline_data_steps)
+        _bp, _bmix = _build_behavior(args.behavior_mix, train_env, args.seed)
+        offline_buffer.load_from_env(
+            train_env,
+            n_steps=args.offline_data_steps,
+            policy=_bp,
+            policy_mixture=_bmix,
+            mixture_seed=args.seed,
+        )
         offline_buffer.freeze()
         agent = GeodesicCQL(obs_dim, action_dim, config, device, offline_buffer=offline_buffer)
         n_steps = config.n_offline_updates
@@ -306,7 +397,6 @@ def main():
             metrics = agent.update()
             if step % args.eval_interval == 0:
                 # Evaluate on val split (2021) during offline training
-                from hybrid_rl.agents.o2o_agent import O2OAgent
                 tmp = O2OAgent.__new__(O2OAgent)
                 tmp.eval_env = val_env
                 tmp.cql_agent = agent

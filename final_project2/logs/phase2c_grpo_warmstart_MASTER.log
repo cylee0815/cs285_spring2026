@@ -1,0 +1,7 @@
+[start] grpo_warm_lambda0.001_seed1337 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2c/grpo_warm_lambda0.001_seed1337.log  (warm-start from /jet/home/tlee8/cs285_spring2026/final_project2/results/phase2a_causal/iql_lambda0.001_seed42/actor.pt)
+[start] grpo_warm_lambda0.001_seed2024 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2c/grpo_warm_lambda0.001_seed2024.log  (warm-start from /jet/home/tlee8/cs285_spring2026/final_project2/results/phase2a_causal/iql_lambda0.001_seed42/actor.pt)
+[start] grpo_warm_lambda0.001_seed42 -> /jet/home/tlee8/cs285_spring2026/final_project2/logs/phase2c/grpo_warm_lambda0.001_seed42.log  (warm-start from /jet/home/tlee8/cs285_spring2026/final_project2/results/phase2a_causal/iql_lambda0.001_seed42/actor.pt)
+[done 1] grpo_warm_lambda0.001_seed2024
+[done 1] grpo_warm_lambda0.001_seed1337
+[done 1] grpo_warm_lambda0.001_seed42
+===== Phase 2C GRPO warm-start complete in 4s =====

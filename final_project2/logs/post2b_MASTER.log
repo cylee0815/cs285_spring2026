@@ -1,0 +1,7 @@
+===== Phase 2A start =====
+[phase2a] elapsed 1450s
+===== Phase 2C + 2D in parallel =====
+scripts/_run_phase2_after_2b.sh: line 34: 17021 Terminated              bash scripts/_run_phase2c.sh > "$LOG_DIR/phase2c_MASTER.log" 2>&1
+[phase2c+2d] elapsed 811s
+===== Aggregate + plot =====
+===== All post-2B phases complete in 2262s =====

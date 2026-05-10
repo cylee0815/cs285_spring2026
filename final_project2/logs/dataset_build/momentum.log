@@ -1,0 +1,18 @@
+[05/09/26 03:49:15] INFO     Downloading 8 ticker(s): ['SPY', 'EEM', 'TLT',     
+                             'HYG', 'DBC', 'GLD', 'UUP', 'SHY'] from 2007-03-01 
+                             to 2026-03-31                                      
+$SHY: possibly delisted; no price data found  (1d 2007-03-01 -> 2026-03-31)
+
+1 Failed download:
+['SHY']: possibly delisted; no price data found  (1d 2007-03-01 -> 2026-03-31)
+[05/09/26 03:49:27] WARNING  Downloader returned empty data for 'SHY' in        
+                             [2007-03-01, 2026-03-31]; will raise downstream    
+                             once the combined frame is checked.                
+                    WARNING  First common trading day 2007-04-11 is >30 days    
+                             after requested start 2007-03-01. At least one     
+                             ticker has limited history in this window.         
+Loaded prices: 4773 rows × 8 tickers (2007-04-11 → 2026-03-30)
+[warn] First available date 2007-04-11 is 41 days after --download-start 2007-03-01. If you just shifted --download-start earlier, re-run with --force-download to refresh the cache. Otherwise this reflects real ticker inception; effective warmup = 265 days — OK.
+Features (pre-trim): 4646 rows × 216 features; dates 2007-10-09 → 2026-03-27
+Features (post-trim @ 2008-01-01): 4588 rows; first date 2008-01-02, last date 2026-03-27
+Saved 4587 transitions to datasets/real_momentum.npz

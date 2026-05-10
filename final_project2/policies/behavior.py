@@ -55,10 +55,12 @@ class MomentumPolicy:
         """Compute momentum weights from a (T, n_assets) returns history.
 
         Uses the last ``lookback`` rows. If fewer rows available, uses all.
+        Uses cumulative log return over the window as the score so the
+        softmax has meaningful spread; raw daily means are ~1e-4 and
+        collapse to a uniform distribution.
         """
         window = returns_history[-self.lookback:]
-        scores = np.mean(window, axis=0)
-        # Softmax for numerical stability
+        scores = np.sum(window, axis=0)
         scores_shifted = scores - np.max(scores)
         exp_scores = np.exp(scores_shifted)
         weights = exp_scores / exp_scores.sum()
