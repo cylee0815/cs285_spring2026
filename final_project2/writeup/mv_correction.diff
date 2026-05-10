@@ -1,0 +1,19 @@
+--- writeup/draft_experiments.tex	2026-05-09 23:29:43
++++ writeup/draft_experiments.tex	2026-05-09 23:29:43
+@@ -1,8 +1,12 @@
+ classical anchors land at the 59.56th percentile (equal-weight),
+ 81.41st (rolling 60-day inverse-vol risk-parity), 88.27th (GLD-100
+-single-asset), and 94.65th (closed-form min-variance on the
+-training-window covariance, simplex-projected); the 60/40 SPY-TLT
+-allocation lands well below. Per-seed Sharpe-to-percentile lookups
+-for the six O2O runs are tabulated in
++single-asset), and 94.65th (training-window min-variance); the 60/40
++SPY-TLT allocation lands well below. ``Min-variance'' here refers to
++the long-only QP on training-window sample covariance
++($\arg\min_w w^\top \widehat{\Sigma} w$ subject to $\sum_i w_i = 1$,
++$w \geq 0$), solved with SLSQP; the converged weight vector is
++heavily SHY-tilted ($91\%$ SHY, the lowest-vol asset in the universe),
++consistent with the min-variance objective. Per-seed
++Sharpe-to-percentile lookups for the six O2O runs are tabulated in
+ \texttt{writeup/per\_seed\_percentiles.csv} and used as the reference
+ scale in the seed-by-seed comparisons that follow.

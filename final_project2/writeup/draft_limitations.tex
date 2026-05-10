@@ -24,11 +24,16 @@ anything resembling regime-aware rebalancing on the 1{,}061-day test
 window. The differential between the two is therefore not how they
 trade --- it is which static allocation the SAC fine-tune lands on.
 Naive O2O's pinned $\beta_t \equiv \alpha_{\mathrm{CQL}}$ leaves the
-basin random across seeds (Sharpe range $[-0.236,\,+2.179]$, std $1.21$);
-adaptive O2O's modulated schedule consistently steers the same SAC
-dynamics from the same Geodesic-CQL pretrain to a uniformly strong
-basin (Sharpe range $[+1.629,\,+1.931]$, std $0.15$, an
-eight-fold variance reduction). The conservatism schedule's load-bearing
+basin random across seeds (Sharpe range $[-0.236,\,+2.179]$, std $1.21$;
+$0.03$rd to $100$th percentile of the static-allocation reference
+distribution in Fig.~\ref{fig:static-sharpe-cdf} --- effectively a
+random sample from the full simplex); adaptive O2O's modulated schedule
+consistently steers the same SAC dynamics from the same Geodesic-CQL
+pretrain to a uniformly strong basin (Sharpe range
+$[+1.629,\,+1.931]$, std $0.15$, percentile band
+$[98.74, 99.93]$): an eight-fold reduction in seed-to-seed Sharpe std
+and a sharper narrowing in percentile space (full simplex
+distribution $\rightarrow$ top $1.25\%$). The conservatism schedule's load-bearing
 function in our results is convergence-basin steering during fine-tune,
 not online responsiveness during deployment. We surface this as a
 mechanism revision rather than a confirmation, in keeping with the

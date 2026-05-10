@@ -1,0 +1,7 @@
+configuration,seed,sharpe,percentile
+naive_o2o,42,-0.236,0.03
+naive_o2o,1337,2.179,100.0
+naive_o2o,2024,1.062,72.6
+adaptive_o2o,42,1.726,99.4
+adaptive_o2o,1337,1.629,98.74
+adaptive_o2o,2024,1.931,99.93
